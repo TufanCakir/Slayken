@@ -28,5 +28,4 @@ const colors = {
   warriorBlue: "#4682B4", // Ein starker Stahlblau-Ton
   white: "#FFFFFF", // Weiß
 };
-
 export default colors;
