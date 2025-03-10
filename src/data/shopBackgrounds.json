@@ -1,0 +1,80 @@
+[
+  {
+    "id": "1",
+    "name": "Sunset",
+    "cost": 50,
+    "colors": ["#ff7e5f", "#feb47b"]
+  },
+  {
+    "id": "2",
+    "name": "Ocean",
+    "cost": 100,
+    "colors": ["#00c6ff", "#0072ff"]
+  },
+  {
+    "id": "3",
+    "name": "Forest",
+    "cost": 150,
+    "colors": ["#56ab2f", "#a8e063"]
+  },
+  {
+    "id": "4",
+    "name": "Dawn",
+    "cost": 200,
+    "colors": ["#ff9a9e", "#fad0c4"]
+  },
+  {
+    "id": "5",
+    "name": "Midnight",
+    "cost": 250,
+    "colors": ["#2c3e50", "#4ca1af"]
+  },
+  {
+    "id": "6",
+    "name": "Crimson",
+    "cost": 300,
+    "colors": ["#ff512f", "#dd2476"]
+  },
+  {
+    "id": "7",
+    "name": "Lavender",
+    "cost": 350,
+    "colors": ["#e0c3fc", "#8ec5fc"]
+  },
+  {
+    "id": "8",
+    "name": "Aurora",
+    "cost": 400,
+    "colors": ["#7F00FF", "#E100FF"]
+  },
+  {
+    "id": "9",
+    "name": "Cobalt",
+    "cost": 450,
+    "colors": ["#004e92", "#000428"]
+  },
+  {
+    "id": "10",
+    "name": "Saffron",
+    "cost": 500,
+    "colors": ["#f7971e", "#ffd200"]
+  },
+  {
+    "id": "11",
+    "name": "Emerald",
+    "cost": 550,
+    "colors": ["#50C878", "#006400"]
+  },
+  {
+    "id": "12",
+    "name": "Magenta",
+    "cost": 600,
+    "colors": ["#ff00ff", "#cc00cc"]
+  },
+  {
+    "id": "13",
+    "name": "Indigo",
+    "cost": 650,
+    "colors": ["#4b0082", "#8a2be2"]
+  }
+]
