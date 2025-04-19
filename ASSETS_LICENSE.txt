@@ -1,0 +1,23 @@
+All images, characters, JSON data (such as players.json, background.json, etc.), music, and graphical assets in this repository are the intellectual property of Tufan Cakir.
+
+These assets may NOT be:
+
+- copied,
+- redistributed,
+- modified,
+- uploaded to other platforms,
+- used in other projects (commercial or non-commercial),
+
+without explicit written permission from the author.
+
+This restriction includes but is not limited to the content of the following folders and files:
+
+- /assets/
+- /data/
+- /components/FastImageWrapper.js (image handling)
+- /context/PlayerContext.js (JSON usage)
+
+If you would like to use any of the visual/audio/text assets, please contact:
+
+📧 support@slayken.com  
+© 2025 Tufan Cakir. All rights reserved.
