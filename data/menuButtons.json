@@ -1,0 +1,8 @@
+[
+  {
+    "id": "battle-001",
+    "name": "Battle",
+    "route": "battle",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/menubuttons/battlebutton.png"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "event-001",
+    "name": "Coin Event",
+    "route": "coinevent",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventbuttons/coinevent.png"
+  },
+  {
+    "id": "event-002",
+    "name": "Crystal Event",
+    "route": "crystalevent",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventbuttons/crystalevent.png"
+  },
+  {
+    "id": "event-003",
+    "name": "Boss Rush",
+    "route": "bossrush",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventbuttons/bossrush.png"
+  },
+  {
+    "id": "event-004",
+    "name": "Login Event",
+    "route": "loginevent",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventbuttons/loginevent.png"
+  },
+  {
+    "id": "event-005",
+    "name": "EXP Event",
+    "route": "expevent",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventbuttons/expevent.png"
+  }
+]

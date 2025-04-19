@@ -1,0 +1,62 @@
+[
+  {
+    "id": "player-001",
+    "name": "player1",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player1.png",
+    "rarity": "SSR"
+  },
+  {
+    "id": "player-002",
+    "name": "player2",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player2.png",
+    "rarity": "R"
+  },
+  {
+    "id": "player-003",
+    "name": "player3",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player3.png",
+    "rarity": "SR"
+  },
+  {
+    "id": "player-004",
+    "name": "player4",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player4.png",
+    "rarity": "SR"
+  },
+  {
+    "id": "player-005",
+    "name": "player5",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player5.png",
+    "rarity": "R"
+  },
+  {
+    "id": "player-006",
+    "name": "player6",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player6.png",
+    "rarity": "SR"
+  },
+  {
+    "id": "player-007",
+    "name": "player7",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player7.png",
+    "rarity": "N"
+  },
+  {
+    "id": "player-008",
+    "name": "player8",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player8.png",
+    "rarity": "SSR"
+  },
+  {
+    "id": "player-009",
+    "name": "player9",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player9.png",
+    "rarity": "R"
+  },
+  {
+    "id": "player-010",
+    "name": "player10",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/players/player10.png",
+    "rarity": "SR"
+  }
+]
