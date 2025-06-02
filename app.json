@@ -18,7 +18,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tufancakir.myslayken"
+      "bundleIdentifier": "com.tufancakir.myslayken",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,9 +33,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-localization"],
+    "plugins": [
+      "expo-localization"
+    ],
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7093121d-57da-48ed-b15c-1d419bfa27f4"
+      }
     }
   }
 }

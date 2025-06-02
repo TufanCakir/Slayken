@@ -48,11 +48,20 @@
   "notInTeam": "nicht im Team",
   "unknownRarity": "Unbekannt",
   "notEnoughCrystalsTitle": "Nicht genug Kristalle",
-  "notEnoughCrystalsMessage": "Du brauchst {count} Kristalle.",
+  "notEnoughCrystalsMessage": "Du brauchst {{count}} Kristalle.",
   "confirmTitle": "Bestätigen",
   "summonLabels": {
     "single": "Glutruf",
     "consecutive": "Feuerpakt"
+  },
+  "summonPoolTitle": "Beschwörungs-Pool:",
+  "rarity": {
+    "mythic": "Mythisch",
+    "legendary": "Legendär",
+    "epic": "Episch",
+    "rare": "Selten",
+    "uncommon": "Ungewöhnlich",
+    "common": "Gewöhnlich"
   },
   "confirmMessage": "Möchtest du {{label}} für {{cost}} Kristalle durchführen?",
   "yes": "Ja",

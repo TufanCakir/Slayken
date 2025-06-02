@@ -48,11 +48,20 @@
   "notInTeam": "not in team",
   "unknownRarity": "Unknown",
   "notEnoughCrystalsTitle": "Not enough crystals",
-  "notEnoughCrystalsMessage": "You need {count} crystals.",
+  "notEnoughCrystalsMessage": "You need {{count}} crystals.",
   "confirmTitle": "Confirm",
   "summonLabels": {
     "single": "Ember Call",
     "consecutive": "Pact of Fire"
+  },
+  "summonPoolTitle": "Summon Pool:",
+  "rarity": {
+    "mythic": "Mythic",
+    "legendary": "Legendary",
+    "epic": "Epic",
+    "rare": "Rare",
+    "uncommon": "Uncommon",
+    "common": "Common"
   },
   "confirmMessage": "Do you want to perform {{label}} for {{cost}} crystals?",
   "yes": "Yes",

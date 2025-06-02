@@ -1,7 +1,5 @@
 [
-  { "id": "1", "name": "Goldene Box", "type": "box" },
-  { "id": "2", "name": "Stern-Geschenk", "type": "star" },
-  { "id": "3", "name": "50 Coins", "type": "coins", "amount": 50 },
-  { "id": "5", "name": "99999 Crystals", "type": "crystals", "amount": 99999 },
-  { "id": "8", "name": "99999 EXP", "type": "exp", "amount": 99999 }
+  { "id": "1", "name": "100 Crystals", "type": "crystals", "amount": 100 },
+  { "id": "2", "name": "100 Coins", "type": "coins", "amount": 100 },
+  { "id": "3", "name": "100 EXP", "type": "exp", "amount": 100 }
 ]
