@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1",
+    "unlockItemId": "1",
+    "eventName": "hellfire_judgement",
+    "title": "Das Urteil der Höllenglut",
+    "story": "Ein uralter Gott ist aus den Tiefen der Glut auferstanden. Sein Blick allein versengt die Hoffnung. Nur die Tapfersten wagen sich ins Feuer.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Infermor.png"
+  },
+  {
+    "id": "2",
+    "unlockItemId": "2",
+    "eventName": "soul_void",
+    "title": "Seelen der Leere",
+    "story": "Aus der Leere kehrt Malzevox zurück – eine uralte Macht, die einst versiegelt wurde. Doch nun zerbricht das Siegel… und mit ihm das Licht.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Malzevox.png"
+  },
+  {
+    "id": "3",
+    "unlockItemId": "3",
+    "eventName": "celestial_flame",
+    "title": "Himmlisches Inferno",
+    "story": "Als der Himmelsfürst Aurelion Fyr fiel, wurde der Himmel selbst in Flammen gehüllt. Sein Herz aus reiner Magie brennt nun gegen die Welt, die ihn verriet.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Aurelion.png"
+  },
+  {
+    "id": "4",
+    "unlockItemId": "4",
+    "eventName": "divine_judgement",
+    "title": "Göttliches Urteil",
+    "story": "Orionyx, der letzte Wächter des Gleichgewichts, ist erwacht. Seine Gerechtigkeit ist absolut – seine Strafe unausweichlich.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Orionyx.png"
+  },
+  {
+    "id": "5",
+    "unlockItemId": "5",
+    "eventName": "titan_awakening",
+    "title": "Erwachen des Titanen",
+    "story": "Tief unter den Ruinen schläft Drogmarth – ein Wesen aus Stein, Magma und Zorn. Die Siegel schwinden… und die Welt wird beben.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Drogmarth.png"
+  },
+  {
+    "id": "6",
+    "unlockItemId": "6",
+    "eventName": "abyss_core",
+    "title": "Kern des Abgrunds",
+    "story": "Tief im Schattenreich pocht ein uraltes Herz aus Energie. Kora'thaz ist erwacht – halb Maschine, halb Gott. Und sein Puls bringt Verderben.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Korathaz.png"
+  },
+  {
+    "id": "7",
+    "unlockItemId": "7",
+    "eventName": "end_of_flame",
+    "title": "Das Ende der Flamme",
+    "story": "Ash'Ragul ist erschienen. Nicht, um zu kämpfen – sondern um alles zu beenden. Nur ein wahrer Held kann sich dem Ende entgegenstellen.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Ashragul.png"
+  },
+  {
+    "id": "8",
+    "unlockItemId": "8",
+    "eventName": "fall_of_heaven",
+    "title": "Der Fall des Himmels",
+    "story": "Zar’Ael war der letzte Seraphim – bis das Licht ihn verließ. Jetzt stürzen seine brennenden Flügel die Welt in ewige Nacht.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Zarael.png"
+  },
+  {
+    "id": "9",
+    "unlockItemId": "9",
+    "eventName": "cult_of_flame",
+    "title": "Kult der Flamme",
+    "story": "Maldrakar, der Flammenprophet, ist zurück. Die dunklen Riten sind vollendet – und nun brennt der Schleier zwischen Welten.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Maldrakar.png"
+  }
+]

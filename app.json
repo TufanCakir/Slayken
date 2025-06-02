@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "slayken-energy",
-    "slug": "slayken-energy",
-    "version": "1.0.0",
+    "name": "Slayken",
+    "slug": "slayken",
+    "version": "2.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/slayken-logo-main.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -12,8 +12,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tufancakir.myslayken"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +29,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-localization"],
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

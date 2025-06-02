@@ -1,0 +1,6 @@
+{
+  "summons": [
+    { "type": "single", "count": 1 },
+    { "type": "consecutive", "count": 10 }
+  ]
+}

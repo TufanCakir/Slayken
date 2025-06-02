@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "title": "Das Urteil der Höllenglut",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Infermor.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "2",
+    "title": "Seelen der Leere",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Malzevox.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "3",
+    "title": "Himmlisches Inferno",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Aurelion.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "4",
+    "title": "Göttliches Urteil",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Orionyx.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "5",
+    "title": "Erwachen des Titanen",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Drogmarth.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "6",
+    "title": "Kern des Abgrunds",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Korathaz.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "7",
+    "title": "Das Ende der Flamme",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Ashragul.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "8",
+    "title": "Der Fall des Himmels",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Zarael.png",
+    "uri": "https://slayken.com/"
+  },
+  {
+    "id": "9",
+    "title": "Kult der Flamme",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Maldrakar.png",
+    "uri": "https://slayken.com/"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "bossName": "Vharzakar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Vharzakar.png",
+    "title": "Kapitel I: Der Flammenfürst der Leere",
+    "story": "Einst war Vharzakar ein Titanenwächter, der über das uralte Siegel der Leere wachte. Doch in einem Zeitalter vergessener Kriege wurde er verraten – sein Körper von Leerenfeuer durchbohrt, seine Seele gebunden an den Schatten der Ewigkeit. Aus seiner Brust pulsiert das Herz der Unvergänglichen Glut, seine Klinge – „Nyxflamme“ – brennt mit dem Zorn verfallener Sterne.\n\nWo Vharzakar erscheint, flackert Raum, und selbst Zeit beginnt zu bröckeln."
+  },
+  {
+    "bossName": "Xepharion",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Xepharion.png",
+    "title": "Kapitel II: Der Leerenfürst des violetten Herzens",
+    "sory": "Xepharion war einst ein Wächter jenseits der Sterne – Träger eines violetten Kristallherzens, das die Essenz uralter Ordnung enthielt. Doch als die Leere begann, nach der Ordnung zu greifen, wurde sein Herz zerschlagen – und zugleich neu geboren.\n\nJetzt ist Xepharion weder Ordnung noch Chaos – sondern das schwebende Gleichgewicht dazwischen. Aus seinen Händen fließt Sternenfluch, aus seinem Blick wächst Wahnsinn. Seine stumme Präsenz durchtrennt Hoffnung – mit der Kälte der Unendlichkeit."
+  },
+  {
+    "bossName": "Drazhulon",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Drazhulon.png",
+    "title": "Kapitel III: Der Schattenherz-Bannfluch",
+    "story": "Drazhulon war einst der Herold des Ewigen Spiegels – eines Ortes zwischen Licht und Abgrund. Als sein Herz in einem uralten Ritual verdorben wurde, verschmolzen seine Tugenden mit der reinen Essenz der Verdammung.\n\nNun wandelt er durch Dimensionen, die nicht mehr existieren sollten. Sein violettes Herz brennt mit dem Fluch vergessener Schwüre, seine Stimme ist ein Echo verlorener Welten. Wo Drazhulon erscheint, stirbt Gleichgewicht – und geboren wird der Wahnsinn."
+  },
+  {
+    "bossName": "Zarvalgon",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Zarvalgon.png",
+    "title": "Kapitel IV: Der Glutruf der Verlorenen Zeit",
+    "story": "Zar’Valgon war einst der Chronomagus der Unteren Spähren – ein Meister der Zeitflammen, die weder brennen noch vergehen. Als sein Tempel im „Kreis der Ewigen Dämmerung“ fiel, zersplitterte seine Seele über Äonen hinweg.\n\nNun trägt er das „Infernalrad der Zeiten“ in seiner Hand – ein Artefakt, das brennende Zyklen entfesseln kann. Seine Rüstung ist geschmiedet aus geschwärzter Erinnerung, sein Blick verglüht selbst Göttererbe.\n\nWo Zar’Valgon erscheint, erstarrt Vergangenheit – und Zukunft brennt im Rückwärtslauf."
+  }
+]

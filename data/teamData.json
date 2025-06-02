@@ -1,0 +1,20 @@
+[
+  {
+    "id": "sylas",
+    "name": "Sylas",
+    "type": "Fighter",
+    "level": 1,
+    "exp": 0,
+    "expToNextLevel": 100,
+    "avatar": "sylas.png"
+  },
+  {
+    "id": "ashen",
+    "name": "Ashen",
+    "type": "Fighter",
+    "level": 1,
+    "exp": 0,
+    "expToNextLevel": 100,
+    "avatar": "ashen.png"
+  }
+]

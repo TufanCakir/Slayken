@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1",
+    "name": "Symbol der Götter",
+    "price": 800,
+    "category": "divine_emblem",
+    "iconName": "götter",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "2",
+    "name": "Siegel der Leere",
+    "price": 850,
+    "category": "nightmare_token",
+    "iconName": "leere",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "3",
+    "name": "Segen des Himmelsbrands",
+    "price": 900,
+    "category": "divine_emblem",
+    "iconName": "himmel",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "4",
+    "name": "Siegel der Ordnung",
+    "price": 950,
+    "category": "divine_emblem",
+    "iconName": "ordnung",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "5",
+    "name": "Siegel des Erdherzens",
+    "price": 920,
+    "category": "nightmare_token",
+    "iconName": "erdherzen",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "6",
+    "name": "Fragment des Abgrunds",
+    "price": 980,
+    "category": "nightmare_token",
+    "iconName": "abgrund",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "7",
+    "name": "Glut der Verdammnis",
+    "price": 1200,
+    "category": "divine_emblem",
+    "iconName": "verdammnis",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "8",
+    "name": "Gefallene Feder",
+    "price": 1050,
+    "category": "divine_emblem",
+    "iconName": "feder",
+    "currency": ["coin", "crystal"]
+  },
+  {
+    "id": "9",
+    "name": "Flammenrune",
+    "price": 1000,
+    "category": "ritual_item",
+    "iconName": "flammenrune",
+    "currency": ["coin", "crystal"]
+  }
+]

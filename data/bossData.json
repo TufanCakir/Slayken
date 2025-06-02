@@ -1,0 +1,331 @@
+[
+  {
+    "bossName": "Azroth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Azroth.png",
+    "chapterType": "boss",
+    "title": "Kapitel I: Blutflügel",
+    "story": "In den Tiefen der zerfallenen Welt erhebt sich Azroth – König der Blutflügel. Geschmiedet aus dem Hass der Gefallenen, ruht er nicht, bis jedes Leben in Flammen vergeht."
+  },
+  {
+    "bossName": "Varnok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Varnok.png",
+    "chapterType": "boss",
+    "title": "Kapitel II: Stahldornen",
+    "story": "Varnok, der Seelenlose, wandelt in einer Hülle aus lebendigem Eisen. Jeder Dorn ein Schwur, jede Bewegung ein Urteil. Seine Ankunft zerschneidet das Land mit kalter Macht."
+  },
+  {
+    "bossName": "Zareth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Zareth.png",
+    "chapterType": "boss",
+    "title": "Kapitel III: Glutfürst",
+    "story": "Zareth, der Glutfürst, war einst ein Lichtkrieger. Jetzt brennt in ihm das Herz des Zorns. Seine geschmolzenen Ketten reißen Realität und Willen gleichermaßen."
+  },
+  {
+    "bossName": "Rhazgorr",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Rhazgorr.png",
+    "chapterType": "boss",
+    "title": "Kapitel IV: Glutklinge",
+    "story": "Rhazgorr war einst der Streiter der Titanen – bis er die Klinge aus dem Herzen der Sonne zog. Sie versengte seine Seele und verfluchte ihn zum ewigen Krieg. Jetzt jagt er alles, was atmet – im Feuer des Zorns."
+  },
+  {
+    "bossName": "Xarnoth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Xarnoth.png",
+    "chapterType": "boss",
+    "title": "Kapitel V: Schatten der Endzeit",
+    "story": "Als die Götter starben, war Xarnoth der letzte, der lachte. Sein Herz wurde zum Brennpunkt der Verdammnis, seine Präsenz allein vernarbt die Welt. Wo Xarnoth geht, stirbt Hoffnung – denn er ist nicht nur Feind, sondern das Ende selbst."
+  },
+  {
+    "bossName": "Korrvex",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Korrvex.png",
+    "chapterType": "boss",
+    "title": "Kapitel VI: Maschinenfeuer",
+    "story": "Korrvex wurde nicht geboren – er wurde geschmiedet im Herzen der letzten Schmiede, wo Dämonen und Stahl verschmolzen. Jeder seiner Finger trägt das Urteil der Ewigkeit. Wer seinen Blick erwidert, vergeht."
+  },
+  {
+    "bossName": "Molthar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Molthar.png",
+    "chapterType": "boss",
+    "title": "Kapitel VII: Dämonenklinge",
+    "story": "Molthar war einst selbst eine Waffe – geschmiedet von einem vergessenen Gott. Doch er erwachte. Jetzt führt er sich selbst – mit jedem Schnitt formt er das Ende der Welt."
+  },
+  {
+    "bossName": "Threxul",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Threxul.png",
+    "chapterType": "boss",
+    "title": "Kapitel VIII: Klinge des Wahnsinns",
+    "story": "Threxul war nicht geschaffen. Er wurde aus Schmerz geboren – aus gefolterten Träumen, aus gebrochenen Gebeten. Seine Form ändert sich mit jedem Schrei, den er hört. Und er hört alles."
+  },
+  {
+    "bossName": "Vaelgor",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Vaelgor.png",
+    "chapterType": "boss",
+    "title": "Kapitel IX: Höllenlegion",
+    "story": "Vaelgor ist kein Dämon. Er ist der Befehl selbst – die Stimme, die die Legionen lenkt, die Hand, die Welten zerschlägt. Sein Wille ist das letzte Gesetz, seine Gegenwart das Ende aller Rebellion."
+  },
+  {
+    "bossName": "Ignarok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Ignarok.png",
+    "chapterType": "boss",
+    "title": "Kapitel X: Brennendes Ende",
+    "story": "Ignarok ist kein Wesen – er ist ein Zustand. Ein Zünden. Aus dem Mahlstrom vergessener Sonnen geboren, vernichtet sein Puls ganze Realitäten. Er ist das Ende, das nie aufhört."
+  },
+  {
+    "bossName": "Drakaroth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Drakaroth.png",
+    "chapterType": "boss",
+    "title": "Kapitel XI: Rückgrat der Verdammnis",
+    "story": "Drakaroth marschierte, als das Erste Licht starb. Seine Wirbelsäule ist ein feuriges Gebet an den Untergang – seine Fäuste sprechen das letzte Gesetz. Wer ihn sieht, wird Geschichte."
+  },
+  {
+    "bossName": "Orzakar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Orzakar.png",
+    "chapterType": "boss",
+    "title": "Kapitel XII: Runenbrenner",
+    "story": "Or'Zakar wurde nicht aus Fleisch geboren, sondern aus der Essenz verlorener Götter. In seiner Hand ruht das Brennzeichen der Ewigkeit. Jeder Puls daraus löscht Geschichte. Er ist das Archiv des Untergangs – brennend, schreiend, ewig."
+  },
+  {
+    "bossName": "Varkhaz",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Varkhaz.png",
+    "chapterType": "boss",
+    "title": "Kapitel XIII: Klingenrichter",
+    "story": "Varkhaz braucht keine Worte. Seine Klingen sprechen. Und sie urteilen. Jeder Schnitt ist ein uraltes Ritual, jede Wunde ein Siegel. Wer ihm gegenübersteht, wird gerichtet – nicht durch Gesetze, sondern durch Glut und Stahl."
+  },
+  {
+    "bossName": "Malgror",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Malgror.png",
+    "chapterType": "boss",
+    "title": "Kapitel XIV: Zorn der Abgründe",
+    "story": "Malgror war einst der Wächter zwischen Welten – bis er selbst stürzte. Jetzt brennt sein Zorn durch die Ebenen. Wer seinen Schatten betritt, hört nur noch das Echo des Untergangs."
+  },
+  {
+    "bossName": "Zarketh",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Zarketh.png",
+    "chapterType": "boss",
+    "title": "Kapitel XV: Kernrichter der Hölle",
+    "story": "Zar'Keth war der Richter der Ersten Hölle – dort, wo selbst Dämonen büßen. In seinem Innern pulsiert das Flammenherz des Urfeuers. Wer seinen Kern erblickt, erkennt das letzte Urteil – und verbrennt in Wahrheit."
+  },
+  {
+    "bossName": "Kharzul",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Kharzul.png",
+    "chapterType": "boss",
+    "title": "Kapitel XVI: Flamme der Leere",
+    "story": "Kharzul war einst der Herold einer untergegangenen Dimension – ein Bote der Leere. Als er in unsere Welt trat, entzündete sich seine Brust in ewiger Glut. Er spricht nicht, denn die Leere hat keine Stimme – nur Feuer. Wo Kharzul geht, verbrennt sogar die Zeit."
+  },
+  {
+    "bossName": "Elarmarok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Elarmarok.png",
+    "chapterType": "boss",
+    "title": "Kapitel XVII: Verdorbene Ewigkeit",
+    "story": "Elar'marok war einst das letzte Fragment eines unsterblichen Pantheons – zerschlagen, aber nicht vernichtet. Aus seinem zerbrochenen Leib wuchs etwas Neues: ein Avatar der Verdorbenen Ewigkeit. Seine Schwingen reißen Löcher in die Zeit, sein Herz pulsiert mit vergessenen Schreien. Wo Elar'marok erscheint, verweilt nichts – nur das Echo von dem, was nie hätte sein dürfen."
+  },
+  {
+    "bossName": "Vorgarok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Vorgarok.png",
+    "chapterType": "boss",
+    "title": "Kapitel XVIII: Dorn des Zorns",
+    "story": "Vorgarok wurde nicht geboren, sondern geweckt – aus dem Blut uralter Titanen. Jeder Dorn an seinem Körper ist ein Manifest des Hasses. Wo er wandelt, wächst das stählerne Verderben. Und wer ihm trotzt, wird vom Zorn zerschmettert."
+  },
+  {
+    "bossName": "Drazhmorok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Drazhmorok.png",
+    "chapterType": "boss",
+    "title": "Kapitel XIX: Blutkern der Verdammnis",
+    "story": "Drazh’Morok ist das Erbe eines Krieges, den selbst die Zeit vergaß. In seiner Brust schlägt der Blutkern – ein Relikt reiner Vernichtung. Seine Klingen wachsen aus Hass. Wo er steht, brechen Siege."
+  },
+  {
+    "bossName": "Zorrakthul",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Zorrakthul.png",
+    "chapterType": "boss",
+    "title": "Kapitel XX: Dornklinge des Weltenbrands",
+    "story": "Zorrak'Thul war einst der Vollstrecker einer sterbenden Sonne. Seine rechte Klinge ist kein Metall – sie ist ein Splitter aus reiner Verzweiflung. Jeder seiner Schritte brennt Narben in die Welt. Wer seinen Namen spricht, hat bereits verloren."
+  },
+  {
+    "bossName": "Volgrath",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Volgrath.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXI: Brandseele der Titanen",
+    "story": "Volgrath entstand nicht durch Geburt, sondern durch Ausbruch. Er ist das Letzte, was eine sterbende Welt ausstößt – Lava, Hass und Wille. In seinem Innern tobt das Erbe der Titanen. Sein Griff ist flüssiges Feuer. Und wo er geht, schmilzt das Urteil."
+  },
+  {
+    "bossName": "Morthazar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Morthazar.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXII: Herzbrand der Verdammten",
+    "story": "Mor'thazar war einst der Kern eines gefallenen Gottes – ein Fragment reinen Zorns. Sein Herz schlägt in Flammen, die weder löschen noch sterben. Jeder Blick auf ihn brennt Erkenntnis in die Seele: Es gibt kein Zurück. Wo Mor'thazar erscheint, beginnt das Ende."
+  },
+  {
+    "bossName": "Skarthul",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Skarthul.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXIII: Wurzel des Verderbens",
+    "story": "Skar’thul wuchs nicht – er kroch. Aus den Rissen des Weltenbrands, aus dem Schlund der Verwesung. Seine Glieder winden sich durch Raum und Fleisch, seine Augen brennen durch Mut. Er ist der Wurzelkern des Bösen – und jede seiner Bewegungen verseucht Wirklichkeit."
+  },
+  {
+    "bossName": "Skarvhor",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Skarvhor.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXIV: Flammensichel der Leere",
+    "story": "Skarvhor ist die geformte Rache der Leere. In seinen Armen lodert das Vergessen, in seinen Klingen tanzt das Urteil. Kein Laut begleitet seinen Schritt – nur das Zischen schmelzender Hoffnung."
+  },
+  {
+    "bossName": "Zarnavok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Zarnavok.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXV: Klingenfluch des Schattenfeuers",
+    "story": "Zarnavok war einst ein Lichtwächter – doch der Schatten verführte ihn. Jetzt lodert sein Körper in schwarzem Feuer, seine Zwillingsklingen flüstern Verdammung. Wo Zarnavok kämpft, stirbt das Licht in Qual."
+  },
+  {
+    "bossName": "Drugorak",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Drugorak.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXVI: Faust der Tiefen",
+    "story": "Dru’gorak stammt aus der Tiefe unter aller Tiefe – dort, wo selbst die Verdammten flüstern. Sein Leib ist aus dem Stein vergessener Äonen, seine Faust bricht nicht Knochen, sondern Geschichte. Wenn Dru’gorak marschiert, bebt das Fundament der Welt – und Stille folgt."
+  },
+  {
+    "bossName": "Xevaron",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Xevaron.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXVII: Klinge des Herzbrandes",
+    "story": "Xevaron ist nicht geboren – er wurde geschnitten. Jeder Teil seines Körpers ist das Ergebnis uralter Rituale. In seiner Brust brennt das Herzbrand-Relikt – ein Splitter aus reiner Qual. Seine Klingen tanzen nicht – sie richten. Und mit jedem Hieb löscht er Erinnerung."
+  },
+  {
+    "bossName": "Tharnok",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Tharnok.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXVIII: Glutwächter des letzten Siegels",
+    "story": "Tharnok ist der letzte Wächter des glühenden Siegels – ein Artefakt, das selbst die Titanen fürchteten. Ausgestattet mit geschmolzenen Ketten und uralten Flammenschwertern, bewacht er das Ende aller Hoffnung. Wer versucht, das Siegel zu brechen, entfesselt nicht nur Tharnok, sondern das Ende aller Zeit."
+  },
+  {
+    "bossName": "Gorvhar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Gorvhar.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXIX: Fluchbote der Glutkrone",
+    "story": "Gorvhar trägt die Krone der Glut – nicht als Herrscher, sondern als Mahnung. Er wurde von den letzten Feuerpriestern erschaffen, um das Ende einzuläuten. Aus seinen Schultern ragen Flammenhörner, in seinen Händen glüht die Essenz ewiger Strafe. Wo Gorvhar erscheint, beugt sich selbst die Hölle."
+  },
+  {
+    "bossName": "Vorgaleth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Vorgaleth.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXX: Glutmonarch der Zwei Sonnen",
+    "story": "Vorgaleth trägt die Essenz zweier untergegangener Sonnen in sich – Flammen, die nie erlöschen. Seine Schultern lodern in ewigem Zorn, sein Blick verschlingt Zeit. Er herrscht nicht über Länder – er herrscht über Asche."
+  },
+  {
+    "bossName": "Rhazareth",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Rhazareth.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXXI: Splitter der Letzten Glut",
+    "story": "Rhazareth war kein Wesen – er war ein Fragment. Übrig geblieben aus der Explosion eines sterbenden Sternenherzens, brennt sein Kern mit dem letzten Feuer des Kosmos. Jeder Schlag ist wie der Einsturz einer Galaxie. Wo Rhazareth geht, verglühen Hoffnung, Wille – und selbst Erinnerung."
+  },
+  {
+    "bossName": "Narzakar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Narzakar.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXXII: Krone des letzten Funkens",
+    "story": "Narzakar war einst der Träger des Ursprungsfeuers – doch als die Glut der Götter verlosch, blieb nur ein Funke. In seinem Innersten lodert dieser letzte Zorn. Er ist das Echo der ersten Schöpfung, gehüllt in schwarzem Erz. Wo Narzakar schreitet, folgt das Schweigen der Elemente."
+  },
+  {
+    "bossName": "Rhazvalon",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Rhazvalon.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXXIII: Dornherz der Glutsphären",
+    "story": "Rhazvalon, der Dornherzträger, war einst der Brennpunkt eines gefallenen Himmels. In seiner Brust schlägt ein Herz aus Sphäre und Flamme – durchbohrt von Wut, genährt von Glut. Jeder seiner Schritte bricht das Gleichgewicht, jede Tat hinterlässt Asche in den Lüften der Schöpfung."
+  },
+  {
+    "bossName": "Nerokhar",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/storyBosse/Nerokhar.png",
+    "chapterType": "boss",
+    "title": "Kapitel XXXIV: Glutbote der Ewigen Flamme",
+    "story": "Nerokhar wurde in der Glut geschmiedet, die selbst den Tod überlebt. Sein Herz ist ein Brennsiegel uralter Feuergötter, seine Dornen wachsen aus verglühten Sternen. Wo Nerokhar erscheint, entflammt nicht nur das Fleisch – sondern auch die Zeit. Denn er trägt das Siegel der Ewigen Flamme."
+  },
+  {
+    "id": "Infermor",
+    "name": "Infermor, Der Brennende Fürst",
+    "element": "fire",
+    "rarity": "legendary",
+    "hp": 50000,
+    "attackPattern": "multi-phase",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/Infermor.png",
+    "story": "Ein uralter Gott ist aus den Tiefen der Glut auferstanden. Sein Blick allein versengt die Hoffnung. Nur die Tapfersten wagen sich ins Feuer."
+  },
+  {
+    "id": "Malzevox",
+    "name": "Malzevox, Der Korrumpierte Bote der Leere",
+    "element": "void",
+    "rarity": "legendary",
+    "hp": 60000,
+    "attackPattern": "corrupt-phase",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/Malzevox.png"
+  },
+  {
+    "id": "boss_aurelionfyr",
+    "name": "Aurelion Fyr, Brennender Himmelsfürst",
+    "element": "fire_light",
+    "rarity": "mythic",
+    "hp": 70000,
+    "attackPattern": "flame-burst",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/Aurelion.png"
+  },
+  {
+    "id": "orionyx",
+    "name": "Orionyx, Wächter des Gleichgewichts",
+    "element": "light_arcane",
+    "rarity": "mythic",
+    "hp": 75000,
+    "attackPattern": "judgement-cycle",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/Orionyx.png"
+  },
+  {
+    "id": "drogmarth",
+    "name": "Drogmarth, Titan der Tiefe",
+    "element": "earth_corrupt",
+    "rarity": "mythic",
+    "hp": 80000,
+    "attackPattern": "quake-cycle",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/Drogmarth.png"
+  },
+  {
+    "id": "korathaz",
+    "name": "Kora'thaz, Herz der Leere",
+    "element": "void_tech",
+    "rarity": "mythic",
+    "hp": 85000,
+    "attackPattern": "energy-overload",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/korathaz.png"
+  },
+  {
+    "id": "ashragul",
+    "name": "Ash'Ragul, Weltenbrenner",
+    "element": "void_fire",
+    "rarity": "mythic",
+    "hp": 100000,
+    "attackPattern": "apocalypse",
+    "phases": 4,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/ashragul.png"
+  },
+  {
+    "id": "zarael",
+    "name": "Zar’Ael, Fluch der Himmel",
+    "element": "fire_dark",
+    "rarity": "mythic",
+    "hp": 95000,
+    "attackPattern": "winged_destruction",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/zarael.png"
+  },
+  {
+    "id": "maldrakar",
+    "name": "Maldrakar, der Flammenprophet",
+    "element": "fire_dark",
+    "rarity": "mythic",
+    "hp": 88000,
+    "attackPattern": "ritual-fireburst",
+    "phases": 3,
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/bosses/maldrakar.png"
+  }
+]

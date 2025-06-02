@@ -1,0 +1,34 @@
+{
+  "rarities": {
+    "common": {
+      "label": "Common",
+      "color": "#A0A0A0",
+      "textColor": "#FFFFFF"
+    },
+    "uncommon": {
+      "label": "Uncommon",
+      "color": "#4CAF50",
+      "textColor": "#FFFFFF"
+    },
+    "rare": {
+      "label": "Rare",
+      "color": "#3F51B5",
+      "textColor": "#FFFFFF"
+    },
+    "epic": {
+      "label": "Epic",
+      "color": "#9C27B0",
+      "textColor": "#FFFFFF"
+    },
+    "legendary": {
+      "label": "Legendary",
+      "color": "#FFC107",
+      "textColor": "#000000"
+    },
+    "mythic": {
+      "label": "Mythic",
+      "color": "#FF5722",
+      "textColor": "#FFFFFF"
+    }
+  }
+}
