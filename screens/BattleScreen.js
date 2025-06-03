@@ -15,8 +15,8 @@ import { useTeam } from "../context/TeamContext";
 const { width } = Dimensions.get("window");
 
 // Konstante Belohnungen
-const COIN_REWARD = 100;
-const CRYSTAL_REWARD = 5;
+const COIN_REWARD = 50;
+const CRYSTAL_REWARD = 15;
 
 export default function BattleScreen() {
   const navigation = useNavigation();
@@ -56,7 +56,7 @@ export default function BattleScreen() {
 
   // Angriff-Handler
   const handleFight = () => {
-    const remainingHp = hp - 20;
+    const remainingHp = hp - 15;
     if (remainingHp <= 0) {
       handleVictory();
     } else {

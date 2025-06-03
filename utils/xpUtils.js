@@ -11,11 +11,11 @@ export function calculateXpReward(bossName, difficulty) {
   const baseXp = bossXpMap[bossName] || 50;
 
   const difficultyBonus = {
-    Easy: 0,
-    Medium: 25,
-    Hard: 50,
-    Nightmare: 100,
-    Hell: 150,
+    Easy: 5,
+    Medium: 15,
+    Hard: 20,
+    Nightmare: 50,
+    Hell: 100,
   };
 
   const bonus = difficultyBonus[difficulty] || 0;

@@ -18,6 +18,7 @@ import ShopScreen from "../screens/ShopScreen";
 import TeamSelectionScreen from "../screens/TeamSelectionScreen";
 import SummonScreen from "../screens/SummonScreen";
 import SummonResultScreen from "../screens/SummonResultScreen";
+import ExchangeScreen from "../screens/ExchangeScreen";
 
 // Modals
 import TutorialStartScreen from "../screens/TutorialStartScreen";
@@ -60,6 +61,7 @@ export default function MainStackNavigator({ data }) {
       <Stack.Screen name="ToSScreen" component={ToSScreen} />
       <Stack.Screen name="SummonScreen" component={SummonScreen} />
       <Stack.Screen name="SummonResultScreen" component={SummonResultScreen} />
+      <Stack.Screen name="ExchangeScreen" component={ExchangeScreen} />
       <Stack.Screen
         name="TeamSelectionScreen"
         component={TeamSelectionScreen}

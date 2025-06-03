@@ -6,12 +6,15 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   Platform,
   Button,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import ScreenLayout from "../components/ScreenLayout";
 import { useThemeContext } from "../context/ThemeContext";
 import { useCoins } from "../context/CoinContext";
@@ -33,13 +36,23 @@ export default function GiftScreen() {
     let icon;
     switch (gift.type) {
       case "coins":
-        icon = () => <FontAwesome name="viacoin" size={50} color="#FFD700" />;
+        icon = () => (
+          <FontAwesome5 name="coins" size={50} color={theme.textColor} />
+        );
         break;
       case "crystals":
-        icon = () => <FontAwesome5 name="gem" size={50} color="#00FFFF" />;
+        icon = () => (
+          <MaterialCommunityIcons
+            name="cards-diamond"
+            size={50}
+            color={theme.textColor}
+          />
+        );
         break;
       case "exp":
-        icon = () => <FontAwesome5 name="fire" size={50} color="#FF5733" />;
+        icon = () => (
+          <FontAwesome5 name="fire" size={50} color={theme.textColor} />
+        );
         break;
       case "box":
         icon = GiftBox;

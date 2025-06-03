@@ -20,7 +20,7 @@ import ScreenshotModal from "../components/ScreenshotModal";
 
 // Konstante Belohnungen
 const COIN_REWARD = 100;
-const CRYSTAL_REWARD = 5;
+const CRYSTAL_REWARD = 30;
 
 export default function EventScreen() {
   const navigation = useNavigation();
@@ -70,7 +70,7 @@ export default function EventScreen() {
 
   // Bei jedem Kampf-Tap den Boss-Hp reduzieren, und erst bei 0 „Sieg“ auslösen
   const handleFight = useCallback(() => {
-    const remaining = hp - 20;
+    const remaining = hp - 30;
 
     if (remaining <= 0 && selectedEvent) {
       setHp(0);
