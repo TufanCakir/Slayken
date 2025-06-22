@@ -1,0 +1,16 @@
+[
+  {
+    "id": "sylas",
+    "label": "Kapitel 1",
+    "description": "Der Beginn deiner Reise.",
+    "bossId": "Infermor",
+    "element": "fire"
+  },
+  {
+    "id": "chapter-2",
+    "label": "Kapitel 2",
+    "description": "Eisige Herausforderungen.",
+    "bossId": "Frostrak",
+    "element": "ice"
+  }
+]

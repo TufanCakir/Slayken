@@ -1,26 +1,110 @@
 [
   {
-    "bossName": "Vharzakar",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Vharzakar.png",
-    "title": "Kapitel I: Der Flammenfürst der Leere",
-    "story": "Einst war Vharzakar ein Titanenwächter, der über das uralte Siegel der Leere wachte. Doch in einem Zeitalter vergessener Kriege wurde er verraten – sein Körper von Leerenfeuer durchbohrt, seine Seele gebunden an den Schatten der Ewigkeit. Aus seiner Brust pulsiert das Herz der Unvergänglichen Glut, seine Klinge – „Nyxflamme“ – brennt mit dem Zorn verfallener Sterne.\n\nWo Vharzakar erscheint, flackert Raum, und selbst Zeit beginnt zu bröckeln."
+    "id": "1",
+    "unlockItemId": "1",
+    "eventName": "hellfire_judgement",
+    "title": "Das Urteil der Höllenglut",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-07-21T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Ein uralter Gott ist aus den Tiefen der Glut auferstanden. Sein Blick allein versengt die Hoffnung. Nur die Tapfersten wagen sich ins Feuer.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Infermor.png"
   },
   {
-    "bossName": "Xepharion",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Xepharion.png",
-    "title": "Kapitel II: Der Leerenfürst des violetten Herzens",
-    "sory": "Xepharion war einst ein Wächter jenseits der Sterne – Träger eines violetten Kristallherzens, das die Essenz uralter Ordnung enthielt. Doch als die Leere begann, nach der Ordnung zu greifen, wurde sein Herz zerschlagen – und zugleich neu geboren.\n\nJetzt ist Xepharion weder Ordnung noch Chaos – sondern das schwebende Gleichgewicht dazwischen. Aus seinen Händen fließt Sternenfluch, aus seinem Blick wächst Wahnsinn. Seine stumme Präsenz durchtrennt Hoffnung – mit der Kälte der Unendlichkeit."
+    "id": "2",
+    "unlockItemId": "2",
+    "eventName": "soul_void",
+    "title": "Seelen der Leere",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Aus der Leere kehrt Malzevox zurück – eine uralte Macht, die einst versiegelt wurde. Doch nun zerbricht das Siegel… und mit ihm das Licht.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Malzevox.png"
   },
   {
-    "bossName": "Drazhulon",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Drazhulon.png",
-    "title": "Kapitel III: Der Schattenherz-Bannfluch",
-    "story": "Drazhulon war einst der Herold des Ewigen Spiegels – eines Ortes zwischen Licht und Abgrund. Als sein Herz in einem uralten Ritual verdorben wurde, verschmolzen seine Tugenden mit der reinen Essenz der Verdammung.\n\nNun wandelt er durch Dimensionen, die nicht mehr existieren sollten. Sein violettes Herz brennt mit dem Fluch vergessener Schwüre, seine Stimme ist ein Echo verlorener Welten. Wo Drazhulon erscheint, stirbt Gleichgewicht – und geboren wird der Wahnsinn."
+    "id": "3",
+    "unlockItemId": "3",
+    "eventName": "celestial_flame",
+    "title": "Himmlisches Inferno",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Als der Himmelsfürst Aurelion Fyr fiel, wurde der Himmel selbst in Flammen gehüllt. Sein Herz aus reiner Magie brennt nun gegen die Welt, die ihn verriet.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Aurelion.png"
   },
   {
-    "bossName": "Zarvalgon",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-bloodshade-assets/main/assets/eventBosse/Zarvalgon.png",
-    "title": "Kapitel IV: Der Glutruf der Verlorenen Zeit",
-    "story": "Zar’Valgon war einst der Chronomagus der Unteren Spähren – ein Meister der Zeitflammen, die weder brennen noch vergehen. Als sein Tempel im „Kreis der Ewigen Dämmerung“ fiel, zersplitterte seine Seele über Äonen hinweg.\n\nNun trägt er das „Infernalrad der Zeiten“ in seiner Hand – ein Artefakt, das brennende Zyklen entfesseln kann. Seine Rüstung ist geschmiedet aus geschwärzter Erinnerung, sein Blick verglüht selbst Göttererbe.\n\nWo Zar’Valgon erscheint, erstarrt Vergangenheit – und Zukunft brennt im Rückwärtslauf."
+    "id": "4",
+    "unlockItemId": "4",
+    "eventName": "divine_judgement",
+    "title": "Göttliches Urteil",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Orionyx, der letzte Wächter des Gleichgewichts, ist erwacht. Seine Gerechtigkeit ist absolut – seine Strafe unausweichlich.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Orionyx.png"
+  },
+  {
+    "id": "5",
+    "unlockItemId": "5",
+    "eventName": "titan_awakening",
+    "title": "Erwachen des Titanen",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Tief unter den Ruinen schläft Drogmarth – ein Wesen aus Stein, Magma und Zorn. Die Siegel schwinden… und die Welt wird beben.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Drogmarth.png"
+  },
+  {
+    "id": "6",
+    "unlockItemId": "6",
+    "eventName": "abyss_core",
+    "title": "Kern des Abgrunds",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Tief im Schattenreich pocht ein uraltes Herz aus Energie. Kora'thaz ist erwacht – halb Maschine, halb Gott. Und sein Puls bringt Verderben.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Korathaz.png"
+  },
+  {
+    "id": "7",
+    "unlockItemId": "7",
+    "eventName": "end_of_flame",
+    "title": "Das Ende der Flamme",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Ash'Ragul ist erschienen. Nicht, um zu kämpfen – sondern um alles zu beenden. Nur ein wahrer Held kann sich dem Ende entgegenstellen.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Ashragul.png"
+  },
+  {
+    "id": "8",
+    "unlockItemId": "8",
+    "eventName": "fall_of_heaven",
+    "title": "Der Fall des Himmels",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Zar’Ael war der letzte Seraphim – bis das Licht ihn verließ. Jetzt stürzen seine brennenden Flügel die Welt in ewige Nacht.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Zarael.png"
+  },
+  {
+    "id": "9",
+    "unlockItemId": "9",
+    "eventName": "cult_of_flame",
+    "title": "Kult der Flamme",
+    "timeLeft": "Noch 15 Std.",
+    "endTime": "2025-06-19T07:20:00.000Z",
+    "tag": "special",
+    "info": "Jubiläums-Event – Spezial!",
+    "story": "Maldrakar, der Flammenprophet, ist zurück. Die dunklen Riten sind vollendet – und nun brennt der Schleier zwischen Welten.",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Maldrakar.png"
   }
 ]

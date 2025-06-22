@@ -1,0 +1,12 @@
+{
+  "fire": {
+    "label": "Fire",
+    "color": "#FF5722",
+    "icon": "🔥"
+  },
+  "ice": {
+    "label": "Ice",
+    "color": "#00BFFF",
+    "icon": "❄️"
+  }
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "sylas",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Krieger",
+    "description": "Ein Mächtiger Krieger.",
+    "element": "fire",
+    "skills": []
+  },
+  {
+    "id": "ice-knight",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Krieger",
+    "description": "Eine starker Nahkämpfer, das viel Schaden einstecken kann.",
+    "element": "ice",
+    "skills": []
+  },
+  {
+    "id": "ice-mage",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Magierin",
+    "description": "Meistert Frostzauber mit hoher Durchschlagskraft.",
+    "element": "ice",
+    "skills": []
+  },
+  {
+    "id": "ice-swordswoman",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Schwertkämpferin",
+    "description": "Eine flinke Kämpferin mit tödlichen Klingen.",
+    "element": "ice",
+    "skills": []
+  },
+  {
+    "id": "fire-rogue",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Assasine",
+    "description": "Schneller Kämpfer.",
+    "element": "fire",
+    "skills": []
+  },
+  {
+    "id": "fire-knight",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Krieger",
+    "description": "Mächtiger Kämpfer.",
+    "element": "fire",
+
+    "skills": []
+  },
+  {
+    "id": "fire-blade",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "label": "Schwert Meister",
+    "description": "Kämpft Konzentriert.",
+    "element": "fire",
+    "skills": []
+  }
+]
