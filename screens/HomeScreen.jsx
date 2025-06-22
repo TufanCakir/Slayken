@@ -130,6 +130,12 @@ export default function HomeScreen() {
               theme={theme}
               style={styles.fullButton}
             />
+            <BattleButton
+              onPress={() => navigateTo(navigation, "TeaserScreen")}
+              label={t("teaserLabel")}
+              theme={theme}
+              style={styles.fullButton}
+            />
           </>
         )}
       </View>

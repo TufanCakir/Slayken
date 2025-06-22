@@ -6,21 +6,17 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  Alert,
-  Dimensions,
   Platform,
+  Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialIcons } from "@expo/vector-icons";
-import RNPickerSelect from "react-native-picker-select";
+import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import Icon from "../components/Icon";
 import SHOP_ITEMS from "../data/shopData.json";
-import { CATEGORY_TITLES } from "../constants/ShopList";
 import ScreenLayout from "../components/ScreenLayout";
 
-// BLUE-THEME COLORS
 const BLUE_BG = "#0f172a";
 const BLUE_CARD = "#1e293b";
 const BLUE_BORDER = "#2563eb";
@@ -59,6 +55,7 @@ const ShopItemCard = React.memo(({ item, onBuy }) => {
 });
 
 export default function ShopScreen() {
+  const layout = Dimensions.get("window");
   const { coins, spendCoins } = useCoins();
   const { crystals, spendCrystals } = useCrystals();
 
@@ -67,22 +64,23 @@ export default function ShopScreen() {
     []
   );
   const routes = useMemo(
-    () => categories.map((key) => ({ key, title: CATEGORY_TITLES[key] })),
+    () =>
+      categories.map((key) => ({
+        key,
+        title: key
+          .replace(/_/g, " ") // underscores → Leerzeichen
+          .replace(/\b\w/g, (c) => c.toUpperCase()), // erste Buchstaben groß
+      })),
     [categories]
   );
-  const [index, setIndex] = useState(0);
 
-  const balanceText = useMemo(() => {
-    return routes[index].key === "crystal"
-      ? `Kristalle: ${crystals}`
-      : `Coins: ${coins}`;
-  }, [index, coins, crystals, routes]);
+  const [index, setIndex] = useState(0);
 
   const executePurchase = useCallback(
     async ({ id, name, price }, payWith, deductFunc) => {
       deductFunc(price);
       await AsyncStorage.setItem(`unlocked_item_${id}`, "true");
-      Alert.alert("Erfolg", `Du hast ${name} für ${price} ${payWith} gekauft.`);
+      alert(`Du hast ${name} für ${price} ${payWith} gekauft.`);
     },
     []
   );
@@ -94,70 +92,43 @@ export default function ShopScreen() {
       const canPayCrystals = currency.includes("crystal");
 
       if (canPayCrystals && !canPayCoins) {
-        if (crystals < price) {
-          return Alert.alert("Fehler", "Unzureichende Kristalle.");
-        }
+        if (crystals < price) return alert("Unzureichende Kristalle.");
         return executePurchase(item, "Kristalle", spendCrystals);
       }
 
       if (canPayCoins && !canPayCrystals) {
-        if (coins < price) {
-          return Alert.alert("Fehler", "Unzureichende Coins.");
-        }
+        if (coins < price) return alert("Unzureichende Coins.");
         return executePurchase(item, "Coins", spendCoins);
       }
 
       if (canPayCoins && canPayCrystals) {
-        if (coins >= price) {
-          return executePurchase(item, "Coins", spendCoins);
-        }
-        if (crystals >= price) {
-          return Alert.alert(
-            "Nicht genügend Coins",
-            "Du hast nicht genug Coins. Möchtest du stattdessen mit Kristallen bezahlen?",
-            [
-              { text: "Abbrechen", style: "cancel" },
-              {
-                text: "Mit Kristallen bezahlen",
-                onPress: () =>
-                  executePurchase(item, "Kristalle", spendCrystals),
-              },
-            ],
-            { cancelable: true }
-          );
-        }
-        return Alert.alert(
-          "Fehler",
-          "Weder genügend Coins noch Kristalle vorhanden."
-        );
+        if (coins >= price) return executePurchase(item, "Coins", spendCoins);
+        if (crystals >= price)
+          return executePurchase(item, "Kristalle", spendCrystals);
+        return alert("Weder genügend Coins noch Kristalle vorhanden.");
       }
-      return Alert.alert("Fehler", "Ungültige Zahlungsoption.");
+      return alert("Ungültige Zahlungsoption.");
     },
     [coins, crystals, executePurchase, spendCoins, spendCrystals]
   );
 
-  const renderList = useCallback(
-    (category) => {
-      const data = SHOP_ITEMS.filter((i) => i.category === category);
-      if (data.length === 0) {
+  const renderScene = SceneMap(
+    routes.reduce((scenes, route) => {
+      scenes[route.key] = () => {
+        const data = SHOP_ITEMS.filter((i) => i.category === route.key);
         return (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Keine Artikel verfügbar.</Text>
-          </View>
+          <FlatList
+            data={data}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <ShopItemCard item={item} onBuy={handleBuy} />
+            )}
+          />
         );
-      }
-      return (
-        <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <ShopItemCard item={item} onBuy={handleBuy} />
-          )}
-        />
-      );
-    },
-    [handleBuy]
+      };
+      return scenes;
+    }, {})
   );
 
   return (
@@ -167,113 +138,28 @@ export default function ShopScreen() {
         backgroundColor="transparent"
         barStyle="light-content"
       />
-      <Text style={styles.balance}>{balanceText}</Text>
-
-      <View style={styles.pickerContainer}>
-        <RNPickerSelect
-          value={routes[index].key}
-          onValueChange={(value) => {
-            const selectedIndex = routes.findIndex((r) => r.key === value);
-            if (selectedIndex !== -1) setIndex(selectedIndex);
-          }}
-          items={routes.map((r) => ({
-            label: r.title,
-            value: r.key,
-          }))}
-          placeholder={{ label: "Kategorie wählen...", value: null }}
-          useNativeAndroidPickerStyle={false}
-          Icon={() => (
-            <MaterialIcons
-              name="keyboard-arrow-down"
-              size={28}
-              color={BLUE_ACCENT}
-            />
-          )}
-          style={{
-            inputIOS: styles.pickerInputIOS,
-            inputAndroid: styles.pickerInputAndroid,
-            viewContainer: {
-              zIndex: 10,
-              position: Platform.OS === "ios" ? "relative" : undefined,
-              elevation: 10,
-            },
-          }}
-        />
-      </View>
-
-      {renderList(routes[index].key)}
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width: layout.width }}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            scrollEnabled
+            style={{ backgroundColor: BLUE_BG }}
+            indicatorStyle={{ backgroundColor: BLUE_ACCENT }}
+            labelStyle={{ color: BLUE_TEXT, fontWeight: "bold" }}
+          />
+        )}
+      />
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BLUE_BG,
-  },
-  balance: {
-    fontSize: 19,
-    fontWeight: "bold",
-    color: BLUE_ACCENT,
-    marginTop: 22,
-    marginBottom: 6,
-    textAlign: "center",
-    letterSpacing: 0.2,
-    zIndex: 2,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-  },
-  pickerContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 18,
-    zIndex: 10,
-    position: Platform.OS === "ios" ? "relative" : undefined,
-  },
-  pickerInputIOS: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: BLUE_ACCENT,
-    backgroundColor: BLUE_CARD,
-    color: BLUE_TEXT,
-    fontSize: 16,
-    fontWeight: "bold",
-    shadowColor: BLUE_SHADOW,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09,
-    shadowRadius: 6,
-  },
-  pickerInputAndroid: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: BLUE_ACCENT,
-    backgroundColor: BLUE_CARD,
-    color: BLUE_TEXT,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  list: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    zIndex: 2,
-  },
-  emptyText: {
-    fontStyle: "italic",
-    color: BLUE_MUTED,
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 28,
-  },
+  container: { flex: 1, backgroundColor: BLUE_BG },
+  list: { padding: 20, paddingBottom: 40 },
   card: {
     borderRadius: 18,
     borderWidth: 2,

@@ -3,8 +3,7 @@ import { StyleSheet, View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
 import ActionBar from "./skills/ActionBar";
-import InfernoEffect from "./skills/InfernoEffect";
-import HealEffect from "./skills/HealEffect";
+import FireEffect from "./skills/FireEffect";
 import FrostEffect from "./skills/FrostEffect";
 import { useClass } from "../context/ClassContext";
 import { skillPool } from "../data/skillPool";
@@ -33,8 +32,7 @@ export default function BattleScene({
 
   // Map für Effekte
   const effectMap = {
-    InfernoEffect,
-    HealEffect,
+    FireEffect,
     FrostEffect,
   };
 

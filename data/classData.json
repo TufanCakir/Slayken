@@ -7,6 +7,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Krieger",
     "description": "Ein Mächtiger Krieger.",
+    "unlockDate": "2025-08",
     "element": "fire",
     "skills": []
   },
@@ -18,6 +19,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Krieger",
     "description": "Eine starker Nahkämpfer, das viel Schaden einstecken kann.",
+    "unlockDate": "2025-08",
     "element": "ice",
     "skills": []
   },
@@ -29,6 +31,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Magierin",
     "description": "Meistert Frostzauber mit hoher Durchschlagskraft.",
+    "unlockDate": "2025-08",
     "element": "ice",
     "skills": []
   },
@@ -40,6 +43,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Schwertkämpferin",
     "description": "Eine flinke Kämpferin mit tödlichen Klingen.",
+    "unlockDate": "2025-08",
     "element": "ice",
     "skills": []
   },
@@ -51,6 +55,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Assasine",
     "description": "Schneller Kämpfer.",
+    "unlockDate": "2025-08",
     "element": "fire",
     "skills": []
   },
@@ -62,8 +67,8 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Krieger",
     "description": "Mächtiger Kämpfer.",
+    "unlockDate": "2025-08",
     "element": "fire",
-
     "skills": []
   },
   {
@@ -74,6 +79,7 @@
     "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
     "label": "Schwert Meister",
     "description": "Kämpft Konzentriert.",
+    "unlockDate": "2025-08",
     "element": "fire",
     "skills": []
   }

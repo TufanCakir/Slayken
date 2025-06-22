@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,14 +7,18 @@ import {
   Dimensions,
   Platform,
   TouchableOpacity,
-  Linking,
 } from "react-native";
 import { Image } from "expo-image";
 import ScreenLayout from "../components/ScreenLayout";
 import newsData from "../data/newsData.json";
 import { t } from "../i18n";
+import { useCoins } from "../context/CoinContext";
+import { useCrystals } from "../context/CrystalContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 
-// BLUE-THEME COLORS
+// Farben
 const BLUE_BG = "#0f172a";
 const BLUE_CARD = "#1e293b";
 const BLUE_BORDER = "#2563eb";
@@ -23,35 +28,91 @@ const BLUE_TEXT = "#f0f9ff";
 const BLUE_MUTED = "#a7c7e7";
 
 export default function NewsScreen() {
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => Linking.openURL(item.uri)}
-      activeOpacity={0.89}
-    >
-      <View style={styles.item}>
-        <Image
-          source={{ uri: item.image }}
-          style={styles.image}
-          contentFit="contain"
-        />
-        <Text style={styles.itemText}>{item.title}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const { addCoins } = useCoins();
+  const { addCrystals } = useCrystals();
+  const [claimedNews, setClaimedNews] = useState({});
+
+  const handleLongPress = async (item) => {
+    const key = `claimed_news_${item.id}`;
+    const alreadyClaimed = await AsyncStorage.getItem(key);
+
+    if (alreadyClaimed) return;
+
+    // Belohnung geben
+    addCoins(100);
+    addCrystals(10);
+
+    await AsyncStorage.setItem(key, "true");
+    setClaimedNews((prev) => ({ ...prev, [item.id]: true }));
+  };
+
+  useEffect(() => {
+    const loadClaimed = async () => {
+      const claims = {};
+      for (let item of newsData) {
+        const key = `claimed_news_${item.id}`;
+        const value = await AsyncStorage.getItem(key);
+        if (value) claims[item.id] = true;
+      }
+      setClaimedNews(claims);
+    };
+    loadClaimed();
+  }, []);
+
+  const renderItem = ({ item }) => {
+    const claimed = claimedNews[item.id];
+
+    return (
+      <TouchableOpacity
+        onLongPress={() => handleLongPress(item)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.item}>
+          <Image
+            source={{ uri: item.image }}
+            style={styles.image}
+            contentFit="contain"
+          />
+          <Text style={styles.itemText}>{item.title}</Text>
+          {claimed && (
+            <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
+          )}
+          {!claimed && (
+            <View style={styles.tooltip}>
+              <Text style={styles.tooltipText}>Halten für Belohnung: </Text>
+              <FontAwesome5
+                name="coins"
+                size={14}
+                color="#facc15"
+                style={styles.icon}
+              />
+              <Text style={styles.tooltipText}> +100 </Text>
+              <MaterialCommunityIcons
+                name="cards-diamond"
+                size={16}
+                color="#38bdf8"
+                style={styles.icon}
+              />
+              <Text style={styles.tooltipText}> +10</Text>
+            </View>
+          )}
+          {item.description && (
+            <Text style={styles.description}>{item.description}</Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ScreenLayout style={styles.container}>
       <Text style={styles.header}>{t("newsTitle")}</Text>
-
       <FlatList
         data={newsData}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        ListEmptyComponent={<Text style={styles.empty}>{t("noNews")}</Text>}
         contentContainerStyle={styles.listContainer}
       />
-
-      <View style={styles.footerWrapper} />
     </ScreenLayout>
   );
 }
@@ -72,20 +133,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 25,
     color: BLUE_ACCENT,
-    letterSpacing: 0.6,
     backgroundColor: `${BLUE_CARD}dd`,
     textShadowColor: "#334155",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     elevation: Platform.OS === "android" ? 2 : 0,
   },
   listContainer: {
     paddingHorizontal: 18,
     paddingBottom: 80,
-    zIndex: 2,
   },
   item: {
     backgroundColor: BLUE_CARD,
@@ -106,9 +162,6 @@ const styles = StyleSheet.create({
     color: BLUE_TEXT,
     marginTop: 12,
     letterSpacing: 0.12,
-    textShadowColor: "#334155",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   image: {
     width: "100%",
@@ -116,16 +169,35 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: "#172138",
   },
-  empty: {
-    textAlign: "center",
-    marginTop: 54,
-    fontSize: 17,
-    color: BLUE_MUTED,
-    zIndex: 2,
+  tooltip: {
+    marginTop: 6,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    flexWrap: "wrap",
   },
-  footerWrapper: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
+
+  tooltipText: {
+    fontSize: 13,
+    color: "#94a3b8",
+  },
+
+  icon: {
+    marginHorizontal: 3,
+    marginBottom: -1,
+  },
+
+  claimed: {
+    marginTop: 6,
+    color: "#10b981",
+    fontSize: 13,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  description: {
+    color: "#cbd5e1",
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 6,
   },
 });

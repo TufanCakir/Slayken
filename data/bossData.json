@@ -9,6 +9,6 @@
     "phases": 1,
     "attackPattern": "regular",
     "power": 20,
-    "voiceLines": []
+    "voiceLines": "Hallo ich bin Infermor "
   }
 ]

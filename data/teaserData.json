@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ice-knight",
+    "label": "Krieger",
+    "description": "Coming Soon.",
+    "unlockDate": "2025-08",
+    "element": "ice"
+  },
+  {
+    "id": "void-angel",
+    "label": "Engel",
+    "description": "Coming Soon.",
+    "unlockDate": "2025-09",
+    "element": "void"
+  }
+]

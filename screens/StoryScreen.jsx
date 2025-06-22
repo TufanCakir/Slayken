@@ -31,6 +31,7 @@ export default function StoryScreen() {
   const [currentBoss, setCurrentBoss] = useState(null);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
   const [isFighting, setIsFighting] = useState(false);
+  const [showVoiceLine, setShowVoiceLine] = useState(false);
 
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
@@ -123,7 +124,9 @@ export default function StoryScreen() {
             ]}
           >
             <Image
-              source={getClassImageUrl(item.id)}
+              source={getBossImageUrl(
+                bossData.find((b) => b.id === item.bossId)
+              )}
               style={styles.chapterImage}
               contentFit="contain"
               transition={300}
@@ -155,10 +158,24 @@ export default function StoryScreen() {
     <ScreenLayout style={styles.container}>
       {!isFighting && <ChapterSelectBar />}
 
+      {showVoiceLine &&
+        currentBoss?.voiceLines &&
+        typeof currentBoss.voiceLines === "string" && (
+          <Text
+            style={{ color: "#facc15", textAlign: "center", marginTop: 10 }}
+          >
+            {currentBoss.voiceLines}
+          </Text>
+        )}
+
       {!isFighting && currentBoss && (
         <Pressable
           style={styles.startButton}
-          onPress={() => setIsFighting(true)}
+          onPress={() => {
+            setShowVoiceLine(true);
+            setIsFighting(true);
+            setTimeout(() => setShowVoiceLine(false), 4000); // 4 Sekunden anzeigen
+          }}
         >
           <Text style={styles.startText}>Kapitel starten</Text>
         </Pressable>
