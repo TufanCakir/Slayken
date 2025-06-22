@@ -2,7 +2,7 @@
   "expo": {
     "name": "Slayken",
     "slug": "slayken",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "orientation": "portrait",
     "icon": "./assets/slayken-logo-main.png",
     "userInterfaceStyle": "light",
@@ -33,9 +33,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-localization"
-    ],
+    "plugins": ["expo-localization"],
     "runtimeVersion": {
       "policy": "appVersion"
     },
