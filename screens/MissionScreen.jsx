@@ -1,43 +1,34 @@
-import { View, Text, FlatList, StyleSheet, Dimensions } from "react-native";
+import { Text, FlatList, StyleSheet } from "react-native";
+
 import ScreenLayout from "../components/ScreenLayout";
+import { useCrystals } from "../context/CrystalContext";
+import { useCoins } from "../context/CoinContext";
+import { useMissions } from "../context/MissionContext";
+import MissionItem from "../components/MissionItem"; // ✅ Ausgelagert
 
 export default function MissionScreen() {
-  const theme = {
-    accentColor: "#1e293b",
-    textColor: "#60a5fa",
-    shadowColor: "#2563eb",
+  const { addCrystals } = useCrystals();
+  const { addCoins } = useCoins();
+  const { missions, collectReward } = useMissions();
+
+  const handleCollect = (mission) => {
+    if (mission.completed && !mission.collected) {
+      if (mission.reward.type === "crystal") {
+        addCrystals(mission.reward.amount);
+      } else if (mission.reward.type === "coin") {
+        addCoins(mission.reward.amount);
+      }
+      collectReward(mission.id);
+    }
   };
 
-  const missions = [
-    { id: "1", title: "Mission 1: Gewinne einen Kampf!", completed: false },
-    { id: "2", title: "Mission 2: Verwende einen Heilzauber", completed: true },
-    { id: "3", title: "Mission 3: Erreiche Level 3", completed: false },
-  ];
-
   const renderItem = ({ item }) => (
-    <View style={styles.missionItem}>
-      <Text
-        style={[
-          styles.missionText,
-          {
-            color: item.completed ? "#94a3b8" : "#38bdf8",
-            backgroundColor: "#0ea5e9",
-            opacity: item.completed ? 0.6 : 1,
-          },
-          item.completed && { textDecorationLine: "line-through" },
-        ]}
-      >
-        {item.title}
-      </Text>
-    </View>
+    <MissionItem item={item} onCollect={handleCollect} />
   );
 
   return (
     <ScreenLayout style={styles.container}>
-      <View style={StyleSheet.absoluteFill} />
-
       <Text style={styles.header}>Missionen</Text>
-
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
@@ -47,13 +38,9 @@ export default function MissionScreen() {
         }
         contentContainerStyle={styles.listContainer}
       />
-
-      <View style={styles.footerWrapper}></View>
     </ScreenLayout>
   );
 }
-
-const { height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -75,31 +62,6 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
     paddingHorizontal: 16,
   },
-  missionItem: {
-    marginBottom: 16,
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09,
-    shadowRadius: 7,
-    elevation: 4,
-    borderRadius: 13,
-    overflow: "hidden",
-  },
-  missionText: {
-    fontSize: 17,
-    letterSpacing: 0.8,
-    paddingVertical: 17,
-    paddingHorizontal: 18,
-    backgroundColor: "#0ea5e9",
-    borderRadius: 13,
-    color: "#38bdf8",
-    fontWeight: "600",
-    shadowColor: "#1e293b",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09,
-    shadowRadius: 3,
-    elevation: 2,
-  },
   empty: {
     textAlign: "center",
     marginTop: 36,
@@ -107,10 +69,5 @@ const styles = StyleSheet.create({
     color: "#7dd3fc",
     fontStyle: "italic",
     letterSpacing: 0.3,
-  },
-  footerWrapper: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
   },
 });

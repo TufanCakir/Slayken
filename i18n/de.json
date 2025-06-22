@@ -27,7 +27,7 @@
   "pauseMusic": "Musik pausieren",
   "volumeLabel": "Lautstärke",
   "homeLabel": "Startseite",
-  "teaserLabel": "Preview",
+  "teaserLabel": "Vorschau",
   "createLabel": "Erstellen",
   "overviewLabel": "Übersicht",
   "summonLabel": "Beschwören",
@@ -109,6 +109,7 @@
   "loginTitle": "Willkommen bei Slayken",
   "loginFailed": "Login fehlgeschlagen.",
   "confirmLogin": "Möchtest du dich als \"{{name}}\" einloggen?",
+  "cancel": "Nein",
   "playerNameLabels": {
     "playerNameTitle": "Spielername ändern",
     "currentNameLabel": "Aktueller Name:",

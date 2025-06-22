@@ -1,32 +1,37 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+// import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+// import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import ScreenLayout from "../components/ScreenLayout";
 import BattleButton from "../components/BattleButton";
 import ActionBar from "../components/ActionBar";
 
 import { useThemeContext } from "../context/ThemeContext";
-import { useCoins } from "../context/CoinContext";
-import { useCrystals } from "../context/CrystalContext";
+// import { useCoins } from "../context/CoinContext";
+// import { useCrystals } from "../context/CrystalContext";
 import { useGifts } from "../context/GiftContext";
 import { useClass } from "../context/ClassContext";
+import { useMissions } from "../context/MissionContext";
 
 import { t } from "../i18n";
 import styles from "../styles/HomeScreenStyles";
 
 import { navigateTo } from "../utils/navigationUtils";
-import { addTestResources } from "../utils/debugUtils";
+import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
+
+// import { addTestResources } from "../utils/debugUtils";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const { addCoins } = useCoins();
-  const { addCrystals } = useCrystals();
+  // const { addCoins } = useCoins();
+  // const { addCrystals } = useCrystals();
   const { collectedGifts } = useGifts();
   const { classList, activeClassId } = useClass();
+  const { missions, markMissionCompleted } = useMissions(); // missions auch holen
+  const completeMissionOnce = useCompleteMissionOnce();
 
   const [tutorialStep, setTutorialStep] = useState(1);
 
@@ -34,14 +39,18 @@ export default function HomeScreen() {
   const hasClaimedGift = Object.values(collectedGifts || {}).some((v) => v);
 
   useEffect(() => {
+    completeMissionOnce("2");
+  }, []);
+
+  useEffect(() => {
     if (!hasClaimedGift) setTutorialStep(1);
     else if (!hasClass) setTutorialStep(2);
     else setTutorialStep(3);
   }, [hasClaimedGift, hasClass]);
 
-  const handleAddResources = () => {
-    addTestResources(addCoins, addCrystals);
-  };
+  // const handleAddResources = () => {
+  //   addTestResources(addCoins, addCrystals);
+  // };
 
   const renderTutorial = () => {
     switch (tutorialStep) {
@@ -139,7 +148,7 @@ export default function HomeScreen() {
           </>
         )}
       </View>
-
+      {/* 
       <TouchableOpacity style={styles.coinButton} onPress={handleAddResources}>
         <FontAwesome5 name="coins" size={24} color="#FFFF33" />
         <Text style={styles.currencyText}>coins</Text>
@@ -154,7 +163,7 @@ export default function HomeScreen() {
           color="#1E90FF"
         />
         <Text style={styles.currencyText}>crystals</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <ActionBar theme={theme} navigation={navigation} t={t} />
     </ScreenLayout>

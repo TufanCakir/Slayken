@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "title": "Mission 1: Gewinne einen Kampf!",
+    "completed": false,
+    "collected": false,
+    "reward": { "type": "crystal", "amount": 50 }
+  },
+  {
+    "id": "2",
+    "title": "Mission 2: Logge dich einmal ein",
+    "completed": false,
+    "collected": false,
+    "reward": { "type": "coin", "amount": 100 }
+  }
+]

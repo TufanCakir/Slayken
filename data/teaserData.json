@@ -1,16 +1,9 @@
 [
   {
-    "id": "ice-knight",
-    "label": "Krieger",
-    "description": "Coming Soon.",
-    "unlockDate": "2025-08",
-    "element": "ice"
-  },
-  {
-    "id": "void-angel",
-    "label": "Engel",
-    "description": "Coming Soon.",
-    "unlockDate": "2025-09",
+    "id": "void-mage",
+    "label": "Void Mage",
+    "description": "Next Character Coming Soon.",
+    "unlockDate": "2025-07-23",
     "element": "void"
   }
 ]

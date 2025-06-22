@@ -8,9 +8,11 @@ import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import BattleScene from "../components/BattleScene";
+import { useMissions } from "../context/MissionContext";
 
 import bossData from "../data/bossData.json";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
+import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
@@ -23,7 +25,8 @@ export default function EndlessModeScreen() {
   const { addCrystals } = useCrystals();
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
-
+  const { missions, markMissionCompleted } = useMissions();
+  const completeMissionOnce = useCompleteMissionOnce();
   // Aktiver Charakter & HP
   const activeCharacter = classList.find((c) => c.id === activeClassId);
   const maxHp = activeCharacter?.maxHp || PLAYER_MAX_HP_DEFAULT;
@@ -67,6 +70,8 @@ export default function EndlessModeScreen() {
             addCrystals(CRYSTAL_REWARD);
             addXp(100);
 
+            completeMissionOnce("1");
+
             // Charakter hochleveln
             const updatedCharacter = gainExp(activeCharacter, 120);
             updateCharacter(updatedCharacter);
@@ -99,6 +104,7 @@ export default function EndlessModeScreen() {
       gainExp,
       updateCharacter,
       spawnNewBoss,
+      completeMissionOnce, // 👈 hinzufügen
     ]
   );
 

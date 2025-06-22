@@ -10,6 +10,7 @@ import { AccountLevelProvider } from "../context/AccountLevelContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { GiftProvider } from "../context/GiftContext";
 import { ClassProvider } from "../context/ClassContext";
+import { MissionProvider } from "../context/MissionContext";
 
 export function AppProviders({ children }) {
   return (
@@ -21,11 +22,13 @@ export function AppProviders({ children }) {
               <AccountLevelProvider>
                 <CrystalProvider>
                   <CoinProvider>
-                    <CharacterProvider>
-                      <ClassProvider>
-                        <SafeAreaProvider>{children}</SafeAreaProvider>
-                      </ClassProvider>
-                    </CharacterProvider>
+                    <MissionProvider>
+                      <CharacterProvider>
+                        <ClassProvider>
+                          <SafeAreaProvider>{children}</SafeAreaProvider>
+                        </ClassProvider>
+                      </CharacterProvider>
+                    </MissionProvider>
                   </CoinProvider>
                 </CrystalProvider>
               </AccountLevelProvider>
