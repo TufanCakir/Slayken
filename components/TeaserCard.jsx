@@ -10,27 +10,32 @@ const ELEMENT_COLORS = {
   default: "#cbd5e1",
 };
 
+// Countdown-Hook
 const useCountdown = (targetDateString) => {
-  const targetDate = new Date(targetDateString + "-01T00:00:00");
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+  if (!targetDateString) return null;
 
-  function getTimeLeft() {
+  const targetDate = new Date(targetDateString);
+  if (isNaN(targetDate.getTime())) return null;
+
+  const calculateTimeLeft = () => {
     const now = new Date();
     const difference = targetDate - now;
 
     if (difference <= 0) return null;
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((difference / (1000 * 60)) % 60);
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / (1000 * 60)) % 60),
+    };
+  };
 
-    return { days, hours, minutes };
-  }
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeLeft(getTimeLeft());
-    }, 60000); // jede Minute
+      setTimeLeft(calculateTimeLeft());
+    }, 60000); // 1 Minute
 
     return () => clearInterval(interval);
   }, []);
@@ -39,8 +44,18 @@ const useCountdown = (targetDateString) => {
 };
 
 export default function TeaserCard({ item }) {
+  if (!item) return null;
+
   const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
   const countdown = useCountdown(item.unlockDate);
+
+  const renderCountdownText = () => {
+    if (!countdown) return "✅ Jetzt verfügbar";
+    const { days, hours, minutes } = countdown;
+    return `⏳ Noch ${days} Tag${
+      days !== 1 ? "e" : ""
+    }, ${hours} Std, ${minutes} Min`;
+  };
 
   return (
     <View
@@ -51,11 +66,7 @@ export default function TeaserCard({ item }) {
         <Text
           style={[styles.date, { color: countdown ? "#facc15" : "#10b981" }]}
         >
-          {countdown
-            ? `⏳ Noch ${countdown.days} Tag${
-                countdown.days !== 1 ? "e" : ""
-              }, ${countdown.hours} Std, ${countdown.minutes} Min`
-            : "✅ Jetzt verfügbar"}
+          {renderCountdownText()}
         </Text>
       </View>
 
@@ -119,8 +130,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   image: {
-    width: 80,
-    height: 80,
+    width: 300,
+    height: 300,
     marginVertical: 8,
   },
 });

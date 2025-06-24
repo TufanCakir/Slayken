@@ -6,25 +6,24 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  Alert,
   SafeAreaView,
+  Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import * as Updates from "expo-updates";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons, Feather, FontAwesome } from "@expo/vector-icons";
-import { useThemeContext } from "../context/ThemeContext";
-import { useLanguage } from "../context/LanguageContext";
+import {
+  Ionicons,
+  Feather,
+  FontAwesome,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { t } from "../i18n";
 import { Image } from "expo-image";
 import { useClass } from "../context/ClassContext";
 
 const { width } = Dimensions.get("window");
-const availableThemes = ["dark", "light"];
 
 // Statische Blue Farben für cleanen Card-Look
-const BLUE = "#2563eb";
-const BLUE_BG = "#0f172a";
 const BLUE_ACCENT = "#38bdf8";
 const BLUE_DARK = "#1e293b";
 const BLUE_TEXT = "#f0f9ff";
@@ -33,36 +32,11 @@ const BLUE_SHADOW = "#1e40af";
 
 export default function StartScreen() {
   const navigation = useNavigation();
-  const { theme, uiThemeType, setUiThemeType } = useThemeContext();
-  const { language, setLanguage } = useLanguage();
+
   const [modalVisible, setModalVisible] = useState(false);
   const { classList, activeClassId } = useClass();
 
   const activeCharacter = classList.find((char) => char.id === activeClassId);
-
-  const handleResetApp = () => {
-    Alert.alert(
-      t("resetConfirmTitle"),
-      t("resetConfirmMessage"),
-      [
-        { text: t("cancel"), style: "cancel" },
-        {
-          text: t("resetApp"),
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.clear();
-              await Updates.reloadAsync();
-            } catch (error) {
-              Alert.alert(t("resetError"));
-              console.error("Fehler beim Zurücksetzen:", error);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -117,62 +91,6 @@ export default function StartScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t("settingsTitle")}</Text>
 
-            {/* Theme Switch */}
-            <Text style={styles.sectionLabel}>{t("themeSection")}</Text>
-            <View style={styles.themeButtons}>
-              {availableThemes.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.themeButton,
-                    {
-                      backgroundColor:
-                        uiThemeType === type ? BLUE_ACCENT : "transparent",
-                      borderColor: BLUE_ACCENT,
-                    },
-                  ]}
-                  onPress={() => setUiThemeType(type)}
-                >
-                  <Text
-                    style={{
-                      color: uiThemeType === type ? BLUE_DARK : BLUE_ACCENT,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {t(`themeLabels.${type}`)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Language Switch */}
-            <Text style={styles.sectionLabel}>{t("languageSection")}</Text>
-            <View style={styles.themeButtons}>
-              {["de", "en"].map((lang) => (
-                <TouchableOpacity
-                  key={lang}
-                  style={[
-                    styles.themeButton,
-                    {
-                      backgroundColor:
-                        language === lang ? BLUE_ACCENT : "transparent",
-                      borderColor: BLUE_ACCENT,
-                    },
-                  ]}
-                  onPress={() => setLanguage(lang)}
-                >
-                  <Text
-                    style={{
-                      color: language === lang ? BLUE_DARK : BLUE_ACCENT,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {lang.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             {/* Nutzungsbedingungen */}
             <TouchableOpacity
               style={styles.modalItem}
@@ -185,22 +103,52 @@ export default function StartScreen() {
               <Text style={styles.modalItemText}>{t("termsOfService")}</Text>
             </TouchableOpacity>
 
-            {/* Reset */}
-            <TouchableOpacity style={styles.modalItem} onPress={handleResetApp}>
-              <Ionicons name="refresh" size={20} color={BLUE_ACCENT} />
-              <Text style={styles.modalItemText}>{t("resetApp")}</Text>
-            </TouchableOpacity>
-
             {/* Socials */}
             <View style={styles.socialIcons}>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(
+                    "https://youtube.com/@tufancakirofficial?si=KF9oge5qlFRRdTzR"
+                  )
+                }
+              >
+                <FontAwesome5 name="youtube" size={24} color={BLUE_ACCENT} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL("https://x.com/Tufan_Cakir_")}
+              >
                 <FontAwesome name="twitter" size={24} color={BLUE_ACCENT} />
               </TouchableOpacity>
-              <TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(
+                    "https://www.instagram.com/tufancakirorigins/"
+                  )
+                }
+              >
                 <FontAwesome name="instagram" size={24} color={BLUE_ACCENT} />
               </TouchableOpacity>
-              <TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL("https://github.com/TufanCakir")}
+              >
                 <FontAwesome name="github" size={24} color={BLUE_ACCENT} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Linking.openURL("https://tufan-cakir.itch.io/")}
+              >
+                <FontAwesome5 name="itch-io" size={24} color={BLUE_ACCENT} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Linking.openURL("https://slayken.com/")}
+              >
+                <MaterialCommunityIcons
+                  name="web"
+                  size={24}
+                  color={BLUE_ACCENT}
+                />
               </TouchableOpacity>
             </View>
 
@@ -320,25 +268,7 @@ const styles = StyleSheet.create({
     color: BLUE_ACCENT,
     marginBottom: 20,
   },
-  sectionLabel: {
-    fontSize: 15,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: BLUE_ACCENT,
-  },
-  themeButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 20,
-  },
-  themeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    marginHorizontal: 3,
-  },
+
   modalItem: {
     flexDirection: "row",
     alignItems: "center",

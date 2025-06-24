@@ -1,9 +1,9 @@
 [
   {
-    "id": "void-mage",
-    "label": "Void Mage",
-    "description": "Next Character Coming Soon.",
-    "unlockDate": "2025-07-23",
+    "id": "void-warrior",
+    "label": "Void Warrior",
+    "description": "Void Warrior Character Coming Soon.",
+    "unlockDate": "2025-07-24",
     "element": "void"
   }
 ]

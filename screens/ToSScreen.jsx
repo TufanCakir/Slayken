@@ -79,9 +79,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: BLUE_OVERLAY,
-    zIndex: 1,
   },
   header: {
     flexDirection: "row",

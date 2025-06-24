@@ -123,7 +123,7 @@ export default function HomeScreen() {
           <>
             <BattleButton
               onPress={() => navigateTo(navigation, "PreBattleInfoScreen")}
-              label={t("endlessfightLabelLabel")}
+              label={t("endlessfightLabel")}
               theme={theme}
               style={styles.fullButton}
             />

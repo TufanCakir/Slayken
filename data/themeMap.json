@@ -40,12 +40,5 @@
     "textColor": "#f0fff0",
     "shadowColor": "#55aa55",
     "borderColor": "#006600"
-  },
-  "thunder": {
-    "accentColor": "#FFFF33",
-    "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Stormhold.png",
-    "textColor": "#333300",
-    "shadowColor": "#ffff88",
-    "borderColor": "#cccc00"
   }
 }
