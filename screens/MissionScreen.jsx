@@ -1,15 +1,17 @@
 import { Text, FlatList, StyleSheet } from "react-native";
-
 import ScreenLayout from "../components/ScreenLayout";
 import { useCrystals } from "../context/CrystalContext";
 import { useCoins } from "../context/CoinContext";
 import { useMissions } from "../context/MissionContext";
-import MissionItem from "../components/MissionItem"; // ✅ Ausgelagert
+import { useThemeContext } from "../context/ThemeContext";
+import MissionItem from "../components/MissionItem";
 
 export default function MissionScreen() {
   const { addCrystals } = useCrystals();
   const { addCoins } = useCoins();
   const { missions, collectReward } = useMissions();
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
 
   const handleCollect = (mission) => {
     if (mission.completed && !mission.collected) {
@@ -42,32 +44,33 @@ export default function MissionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    letterSpacing: 1.1,
-    color: "#60a5fa",
-    textAlign: "center",
-    marginVertical: 24,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
-  },
-  listContainer: {
-    paddingBottom: 80,
-    paddingHorizontal: 16,
-  },
-  empty: {
-    textAlign: "center",
-    marginTop: 36,
-    fontSize: 17,
-    color: "#7dd3fc",
-    fontStyle: "italic",
-    letterSpacing: 0.3,
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      fontSize: 24,
+      fontWeight: "bold",
+      letterSpacing: 1.1,
+      color: theme.textColor,
+      textAlign: "center",
+      marginVertical: 24,
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 3 },
+      textShadowRadius: 8,
+    },
+    listContainer: {
+      paddingBottom: 80,
+      paddingHorizontal: 16,
+    },
+    empty: {
+      textAlign: "center",
+      marginTop: 36,
+      fontSize: 17,
+      color: theme.textColor,
+      fontStyle: "italic",
+      letterSpacing: 0.3,
+    },
+  });
+}

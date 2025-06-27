@@ -4,11 +4,9 @@
     "unlockItemId": "1",
     "eventName": "hellfire_judgement",
     "title": "Das Urteil der Höllenglut",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Ein uralter Gott ist aus den Tiefen der Glut auferstanden. Sein Blick allein versengt die Hoffnung. Nur die Tapfersten wagen sich ins Feuer.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Infermor.png"
   },
   {
@@ -16,23 +14,19 @@
     "unlockItemId": "2",
     "eventName": "soul_void",
     "title": "Seelen der Leere",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
     "tag": "special",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "info": "Realese-Event – Normal!",
-    "story": "Aus der Leere kehrt Malzevox zurück – eine uralte Macht, die einst versiegelt wurde. Doch nun zerbricht das Siegel… und mit ihm das Licht.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Malzevox.png"
   },
   {
     "id": "3",
     "unlockItemId": "3",
     "eventName": "celestial_flame",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "title": "Himmlisches Inferno",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Als der Himmelsfürst Aurelion Fyr fiel, wurde der Himmel selbst in Flammen gehüllt. Sein Herz aus reiner Magie brennt nun gegen die Welt, die ihn verriet.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Aurelion.png"
   },
   {
@@ -40,11 +34,9 @@
     "unlockItemId": "4",
     "eventName": "divine_judgement",
     "title": "Göttliches Urteil",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Orionyx, der letzte Wächter des Gleichgewichts, ist erwacht. Seine Gerechtigkeit ist absolut – seine Strafe unausweichlich.",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Orionyx.png"
   },
   {
@@ -52,23 +44,19 @@
     "unlockItemId": "5",
     "eventName": "titan_awakening",
     "title": "Erwachen des Titanen",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Tief unter den Ruinen schläft Drogmarth – ein Wesen aus Stein, Magma und Zorn. Die Siegel schwinden… und die Welt wird beben.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Drogmarth.png"
   },
   {
     "id": "6",
     "unlockItemId": "6",
     "eventName": "abyss_core",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "title": "Kern des Abgrunds",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Tief im Schattenreich pocht ein uraltes Herz aus Energie. Kora'thaz ist erwacht – halb Maschine, halb Gott. Und sein Puls bringt Verderben.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Korathaz.png"
   },
   {
@@ -76,23 +64,19 @@
     "unlockItemId": "7",
     "eventName": "end_of_flame",
     "title": "Das Ende der Flamme",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Ash'Ragul ist erschienen. Nicht, um zu kämpfen – sondern um alles zu beenden. Nur ein wahrer Held kann sich dem Ende entgegenstellen.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Ashragul.png"
   },
   {
     "id": "8",
     "unlockItemId": "8",
     "eventName": "fall_of_heaven",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "title": "Der Fall des Himmels",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Zar’Ael war der letzte Seraphim – bis das Licht ihn verließ. Jetzt stürzen seine brennenden Flügel die Welt in ewige Nacht.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Zarael.png"
   },
   {
@@ -100,11 +84,9 @@
     "unlockItemId": "9",
     "eventName": "cult_of_flame",
     "title": "Kult der Flamme",
-    "timeLeft": "Noch 15 Std.",
-    "endTime": "2025-07-21T07:20:00.000Z",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "tag": "special",
     "info": "Realese-Event – Normal!",
-    "story": "Maldrakar, der Flammenprophet, ist zurück. Die dunklen Riten sind vollendet – und nun brennt der Schleier zwischen Welten.",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/Maldrakar.png"
   }
 ]

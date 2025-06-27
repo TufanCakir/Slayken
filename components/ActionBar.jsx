@@ -1,8 +1,11 @@
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons, Feather, FontAwesome5, Entypo } from "@expo/vector-icons";
+import { useThemeContext } from "../context/ThemeContext";
 
 export default function ActionBar({ navigation, t }) {
-  const iconColor = "#f0f9ff"; // fast weiß/bläulich
+  const { theme } = useThemeContext();
+  const iconColor = theme.textColor;
+
   const buttons = [
     {
       icon: <Ionicons name="gift-outline" size={24} color={iconColor} />,
@@ -26,6 +29,8 @@ export default function ActionBar({ navigation, t }) {
     },
   ];
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.row}>
       {buttons.map(({ icon, screen, label }, index) => (
@@ -33,7 +38,7 @@ export default function ActionBar({ navigation, t }) {
           key={index}
           style={styles.button}
           onPress={() => navigation.navigate(screen)}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           <View style={styles.inner}>
             {icon}
@@ -45,44 +50,43 @@ export default function ActionBar({ navigation, t }) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingBottom: 16,
-    marginTop: 24,
-    width: "100%",
-  },
-  button: {
-    flex: 1,
-    marginHorizontal: 4,
-    height: 70,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#2563eb",
-    backgroundColor: "#2563eb",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.17,
-    shadowRadius: 7,
-    elevation: 5,
-  },
-  inner: {
-    alignItems: "center",
-  },
-  label: {
-    fontSize: 13,
-    marginTop: 6,
-    textAlign: "center",
-    color: "#f0f9ff",
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 10,
+      paddingBottom: 16,
+      marginTop: 24,
+      width: "100%",
+    },
+    button: {
+      flex: 1,
+      marginHorizontal: 4,
+      height: 70,
+      borderRadius: 14,
+      borderWidth: 2,
+      borderColor: theme.borderColor,
+      backgroundColor: theme.accentColor,
+      justifyContent: "center",
+      alignItems: "center",
+      overflow: "hidden",
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 7,
+      elevation: 4,
+    },
+    inner: {
+      alignItems: "center",
+    },
+    label: {
+      fontSize: 13,
+      marginTop: 6,
+      textAlign: "center",
+      color: theme.textColor,
+      fontWeight: "700",
+      letterSpacing: 0.2,
+    },
+  });
+}

@@ -1,136 +1,64 @@
-import { useState, useEffect } from "react";
 import {
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
   View,
+  Text,
 } from "react-native";
 import { Image } from "expo-image";
-
-import { useThemeContext } from "../context/ThemeContext";
 import ScreenLayout from "./ScreenLayout";
 
-// Hilfsfunktion zur Zeitberechnung
-const getRemaining = (endTimeString) => {
-  const now = new Date();
-  const endTime = new Date(endTimeString);
-  const diffMs = endTime - now;
-
-  if (diffMs <= 0) return null;
-
-  const seconds = Math.floor(diffMs / 1000);
-  const hours = String(Math.floor(seconds / 3600)).padStart(2, "0");
-  const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-  const secs = String(seconds % 60).padStart(2, "0");
-
-  return `${hours}:${minutes}:${secs}`;
-};
-
-// ✅ Diese Funktion muss VOR der Komponente stehen
-const formatDateTime = (dateString) => {
-  const d = new Date(dateString);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${day}.${month}.${year}, ${hours}:${minutes}`;
-};
-
-export default function EventList({
-  availableEvents = [],
-  onSelectEvent,
-  eventName,
-}) {
-  const { theme } = useThemeContext();
-  const [showCountdown, setShowCountdown] = useState(true);
-  const [now, setNow] = useState(new Date());
-
-  // Intervall zum regelmäßigen Aktualisieren
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Events mit abgelaufener Zeit ausfiltern
-  const filteredEvents = availableEvents.filter(
-    (item) => getRemaining(item.endTime) !== null
-  );
-
+export default function EventList({ availableEvents = [], onSelectEvent }) {
   return (
-    <ScreenLayout
-      style={[
-        styles.container,
-        { backgroundColor: theme.bgImage ? undefined : theme.backgroundColor },
-      ]}
-    >
-      {filteredEvents.length === 0 ? (
-        <Text style={[styles.message, { color: theme.textColor }]}>
+    <ScreenLayout style={styles.container}>
+      {availableEvents.length === 0 ? (
+        <Text style={styles.message}>
           Keine Events verfügbar. Vielleicht hast du alle erledigt?
         </Text>
       ) : (
         <FlatList
-          data={filteredEvents}
+          data={availableEvents}
           keyExtractor={(item) => item.id?.toString()}
           contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => {
-            const timeLeft = getRemaining(item.endTime);
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: theme.accentColor,
-                    borderColor: theme.borderColor,
-                    shadowColor: theme.shadowColor,
-                  },
-                ]}
-                onPress={() => onSelectEvent(item)}
-                activeOpacity={0.85}
-              >
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => onSelectEvent(item)}
+              activeOpacity={0.92}
+            >
+              <View style={styles.bannerContainer}>
+                {/* Hintergrundbild */}
                 <Image
                   source={{ uri: item.image }}
-                  style={styles.image}
-                  contentFit="contain"
+                  style={styles.imageBackground}
+                  contentFit="cover"
                   transition={300}
                 />
-                {/* Info-Badge */}
-                <View style={styles.badge}>
-                  <Text style={[styles.badgeText, { color: theme.textColor }]}>
-                    {item.info}
-                  </Text>
+                {/* Overlay für bessere Lesbarkeit */}
+                <View style={styles.overlay} pointerEvents="none" />
+                {/* Badge/Label (oben links) */}
+                {item.info && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{item.info}</Text>
+                  </View>
+                )}
+                {/* Fortschritts-Anzeige (oben rechts) */}
+                <View style={styles.progressStatus}>
+                  {item.completed && (
+                    <Text style={styles.completedBadge}>Geschafft!</Text>
+                  )}
+                  {item.star && <Text style={styles.starIcon}>★</Text>}
                 </View>
-
-                {/* Titel & Story */}
-                <Text style={[styles.title, { color: theme.textColor }]}>
-                  {item.title}
-                </Text>
-                <Text style={[styles.story, { color: theme.textColor }]}>
-                  {item.story}
-                </Text>
-
-                {/* TimeLeft */}
-                <View style={styles.timeBadge}>
-                  <Text style={[styles.timeLeft, { color: theme.textColor }]}>
-                    {showCountdown
-                      ? `Noch ${timeLeft}`
-                      : `Endet am ${formatDateTime(item.endTime)}`}
-                  </Text>
+                {/* Text-Overlay unten */}
+                <View style={styles.textOverlay}>
+                  <Text style={styles.title}>{item.title}</Text>
+                  <Text style={styles.description}>{item.description}</Text>
                 </View>
-              </TouchableOpacity>
-            );
-          }}
+              </View>
+            </TouchableOpacity>
+          )}
         />
       )}
-      <TouchableOpacity
-        onPress={() => setShowCountdown(!showCountdown)}
-        style={styles.toggleButton}
-      >
-        <Text style={[styles.toggleText, { color: theme.textColor }]}>
-          {showCountdown ? "Datum anzeigen" : "Countdown anzeigen"}
-        </Text>
-      </TouchableOpacity>
     </ScreenLayout>
   );
 }
@@ -138,124 +66,129 @@ export default function EventList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a", // tiefes Nachtblau
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 18,
-    color: "#60a5fa", // hellblau
-    letterSpacing: 0.4,
-    textShadowColor: "#1e3a8a",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   message: {
     fontSize: 16,
     textAlign: "center",
     marginTop: 32,
-    color: "#94a3b8",
+    color: "#555",
   },
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 90,
   },
   card: {
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "#2563eb", // Blau
-    padding: 18,
-    marginBottom: 18,
-    alignItems: "center",
-    backgroundColor: "#1e293b", // dunkelblau
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.17,
-    shadowRadius: 12,
-    elevation: 9,
+    borderWidth: 0,
+    padding: 0,
+    marginBottom: 22,
+    overflow: "hidden",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.13,
+    shadowOffset: { width: 0, height: 7 },
+    shadowRadius: 18,
+    backgroundColor: "#fff", // Weiß
   },
-  image: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: "#334155", // fallback dark-blue
+  bannerContainer: {
+    height: 120,
+    borderRadius: 14,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    backgroundColor: "#eee",
   },
-  title: {
-    fontSize: 19,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-    color: "#60a5fa",
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-    letterSpacing: 0.2,
+  imageBackground: {
+    ...StyleSheet.absoluteFillObject,
+    width: undefined,
+    height: undefined,
+    borderRadius: 14,
+    zIndex: 0,
   },
-  story: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: "center",
-    color: "#e0eaff",
-    marginBottom: 2,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.21)", // sanftes Schwarz-Overlay für Text-Lesbarkeit
+    zIndex: 1,
   },
   badge: {
-    alignSelf: "flex-start",
+    position: "absolute",
+    top: 9,
+    left: 9,
+    backgroundColor: "#111", // schwarz für Badge, sehr dezent
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 6,
-    backgroundColor: "#2563eb", // blau
-    shadowColor: "#0ea5e9",
+    borderRadius: 8,
+    zIndex: 3,
+    shadowColor: "#222",
+    shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
+    shadowRadius: 5,
   },
   badgeText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 12,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#f0f9ff",
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
+    textShadowColor: "#0007",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
-  timeBadge: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-    backgroundColor: "#0ea5e9", // cyan
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    shadowColor: "#7dd3fc",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+  progressStatus: {
+    position: "absolute",
+    top: 9,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    zIndex: 3,
   },
-  timeLeft: {
-    fontSize: 13,
-    color: "#0c4a6e",
+  completedBadge: {
+    backgroundColor: "#222", // dunkler Balken, wirkt modern auf weiß
+    color: "#fff",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
     fontWeight: "bold",
-    opacity: 0.95,
-    letterSpacing: 0.2,
-  },
-  toggleButton: {
-    alignSelf: "center",
-    marginBottom: 16,
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 22,
-    borderRadius: 22,
-    backgroundColor: "#3b82f6",
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 3 },
+    fontSize: 11,
+    marginRight: 4,
+    elevation: 1,
+    shadowColor: "#333",
     shadowOpacity: 0.18,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
   },
-  toggleText: {
-    fontSize: 15,
+  starIcon: {
+    fontSize: 18,
+    color: "#111",
+    fontWeight: "900",
+    textShadowColor: "#fff",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  textOverlay: {
+    backgroundColor: "rgba(255,255,255,0.92)", // sehr helle Leiste am unteren Rand
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    zIndex: 2,
+  },
+  title: {
+    color: "#101014",
     fontWeight: "bold",
-    color: "#f0f9ff",
-    letterSpacing: 0.2,
+    fontSize: 18,
+    marginBottom: 2,
+    textShadowColor: "#fff",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    letterSpacing: 0.25,
+  },
+  description: {
+    color: "#222",
+    fontSize: 13,
+    marginBottom: 2,
+    textShadowColor: "#fff",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+    lineHeight: 17,
   },
 });

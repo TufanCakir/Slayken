@@ -13,6 +13,7 @@ import { useMissions } from "../context/MissionContext";
 import bossData from "../data/bossData.json";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
+import { Image } from "expo-image";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
@@ -122,6 +123,24 @@ export default function EndlessModeScreen() {
 
   return (
     <View style={styles.container}>
+      {currentBoss?.background && (
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={{ uri: currentBoss.background }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={400}
+          />
+          {/* Optional Overlay */}
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              backgroundColor: "rgba(0,0,0,0.35)", // für besseren Kontrast
+            }}
+          />
+        </View>
+      )}
+
       <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.backText}>← Zurück</Text>
       </Pressable>
@@ -136,6 +155,7 @@ export default function EndlessModeScreen() {
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
           character={activeCharacter}
+          bossBackground={null} // ❌ kein Hintergrund in BattleScene nötig
         />
       )}
 

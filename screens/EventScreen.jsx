@@ -21,6 +21,7 @@ import { useLevelSystem } from "../hooks/useLevelSystem";
 
 import EventList from "../components/EventList";
 import BattleView from "../components/BattleView";
+import { Image } from "expo-image";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
@@ -130,6 +131,24 @@ export default function EventScreen() {
 
   return (
     <View style={styles.container}>
+      {selectedEvent?.background && (
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={{ uri: selectedEvent.background }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={400}
+          />
+          {/* Optional Overlay */}
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              backgroundColor: "rgba(0,0,0,0.35)", // für besseren Kontrast
+            }}
+          />
+        </View>
+      )}
+
       {!selectedEvent && (
         <View style={styles.stickyHeader}>
           <ScrollView

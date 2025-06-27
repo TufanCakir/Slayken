@@ -9,13 +9,7 @@ import {
 import Slider from "@react-native-community/slider";
 import { useMusic } from "../../context/MusicContext";
 import { t } from "../../i18n";
-
-// Blaue Farbpalette (kannst du zentral anpassen)
-const accentColor = "#2563eb";
-const accentColorLight = "#60a5fa";
-const backgroundColor = "#0f172a";
-const textColor = "#f0f9ff";
-const controlDisabled = "#334155";
+import { useThemeContext } from "../../context/ThemeContext";
 
 export default function MusicSection() {
   const {
@@ -30,6 +24,8 @@ export default function MusicSection() {
     playMusic,
   } = useMusic();
 
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
   const [isLoadingTrack, setIsLoadingTrack] = React.useState(false);
 
   const handlePrevTrack = async () => {
@@ -74,9 +70,9 @@ export default function MusicSection() {
           maximumValue={1}
           value={volume}
           onValueChange={setVolume}
-          minimumTrackTintColor={accentColor}
-          maximumTrackTintColor={accentColorLight}
-          thumbTintColor={accentColor}
+          minimumTrackTintColor={theme.accentColor}
+          maximumTrackTintColor={theme.borderColor}
+          thumbTintColor={theme.accentColor}
           accessibilityLabel={t("volumeLabel")}
         />
       </View>
@@ -113,7 +109,7 @@ export default function MusicSection() {
         {isLoadingTrack && (
           <ActivityIndicator
             size="small"
-            color={accentColor}
+            color={theme.accentColor}
             style={{ marginHorizontal: 8 }}
           />
         )}
@@ -141,91 +137,92 @@ export default function MusicSection() {
   );
 }
 
-const styles = StyleSheet.create({
-  linkButton: {
-    padding: 14,
-    borderWidth: 2,
-    borderRadius: 10,
-    alignItems: "center",
-    backgroundColor: accentColor,
-    borderColor: accentColorLight,
-    marginTop: 12,
-    marginBottom: 12,
-    shadowColor: accentColorLight,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.13,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  linkText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: textColor,
-    letterSpacing: 0.3,
-  },
-  volumeContainer: {
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  current: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: accentColorLight,
-    fontWeight: "500",
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  trackInfoContainer: {
-    marginTop: 14,
-    alignItems: "center",
-  },
-  currentTrackLabel: {
-    fontSize: 15,
-    color: accentColorLight,
-    marginBottom: 2,
-    fontWeight: "500",
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  trackTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: textColor,
-    letterSpacing: 0.2,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  trackControls: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 14,
-  },
-  controlButton: {
-    flex: 1,
-    paddingVertical: 11,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: accentColorLight,
-    marginHorizontal: 6,
-    alignItems: "center",
-    backgroundColor: accentColorLight,
-    elevation: 3,
-  },
-  controlButtonDisabled: {
-    backgroundColor: controlDisabled,
-    borderColor: "#475569",
-  },
-  controlButtonText: {
-    color: accentColor,
-    fontWeight: "bold",
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
-  controlButtonTextDisabled: {
-    color: "#cbd5e1",
-  },
-});
+const createStyles = (theme) =>
+  StyleSheet.create({
+    linkButton: {
+      padding: 14,
+      borderWidth: 2,
+      borderRadius: 10,
+      alignItems: "center",
+      backgroundColor: theme.accentColor,
+      borderColor: theme.borderColor,
+      marginTop: 12,
+      marginBottom: 12,
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.13,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    linkText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: theme.textColor,
+      letterSpacing: 0.3,
+    },
+    volumeContainer: {
+      marginTop: 8,
+      marginBottom: 12,
+    },
+    current: {
+      fontSize: 16,
+      marginBottom: 10,
+      color: theme.borderColor,
+      fontWeight: "500",
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    trackInfoContainer: {
+      marginTop: 14,
+      alignItems: "center",
+    },
+    currentTrackLabel: {
+      fontSize: 15,
+      color: theme.borderColor,
+      marginBottom: 2,
+      fontWeight: "500",
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    trackTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: theme.textColor,
+      letterSpacing: 0.2,
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    trackControls: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: 14,
+    },
+    controlButton: {
+      flex: 1,
+      paddingVertical: 11,
+      borderRadius: 9,
+      borderWidth: 2,
+      borderColor: theme.borderColor,
+      marginHorizontal: 6,
+      alignItems: "center",
+      backgroundColor: theme.borderColor,
+      elevation: 3,
+    },
+    controlButtonDisabled: {
+      backgroundColor: "#334155",
+      borderColor: "#475569",
+    },
+    controlButtonText: {
+      color: theme.accentColor,
+      fontWeight: "bold",
+      fontSize: 14,
+      letterSpacing: 0.2,
+    },
+    controlButtonTextDisabled: {
+      color: "#cbd5e1",
+    },
+  });

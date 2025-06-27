@@ -2,40 +2,47 @@
   "dark": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_dark.png",
-    "textColor": "#FFFFFF",
-    "shadowColor": "#ffffff",
-    "borderColor": "#ffffff"
+    "textColor": "#ffffff",
+    "shadowColor": "#000000",
+    "borderColor": "#333333"
   },
   "light": {
     "accentColor": "#ffffff",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_light.png",
-    "textColor": "#000000",
-    "shadowColor": "#000000",
-    "borderColor": "#000000"
+    "textColor": "#111111",
+    "shadowColor": "#aaaaaa",
+    "borderColor": "#dddddd"
+  },
+  "tech": {
+    "accentColor": "#000000",
+    "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_dark.png",
+    "textColor": "#00ff00",
+    "shadowColor": "#00ff00",
+    "borderColor": "#00ff00"
   },
   "fire": {
-    "accentColor": "#FF4500",
+    "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Magmorra.png",
     "textColor": "#fff5e6",
     "shadowColor": "#ff8800",
     "borderColor": "#ff5500"
   },
   "ice": {
-    "accentColor": "#00BFFF",
+    "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Karnathor.png",
     "textColor": "#e0f7ff",
     "shadowColor": "#66ccff",
     "borderColor": "#3399ff"
   },
   "void": {
-    "accentColor": "#9900cc",
+    "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Lumora.png",
     "textColor": "#e0d0ff",
     "shadowColor": "#bb00ff",
     "borderColor": "#660099"
   },
   "nature": {
-    "accentColor": "#228B22",
+    "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Everglade.png",
     "textColor": "#f0fff0",
     "shadowColor": "#55aa55",

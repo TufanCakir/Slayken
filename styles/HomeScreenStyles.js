@@ -64,11 +64,7 @@ export default StyleSheet.create({
     letterSpacing: 0.1,
   },
   fullButton: {
-    width: "92%",
-    borderRadius: 18,
-    backgroundColor: "#2563eb",
-    borderWidth: 2,
-    borderColor: "#38bdf8",
+    flex: 1,
     marginVertical: 12,
     alignSelf: "center",
     shadowColor: "#60a5fa",

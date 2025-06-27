@@ -5,6 +5,8 @@ import { BlurView } from "expo-blur";
 import ActionBar from "./skills/ActionBar";
 import FireEffect from "./skills/FireEffect";
 import FrostEffect from "./skills/FrostEffect";
+import VoidEffect from "./skills/voidEffect";
+import NaturEffect from "./skills/NaturEffect";
 import { useClass } from "../context/ClassContext";
 import { skillPool } from "../data/skillPool";
 
@@ -25,7 +27,10 @@ export default function BattleScene({
   bossDefeated,
   onSkillPress,
   handleFight,
+  bossBackground, // ✅ nicht vergessen
 }) {
+  console.log("✅ BossBackground in Scene:", bossBackground);
+
   const { classList, activeClassId } = useClass();
   const activeCharacter = classList.find((c) => c.id === activeClassId);
   const [activeEffect, setActiveEffect] = useState(null);
@@ -34,6 +39,8 @@ export default function BattleScene({
   const effectMap = {
     FireEffect,
     FrostEffect,
+    VoidEffect,
+    NaturEffect,
   };
 
   if (!activeCharacter) {
@@ -86,6 +93,14 @@ export default function BattleScene({
 
   return (
     <View style={styles.wrapper}>
+      {bossBackground && (
+        <Image
+          source={{ uri: bossBackground }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+        />
+      )}
+
       {/* Boss-Anzeige */}
       <View style={styles.bossContainer}>
         <BlurView intensity={55} tint="dark" style={styles.bossInfo}>
@@ -149,13 +164,11 @@ export default function BattleScene({
       {EffectComponent}
 
       {/* Skills */}
-      <View style={styles.actionBarFooter}>
-        <ActionBar
-          skills={skillPool}
-          activeCharacter={activeCharacter}
-          onSkillPress={handleSkillPress}
-        />
-      </View>
+      <ActionBar
+        skills={skillPool}
+        activeCharacter={activeCharacter}
+        onSkillPress={handleSkillPress}
+      />
     </View>
   );
 }
@@ -167,8 +180,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 24,
-    borderBottomWidth: 1.5,
-    borderColor: BLUE_BORDER,
     gap: 16,
   },
   bossInfo: {
@@ -259,13 +270,5 @@ const styles = StyleSheet.create({
     color: TEXT_MUTED,
     textAlign: "center",
     marginTop: 40,
-  },
-  actionBarFooter: {
-    borderTopWidth: 1.5,
-    borderColor: BLUE_BORDER,
-    padding: 10,
-    backgroundColor: "rgba(15,23,42,0.94)",
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
   },
 });

@@ -2,15 +2,17 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Easing } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
-const SIZE = 50;
-const STROKE_WIDTH = 4;
-const RADIUS = (SIZE - STROKE_WIDTH) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export default function CircularCooldown({ duration }) {
+export default function CircularCooldown({
+  duration,
+  size = 36,
+  strokeWidth = 3,
+}) {
   const progress = useRef(new Animated.Value(0)).current;
+
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
   useEffect(() => {
     progress.setValue(0);
@@ -18,42 +20,37 @@ export default function CircularCooldown({ duration }) {
       toValue: 1,
       duration,
       easing: Easing.linear,
-      useNativeDriver: false, // SVG-Animation: nativeDriver nicht möglich
+      useNativeDriver: false,
     }).start();
   }, [duration]);
 
   const strokeDashoffset = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [CIRCUMFERENCE, 0],
+    outputRange: [circumference, 0],
   });
 
   return (
-    <Svg width={SIZE} height={SIZE}>
-      {/* Hintergrundkreis: Dunkelblau */}
+    <Svg width={size} height={size}>
+      {/* Hintergrundkreis */}
       <Circle
         stroke="#1e293b"
         fill="none"
-        cx={SIZE / 2}
-        cy={SIZE / 2}
-        r={RADIUS}
-        strokeWidth={STROKE_WIDTH}
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={strokeWidth}
       />
-      {/* Fortschrittskreis: Kräftiges Blau/Cyan */}
+      {/* Animierter Fortschrittskreis */}
       <AnimatedCircle
         stroke="#3b82f6"
         fill="none"
-        cx={SIZE / 2}
-        cy={SIZE / 2}
-        r={RADIUS}
-        strokeWidth={STROKE_WIDTH}
-        strokeDasharray={CIRCUMFERENCE}
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         strokeLinecap="round"
-        // Optional: leichter Glow-Effekt für iOS
-        // shadowColor="#60a5fa"
-        // shadowOffset={{ width: 0, height: 0 }}
-        // shadowOpacity={0.5}
-        // shadowRadius={6}
       />
     </Svg>
   );

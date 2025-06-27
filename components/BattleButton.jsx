@@ -1,6 +1,10 @@
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import { useThemeContext } from "../context/ThemeContext";
 
 export default function BattleButton({ onPress, label, style }) {
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
+
   return (
     <TouchableOpacity
       style={[styles.button, style]}
@@ -14,40 +18,38 @@ export default function BattleButton({ onPress, label, style }) {
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    marginTop: 12,
-    borderRadius: 18,
-    backgroundColor: "#2563eb", // schönes kräftiges Blau
-    borderColor: "#3b82f6", // etwas helleres Blau für Border
-    borderWidth: 2,
-    shadowColor: "#60a5fa", // leichter Glow
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    elevation: 6,
-    flexDirection: "row",
-    paddingBottom: 10,
-    paddingTop: 6,
-    height: 100,
-    width: "100%",
-    zIndex: 1,
-    transform: [{ skewY: "-3deg" }],
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    fontSize: 30,
-    color: "#f0f9ff", // fast weiß/blau für Lesbarkeit
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-    transform: [{ skewY: "3deg" }],
-    textAlign: "center",
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    button: {
+      marginTop: 12,
+      borderRadius: 18,
+      backgroundColor: theme.accentColor, // z. B. #111111 (dark) oder #ffffff (light)
+      borderColor: theme.borderColor, // z. B. #333333 oder #dddddd
+      borderWidth: 2,
+      shadowColor: theme.shadowColor, // z. B. #000000 oder #aaaaaa
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.13,
+      shadowRadius: 16,
+      elevation: 7,
+      flexDirection: "row",
+      paddingBottom: 10,
+      paddingTop: 6,
+      height: 100,
+      width: "100%",
+      zIndex: 1,
+      transform: [{ skewY: "-3deg" }],
+    },
+    content: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    text: {
+      fontSize: 30,
+      color: theme.textColor, // z. B. #ffffff oder #111111
+      letterSpacing: 0.5,
+      transform: [{ skewY: "3deg" }],
+      textAlign: "center",
+    },
+  });
+}

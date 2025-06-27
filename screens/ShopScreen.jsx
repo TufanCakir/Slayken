@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  StatusBar,
   Platform,
   Dimensions,
 } from "react-native";
@@ -13,19 +12,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
+import { useThemeContext } from "../context/ThemeContext";
 import Icon from "../components/Icon";
 import SHOP_ITEMS from "../data/shopData.json";
 import ScreenLayout from "../components/ScreenLayout";
 
-const BLUE_BG = "#0f172a";
-const BLUE_CARD = "#1e293b";
-const BLUE_BORDER = "#2563eb";
-const BLUE_SHADOW = "#60a5fa";
-const BLUE_ACCENT = "#38bdf8";
-const BLUE_TEXT = "#f0f9ff";
-const BLUE_MUTED = "#a7c7e7";
-
-const ShopItemCard = React.memo(({ item, onBuy }) => {
+const ShopItemCard = React.memo(({ item, onBuy, theme }) => {
   const { price, currency } = item;
   let priceLabel = "";
   if (currency.length === 2) {
@@ -36,10 +28,12 @@ const ShopItemCard = React.memo(({ item, onBuy }) => {
     priceLabel = `${price} Kristalle`;
   }
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.card}>
       <View style={styles.icon}>
-        <Icon name={item.iconName} size={40} color={BLUE_ACCENT} />
+        <Icon name={item.iconName} size={40} color={theme.borderColor} />
       </View>
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.price}>{priceLabel}</Text>
@@ -58,6 +52,8 @@ export default function ShopScreen() {
   const layout = Dimensions.get("window");
   const { coins, spendCoins } = useCoins();
   const { crystals, spendCrystals } = useCrystals();
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
 
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((i) => i.category))),
@@ -67,9 +63,7 @@ export default function ShopScreen() {
     () =>
       categories.map((key) => ({
         key,
-        title: key
-          .replace(/_/g, " ") // underscores → Leerzeichen
-          .replace(/\b\w/g, (c) => c.toUpperCase()), // erste Buchstaben groß
+        title: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       })),
     [categories]
   );
@@ -122,7 +116,7 @@ export default function ShopScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
-              <ShopItemCard item={item} onBuy={handleBuy} />
+              <ShopItemCard item={item} onBuy={handleBuy} theme={theme} />
             )}
           />
         );
@@ -133,11 +127,6 @@ export default function ShopScreen() {
 
   return (
     <ScreenLayout style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
-      />
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -147,9 +136,18 @@ export default function ShopScreen() {
           <TabBar
             {...props}
             scrollEnabled
-            style={{ backgroundColor: BLUE_BG }}
-            indicatorStyle={{ backgroundColor: BLUE_ACCENT }}
-            labelStyle={{ color: BLUE_TEXT, fontWeight: "bold" }}
+            style={{ backgroundColor: theme.accentColor }}
+            indicatorStyle={{ backgroundColor: theme.accentColor }}
+            renderLabel={({ route, focused }) => (
+              <Text
+                style={{
+                  color: focused ? theme.textColor : `${theme.textColor}99`,
+                  fontWeight: "bold",
+                }}
+              >
+                {route.title}
+              </Text>
+            )}
           />
         )}
       />
@@ -157,56 +155,64 @@ export default function ShopScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BLUE_BG },
-  list: { padding: 20, paddingBottom: 40 },
-  card: {
-    borderRadius: 18,
-    borderWidth: 2,
-    padding: 22,
-    marginBottom: 18,
-    alignItems: "center",
-    backgroundColor: BLUE_CARD,
-    borderColor: `${BLUE_ACCENT}88`,
-    shadowColor: BLUE_SHADOW,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.13,
-    shadowRadius: 8,
-    elevation: Platform.OS === "android" ? 6 : 0,
-    zIndex: 2,
-  },
-  icon: { marginBottom: 10 },
-  name: {
-    fontSize: 17,
-    fontWeight: "bold",
-    color: BLUE_ACCENT,
-    marginBottom: 4,
-    letterSpacing: 0.05,
-  },
-  price: {
-    fontSize: 14,
-    color: BLUE_TEXT,
-    marginBottom: 12,
-    letterSpacing: 0.03,
-  },
-  button: {
-    backgroundColor: BLUE_ACCENT,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 28,
-    marginTop: 8,
-    shadowColor: BLUE_SHADOW,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 4,
-  },
-  buttonText: {
-    color: BLUE_BG,
-    fontWeight: "bold",
-    fontSize: 15,
-    letterSpacing: 0.12,
-    textShadowColor: "#60a5fa44",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    list: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    card: {
+      borderRadius: 18,
+      borderWidth: 2,
+      padding: 22,
+      marginBottom: 18,
+      alignItems: "center",
+      backgroundColor: theme.shadowColor,
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.13,
+      shadowRadius: 8,
+      elevation: Platform.OS === "android" ? 6 : 0,
+      zIndex: 2,
+    },
+    icon: {
+      marginBottom: 10,
+    },
+    name: {
+      fontSize: 17,
+      fontWeight: "bold",
+      color: theme.textColor,
+      marginBottom: 4,
+      letterSpacing: 0.05,
+    },
+    price: {
+      fontSize: 14,
+      color: theme.textColor,
+      marginBottom: 12,
+      letterSpacing: 0.03,
+    },
+    button: {
+      backgroundColor: theme.accentColor,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 28,
+      marginTop: 8,
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.16,
+      shadowRadius: 4,
+    },
+    buttonText: {
+      color: theme.textColor,
+      fontWeight: "bold",
+      fontSize: 15,
+      letterSpacing: 0.12,
+      textShadowColor: `${theme.borderColor}44`,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+  });
+}

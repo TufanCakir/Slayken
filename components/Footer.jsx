@@ -8,11 +8,13 @@ import {
   FontAwesome6,
 } from "@expo/vector-icons";
 import { t } from "../i18n";
+import { useThemeContext } from "../context/ThemeContext";
 
 export default function Footer() {
   const navigation = useNavigation();
   const route = useRoute();
   const current = route.name;
+  const { theme } = useThemeContext();
 
   const tabs = [
     {
@@ -22,7 +24,7 @@ export default function Footer() {
         <AntDesign
           name="home"
           size={24}
-          color={isActive ? "#38bdf8" : "#f0f9ff"}
+          color={isActive ? theme.textColor : "#bbb"}
         />
       ),
       labelKey: "homeLabel",
@@ -34,7 +36,7 @@ export default function Footer() {
         <FontAwesome6
           name="people-roof"
           size={24}
-          color={isActive ? "#38bdf8" : "#f0f9ff"}
+          color={isActive ? theme.textColor : "#bbb"}
         />
       ),
       labelKey: "overviewLabel",
@@ -46,7 +48,7 @@ export default function Footer() {
         <Ionicons
           name="people-circle-outline"
           size={24}
-          color={isActive ? "#38bdf8" : "#f0f9ff"}
+          color={isActive ? theme.textColor : "#bbb"}
         />
       ),
       labelKey: "createLabel",
@@ -58,7 +60,7 @@ export default function Footer() {
         <Feather
           name="shopping-bag"
           size={24}
-          color={isActive ? "#38bdf8" : "#f0f9ff"}
+          color={isActive ? theme.textColor : "#bbb"}
         />
       ),
       labelKey: "shopLabel",
@@ -70,25 +72,24 @@ export default function Footer() {
         <FontAwesome
           name="exchange"
           size={24}
-          color={isActive ? "#38bdf8" : "#f0f9ff"}
+          color={isActive ? theme.textColor : "#bbb"}
         />
       ),
       labelKey: "exchangeLabel",
     },
   ];
 
-  const centerIndex = Math.floor(tabs.length / 2);
+  const styles = createStyles(theme, current);
 
   return (
     <View style={styles.footer}>
-      {tabs.map((tab, index) => {
+      {tabs.map((tab) => {
         const isActive = current === tab.screen;
-        const isCenter = index === centerIndex;
         return (
           <View key={tab.key} style={styles.tabWrapper}>
             <TouchableOpacity
               onPress={() => navigation.navigate(tab.screen)}
-              activeOpacity={0.83}
+              activeOpacity={0.85}
               style={[styles.tab, isActive && styles.activeTab]}
             >
               <View style={styles.icon}>{tab.icon(isActive)}</View>
@@ -103,71 +104,63 @@ export default function Footer() {
   );
 }
 
-const styles = StyleSheet.create({
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingBottom: 10,
-    height: 100,
-    zIndex: 99,
-    gap: 10,
-    backgroundColor: "#1e293b", // modern deep blue
-    borderTopWidth: 2,
-    borderTopColor: "#2563eb",
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.09,
-    shadowRadius: 12,
-  },
-  tabWrapper: {
-    flex: 1,
-  },
-  tab: {
-    transform: [{ skewY: "-3deg" }],
-    borderWidth: 2,
-    borderColor: "#2563eb",
-    backgroundColor: "#2563eb",
-    paddingTop: 6,
-    height: 70,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 13,
-    marginHorizontal: 3,
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.13,
-    shadowRadius: 7,
-    elevation: 3,
-    zIndex: 99,
-  },
-  activeTab: {
-    backgroundColor: "#1e293b",
-    borderColor: "#38bdf8",
-    shadowColor: "#38bdf8",
-    shadowOpacity: 0.38,
-    elevation: 6,
-  },
-  label: {
-    fontSize: 13,
-    transform: [{ skewY: "3deg" }],
-    marginTop: 4,
-    textAlign: "center",
-    color: "#f0f9ff",
-    fontWeight: "bold",
-    letterSpacing: 0.2,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  activeLabel: {
-    color: "#38bdf8",
-    textShadowColor: "#7dd3fc",
-    textShadowRadius: 5,
-  },
-  icon: {
-    alignItems: "center",
-    justifyContent: "center",
-    transform: [{ scale: 1.5 }],
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    footer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      paddingBottom: 10,
+      height: 100,
+      zIndex: 99,
+      gap: 10,
+      backgroundColor: theme.accentColor,
+      borderTopWidth: 2,
+      borderTopColor: theme.borderColor,
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: -6 },
+      shadowOpacity: 0.06,
+      shadowRadius: 16,
+    },
+    tabWrapper: {
+      flex: 1,
+    },
+    tab: {
+      borderWidth: 2,
+      borderColor: theme.borderColor,
+      backgroundColor: theme.accentColor,
+      paddingTop: 6,
+      height: 70,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 13,
+      marginHorizontal: 3,
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 7,
+      elevation: 2,
+      zIndex: 99,
+    },
+    activeTab: {
+      backgroundColor: theme.accentColor,
+      borderColor: theme.textColor,
+      shadowColor: theme.shadowColor,
+    },
+    label: {
+      fontSize: 13,
+      marginTop: 4,
+      textAlign: "center",
+      color: theme.textColor,
+      letterSpacing: 0.2,
+    },
+    activeLabel: {
+      color: theme.textColor,
+    },
+    icon: {
+      alignItems: "center",
+      justifyContent: "center",
+      transform: [{ scale: 1.5 }],
+    },
+  });
+}

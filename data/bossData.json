@@ -6,6 +6,7 @@
     "element": "fire",
     "rarity": "epic",
     "hp": 120,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "phases": 1,
     "attackPattern": "regular",
     "power": 20,

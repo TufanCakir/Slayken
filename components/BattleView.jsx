@@ -6,7 +6,7 @@ export default function BattleView({
   bossHp,
   bossDefeated,
   handleFight,
-  character, // <- Kommt von oben!
+  character,
 }) {
   if (!selectedEvent) return null;
 
@@ -19,6 +19,7 @@ export default function BattleView({
         bossDefeated={bossDefeated}
         handleFight={handleFight}
         character={character}
+        bossBackground={selectedEvent.background} // <- hier!
       />
     </View>
   );

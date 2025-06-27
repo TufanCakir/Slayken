@@ -7,7 +7,7 @@ import {
   Vibration,
   useWindowDimensions,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Image } from "expo-image";
 import CircularCooldown from "../effects/CircularCooldown";
 import useCooldownTimer from "../../hooks/useCooldownTimer";
@@ -20,7 +20,10 @@ export default function ActionBar({
   const [tooltipSkill, setTooltipSkill] = useState(null);
   const [cooldowns, setCooldowns] = useState({});
   const [pressedIndex, setPressedIndex] = useState(null);
+  const [unlockedSkill, setUnlockedSkill] = useState(null); // Für Unlock-Popup
   const { width } = useWindowDimensions();
+  const unlockedSkillIds = useRef(new Set());
+  const prevLevel = useRef(activeCharacter.level);
 
   if (!activeCharacter) {
     return (
@@ -30,7 +33,14 @@ export default function ActionBar({
     );
   }
 
-  // Nur Skills anzeigen, die für diesen Char je möglich wären
+  const matchesElement = (elementField) => {
+    if (!elementField) return true;
+    if (Array.isArray(elementField)) {
+      return elementField.includes(activeCharacter.element);
+    }
+    return elementField === activeCharacter.element;
+  };
+
   const filterSkills = skills.filter((skill) => {
     if (!activeCharacter) return false;
     if (
@@ -38,13 +48,10 @@ export default function ActionBar({
       !skill.allowedElements.includes(activeCharacter.element)
     )
       return false;
-    if (skill.element && skill.element !== activeCharacter.element)
-      return false;
+    if (!matchesElement(skill.element)) return false;
     return true;
   });
 
-  // Dynamisch: Skill-Namen nur anzeigen, wenn wenige Skills oder genug Platz
-  const showSkillName = filterSkills.length <= Math.floor(width / 80);
   function isUnlocked(skill) {
     if (!skill || !activeCharacter) return false;
     if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
@@ -53,19 +60,35 @@ export default function ActionBar({
       !skill.allowedElements.includes(activeCharacter.element)
     )
       return false;
-    if (skill.element && skill.element !== activeCharacter.element)
-      return false;
+    if (!matchesElement(skill.element)) return false;
     return true;
   }
+
+  useEffect(() => {
+    if (!activeCharacter) return;
+
+    // Nur reagieren, wenn Level gestiegen ist
+    if (activeCharacter.level > prevLevel.current) {
+      filterSkills.forEach((skill) => {
+        const unlocked = isUnlocked(skill);
+        if (unlocked && !unlockedSkillIds.current.has(skill.id)) {
+          unlockedSkillIds.current.add(skill.id);
+          setUnlockedSkill(skill);
+          Vibration.vibrate(100);
+        }
+      });
+    }
+
+    // Update prevLevel
+    prevLevel.current = activeCharacter.level;
+  }, [activeCharacter.level, activeCharacter.element, filterSkills]);
 
   const handlePress = (skill) => {
     if (!isUnlocked(skill)) return;
     const now = Date.now();
     const cooldownUntil = cooldowns[skill.id] || 0;
 
-    if (now < cooldownUntil) {
-      return;
-    }
+    if (now < cooldownUntil) return;
 
     onSkillPress?.(skill);
 
@@ -82,65 +105,69 @@ export default function ActionBar({
     setTooltipSkill(skill);
     setPressedIndex(idx);
   };
+
   const handleTooltipClose = () => {
     setTooltipSkill(null);
     setPressedIndex(null);
   };
 
   return (
-    <View style={styles.barContainer}>
-      {filterSkills.map((skill, index) => {
-        const cooldownEnd = cooldowns[skill.id] || 0;
-        const isCoolingDown = cooldownEnd > Date.now();
-        const remaining = useCooldownTimer(cooldownEnd);
-        const unlocked = isUnlocked(skill);
+    <>
+      <View style={styles.barContainer}>
+        {filterSkills.map((skill, index) => {
+          const cooldownEnd = cooldowns[skill.id] || 0;
+          const isCoolingDown = cooldownEnd > Date.now();
+          const remaining = useCooldownTimer(cooldownEnd);
+          const unlocked = isUnlocked(skill);
 
-        return (
-          <TouchableOpacity
-            key={skill.id || index}
-            disabled={!unlocked || isCoolingDown}
-            style={[
-              styles.skillButton,
-              !unlocked && { opacity: 0.3 },
-              isCoolingDown && { opacity: 0.5 },
-              pressedIndex === index && styles.skillButtonPressed,
-            ]}
-            onPress={() => handlePress(skill)}
-            onLongPress={() => handleLongPress(skill, index)}
-            delayLongPress={150}
-            onPressOut={() => setPressedIndex(null)}
-            activeOpacity={0.8}
-          >
-            <Image
-              source={{ uri: skill.image }}
-              style={styles.skillIcon}
-              contentFit="contain"
-              transition={300}
-            />
-            {isCoolingDown && unlocked && (
-              <View style={styles.cooldownOverlay}>
-                <CircularCooldown duration={skill.cooldown} />
-                <Text style={styles.cooldownTextOverlay}>
-                  {remaining.toFixed(1)}s
-                </Text>
-              </View>
-            )}
-            {showSkillName && (
-              <Text style={styles.skillText}>{skill.name}</Text>
-            )}
-            {!unlocked && (
-              <View
-                style={{
-                  ...StyleSheet.absoluteFillObject,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                pointerEvents="none"
-              ></View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
+          return (
+            <TouchableOpacity
+              key={skill.id || index}
+              disabled={!unlocked || isCoolingDown}
+              style={[
+                styles.skillButton,
+                !unlocked && { opacity: 0.3 },
+                isCoolingDown && { opacity: 0.5 },
+                pressedIndex === index && styles.skillButtonPressed,
+              ]}
+              onPress={() => handlePress(skill)}
+              onLongPress={() => handleLongPress(skill, index)}
+              delayLongPress={150}
+              onPressOut={() => setPressedIndex(null)}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={{ uri: skill.image }}
+                style={styles.skillIcon}
+                contentFit="contain"
+                transition={300}
+              />
+              {isCoolingDown && unlocked && (
+                <View style={styles.cooldownOverlay}>
+                  <CircularCooldown
+                    duration={skill.cooldown}
+                    size={36}
+                    strokeWidth={3}
+                  />
+                  <Text style={styles.cooldownTextOverlay}>
+                    {remaining.toFixed(1)}s
+                  </Text>
+                </View>
+              )}
+              {!unlocked && (
+                <View
+                  style={{
+                    ...StyleSheet.absoluteFillObject,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  pointerEvents="none"
+                />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Tooltip Modal */}
       <Modal
@@ -162,155 +189,163 @@ export default function ActionBar({
             <Text style={styles.tooltipPower}>
               Power: {tooltipSkill?.power}
             </Text>
-            {tooltipSkill && !isUnlocked(tooltipSkill) && (
-              <Text
-                style={{ color: "#facc15", marginTop: 6, fontWeight: "bold" }}
-              >
-                {tooltipSkill.level &&
-                activeCharacter.level < tooltipSkill.level
-                  ? `Ab Level ${tooltipSkill.level} verfügbar`
-                  : tooltipSkill.allowedElements &&
-                    !tooltipSkill.allowedElements.includes(
-                      activeCharacter.element
-                    )
-                  ? `Nur für: ${tooltipSkill.allowedElements
-                      .map((e) =>
-                        e === "fire" ? "🔥" : e === "ice" ? "❄️" : e
-                      )
-                      .join(", ")}`
-                  : tooltipSkill.element &&
-                    tooltipSkill.element !== activeCharacter.element
-                  ? `Nur für ${
-                      tooltipSkill.element === "fire"
-                        ? "🔥"
-                        : tooltipSkill.element === "ice"
-                        ? "❄️"
-                        : tooltipSkill.element
-                    }`
-                  : "Aktuell nicht verfügbar"}
-              </Text>
-            )}
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+
+      {/* Unlock Modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={!!unlockedSkill}
+        onRequestClose={() => setUnlockedSkill(null)}
+      >
+        <View style={styles.unlockOverlay}>
+          <View style={styles.unlockBox}>
+            <Text style={styles.unlockTitle}>
+              Neue Fähigkeit freigeschaltet!
+            </Text>
+            <Image
+              source={{ uri: unlockedSkill?.image }}
+              style={styles.unlockImage}
+              contentFit="contain"
+            />
+            <Text style={styles.unlockSkillName}>{unlockedSkill?.name}</Text>
+            <TouchableOpacity
+              onPress={() => setUnlockedSkill(null)}
+              style={styles.unlockButton}
+            >
+              <Text style={styles.unlockButtonText}>Schließen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   barContainer: {
     flexDirection: "row",
-    flexWrap: "wrap", // <--- Wichtig!
+    flexWrap: "wrap",
     justifyContent: "center",
-    alignItems: "flex-end",
-    gap: 16,
-    backgroundColor: "#1e293b",
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 28,
-    margin: 16,
-    shadowColor: "#2563eb",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    minHeight: 104,
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    margin: 12,
+    maxWidth: 512,
+    alignSelf: "center",
   },
   skillButton: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2563eb",
-    borderRadius: 18,
-    padding: 10,
-    width: 64,
-    height: 80,
-    marginHorizontal: 2,
-    marginVertical: 4,
-    shadowColor: "#60a5fa",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: "#22d3ee",
+    borderRadius: 8,
+    padding: 2,
+    width: 44,
+    height: 44,
+    margin: 3,
+    borderWidth: 1.5,
+    borderColor: "#94a3b8",
+    backgroundColor: "transparent",
+  },
+  skillIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 4,
   },
   skillButtonPressed: {
     borderColor: "#facc15",
-    shadowColor: "#facc15",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-    opacity: 1,
-  },
-  skillIcon: {
-    width: 32,
-    height: 32,
-    marginBottom: 6,
-    borderRadius: 8,
-    backgroundColor: "#1e293b",
-  },
-  skillText: {
-    fontSize: 13,
-    color: "#dbeafe",
-    fontWeight: "600",
-    textAlign: "center",
-    marginTop: 2,
-    textShadowColor: "#60a5fa",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   cooldownOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(30,41,59,0.75)",
+    backgroundColor: "rgba(148,163,184,0.7)", // leichtes grau-transparent
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 10,
   },
   cooldownTextOverlay: {
-    color: "#22d3ee",
+    color: "#1e293b",
     fontWeight: "bold",
-    fontSize: 15,
-    marginTop: 8,
-    textShadowColor: "#0ea5e9",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    fontSize: 14,
+    marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(30,41,59,0.80)",
+    backgroundColor: "rgba(15,23,42,0.8)",
   },
   tooltipBottomBox: {
-    backgroundColor: "#1e293b",
-    padding: 24,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    shadowColor: "#2563eb",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    borderWidth: 2,
-    borderColor: "#2563eb",
-    marginHorizontal: 0,
-    minHeight: 140,
+    backgroundColor: "#0f172a",
+    padding: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderTopWidth: 2,
+    borderColor: "#94a3b8",
   },
   tooltipTitle: {
-    color: "#60a5fa",
-    fontSize: 19,
+    color: "#f8fafc",
+    fontSize: 18,
     fontWeight: "bold",
     marginBottom: 4,
-    letterSpacing: 0.5,
   },
   tooltipDescription: {
-    color: "#dbeafe",
-    fontSize: 15,
+    color: "#cbd5e1",
+    fontSize: 14,
     marginBottom: 8,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   tooltipPower: {
-    color: "#22d3ee",
-    fontSize: 14,
+    color: "#facc15",
+    fontSize: 13,
     fontWeight: "700",
     marginTop: 2,
+  },
+  unlockOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(15,23,42,0.85)",
+  },
+  unlockBox: {
+    backgroundColor: "#0f172a",
+    padding: 20,
+    borderRadius: 14,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#94a3b8",
+    width: 260,
+  },
+  unlockTitle: {
+    color: "#f8fafc",
+    fontSize: 17,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  unlockImage: {
+    width: 72,
+    height: 72,
+    marginBottom: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#94a3b8",
+  },
+  unlockSkillName: {
+    color: "#facc15",
+    fontSize: 15,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  unlockButton: {
+    borderColor: "#94a3b8",
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  unlockButtonText: {
+    color: "#f8fafc",
+    fontWeight: "bold",
+    fontSize: 13,
   },
 });

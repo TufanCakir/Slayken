@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Dimensions, View } from "react-native";
-import Fireball from "../effects/fire";
+import Naturball from "../effects/natur";
 
 const { width, height } = Dimensions.get("window");
 
-export default function InfernoEffect({ onEnd = () => {} }) {
+export default function NaturEffect({ onEnd = () => {} }) {
   const translateY = useRef(new Animated.Value(height - 140)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -70,14 +70,14 @@ export default function InfernoEffect({ onEnd = () => {} }) {
     <>
       <Animated.View
         style={[
-          styles.fireballContainer,
+          styles.naturballContainer,
           {
             transform: [{ translateX }, { translateY }, { scale }],
             opacity,
           },
         ]}
       >
-        <Fireball size={100} />
+        <Naturball size={100} />
       </Animated.View>
 
       {/* Partikel hinzufügen */}
@@ -102,7 +102,7 @@ export default function InfernoEffect({ onEnd = () => {} }) {
 }
 
 const styles = StyleSheet.create({
-  fireballContainer: {
+  naturballContainer: {
     position: "absolute",
     top: 0,
     left: width / 2 - 50,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "orange",
+    backgroundColor: "green",
     zIndex: 998,
   },
 });
