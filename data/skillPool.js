@@ -2,7 +2,7 @@ import { getSkillImageUrl } from "../utils/skillUtils";
 
 export const skillPool = [
   {
-    id: "fireball",
+    id: "fire",
     name: "fireball",
     description: "Ein mächtiger Feuerball.",
     level: 3,
@@ -44,6 +44,30 @@ export const skillPool = [
     power: 5,
     effect: "NaturEffect",
     image: getSkillImageUrl("naturball"),
+    cooldown: 3000,
+  },
+  {
+    id: "stormstrike",
+    name: "Storm Strike",
+    description:
+      "Reine Naturenergie, inspiriert von der wilden Kraft der Tiere.",
+    level: 2,
+    element: ["void", "fire"], // Kombiniert!
+    power: 5,
+    effect: "StormStrikeEffect",
+    image: getSkillImageUrl("stormstrike"),
+    cooldown: 3000,
+  },
+  {
+    id: "windblade",
+    name: "Wind Blade",
+    description:
+      "Reine Naturenergie, inspiriert von der wilden Kraft der Tiere.",
+    level: 2,
+    element: ["void", "fire"], // Kombiniert!
+    power: 5,
+    effect: "WindBladeEffect",
+    image: getSkillImageUrl("windblade"),
     cooldown: 3000,
   },
 ];

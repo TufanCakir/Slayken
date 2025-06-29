@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,18 +23,21 @@ import EventList from "../components/EventList";
 import BattleView from "../components/BattleView";
 import { Image } from "expo-image";
 
-const COIN_REWARD = 100;
-const CRYSTAL_REWARD = 30;
-const BOSS_MAX_HP = 100;
+// Hilfsfunktion: Bild-Key aus URL, unabhängig von Groß/Klein!
+const getEventBossKey = (imageUrl) => {
+  if (!imageUrl) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+  return match ? "eventboss_" + match[1].toLowerCase() : null;
+};
 
-const tabOptions = [
-  { key: "special", label: "Spezial" },
-  { key: "recommended", label: "Empfohlen" },
-  { key: "raid", label: "Überfall" },
-  { key: "skill", label: "Fähigkeit" },
-];
+// Background-Key (falls du im Preloader die BGs auch ablegst – sonst bleibt's wie gehabt)
+const getBackgroundKey = (bgUrl) => {
+  if (!bgUrl) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
+  return match ? "bg_" + match[1].toLowerCase() : null;
+};
 
-export default function EventScreen() {
+export default function EventScreen({ imageMap = {} }) {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
   const { addXp } = useAccountLevel();
@@ -45,10 +48,10 @@ export default function EventScreen() {
 
   const activeCharacter = classList.find((c) => c.id === activeClassId);
 
-  const [activeTab, setActiveTab] = useState(tabOptions[0].key);
+  const [activeTab, setActiveTab] = useState("special");
   const [unlockedItemIds, setUnlockedItemIds] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [bossHp, setBossHp] = useState(BOSS_MAX_HP);
+  const [bossHp, setBossHp] = useState(100);
   const [bossDefeated, setBossDefeated] = useState(false);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
@@ -69,15 +72,29 @@ export default function EventScreen() {
     }, [loadUnlocked])
   );
 
-  // 📋 Gefilterte Events
-  const availableEvents = eventData.filter(
-    (e) =>
-      unlockedItemIds.includes(String(e.unlockItemId)) && e.tag === activeTab
-  );
-  console.log("unlockedItemIds", unlockedItemIds);
-  console.log("eventData", eventData);
-  console.log("activeTab", activeTab);
-  console.log("availableEvents", availableEvents);
+  // Tab Optionen
+  const tabOptions = [
+    { key: "special", label: "Spezial" },
+    { key: "recommended", label: "Empfohlen" },
+    { key: "raid", label: "Überfall" },
+    { key: "skill", label: "Fähigkeit" },
+  ];
+
+  // Events für den aktuellen Tab, MAPPING lokal!
+  const availableEvents = eventData
+    .filter(
+      (e) =>
+        unlockedItemIds.includes(String(e.unlockItemId)) && e.tag === activeTab
+    )
+    .map((e) => {
+      const bossKey = getEventBossKey(e.image);
+      const bgKey = getBackgroundKey(e.background);
+      return {
+        ...e,
+        image: bossKey && imageMap[bossKey] ? imageMap[bossKey] : e.image,
+        background: bgKey && imageMap[bgKey] ? imageMap[bgKey] : e.background,
+      };
+    });
 
   // 🧠 Kampf-Logik (Side-Effect auf bossDefeated)
   useEffect(() => {
@@ -88,8 +105,8 @@ export default function EventScreen() {
         (s) => !oldSkills.includes(s.name)
       );
 
-      addCoins(COIN_REWARD);
-      addCrystals(CRYSTAL_REWARD);
+      addCoins(100);
+      addCrystals(30);
       addXp(100);
       updateCharacter(updatedChar);
 
@@ -97,8 +114,8 @@ export default function EventScreen() {
         setNewUnlockedSkills(freshSkills);
       } else {
         navigation.navigate("VictoryScreen", {
-          coinReward: COIN_REWARD,
-          crystalReward: CRYSTAL_REWARD,
+          coinReward: 100,
+          crystalReward: 30,
           character: updatedChar,
           isEvent: true,
         });
@@ -111,7 +128,6 @@ export default function EventScreen() {
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || bossDefeated) return;
-      // Notfallwert, falls skill fehlt
       const skillPower = skill?.power ?? 30;
       setBossHp((prevBossHp) => {
         const newHp = Math.max(prevBossHp - skillPower, 0);
@@ -125,25 +141,26 @@ export default function EventScreen() {
   // 📌 Event auswählen
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
-    setBossHp(BOSS_MAX_HP);
+    setBossHp(100);
     setBossDefeated(false);
   };
 
+  // BattleView bekommt ein gemapptes selectedEvent mit richtigen Bildern
   return (
     <View style={styles.container}>
+      {/* Background-Bild mit Caching */}
       {selectedEvent?.background && (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: selectedEvent.background }}
+            source={selectedEvent.background}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={400}
           />
-          {/* Optional Overlay */}
           <View
             style={{
               ...StyleSheet.absoluteFillObject,
-              backgroundColor: "rgba(0,0,0,0.35)", // für besseren Kontrast
+              backgroundColor: "rgba(0,0,0,0.35)",
             }}
           />
         </View>
@@ -186,11 +203,13 @@ export default function EventScreen() {
             setSelectedEvent(null);
           }}
           character={activeCharacter}
+          imageMap={imageMap}
         />
       ) : (
         <EventList
           availableEvents={availableEvents}
           onSelectEvent={handleSelectEvent}
+          imageMap={imageMap}
         />
       )}
 
@@ -217,8 +236,8 @@ export default function EventScreen() {
                   setNewUnlockedSkills(null);
                   setTimeout(() => {
                     navigation.navigate("VictoryScreen", {
-                      coinReward: COIN_REWARD,
-                      crystalReward: CRYSTAL_REWARD,
+                      coinReward: 100,
+                      crystalReward: 30,
                       character: activeCharacter,
                       isEvent: true,
                     });

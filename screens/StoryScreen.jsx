@@ -1,80 +1,95 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  Pressable,
   Modal,
   FlatList,
   TouchableOpacity,
-  Pressable,
 } from "react-native";
-import BattleScene from "../components/BattleScene";
-import bossData from "../data/bossData.json";
-import chapterData from "../data/chapterData.json";
-import { getBossImageUrl } from "../utils/boss/bossUtils";
-import { getClassImageUrl } from "../utils/classUtils";
-import { useClass } from "../context/ClassContext";
-import { useLevelSystem } from "../hooks/useLevelSystem";
-import ScreenLayout from "../components/ScreenLayout";
-import { Image } from "expo-image";
+import { useNavigation } from "@react-navigation/native";
+import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
+import { useClass } from "../context/ClassContext";
+import { useLevelSystem } from "../hooks/useLevelSystem";
+import BattleScene from "../components/BattleScene";
+import { useMissions } from "../context/MissionContext";
 
-const BLUE = "#2563eb";
-const BLUE_BG = "#1e293b";
-const GOLD = "#facc15";
-const TEXT_WHITE = "#e0edfa";
+import bossData from "../data/bossData.json";
+import chapterData from "../data/chapterData.json";
+import { Image } from "expo-image";
+import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 
-export default function StoryScreen() {
-  const [selectedChapter, setSelectedChapter] = useState(chapterData[0]);
-  const [bossHp, setBossHp] = useState(100);
-  const [currentBoss, setCurrentBoss] = useState(null);
-  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
-  const [isFighting, setIsFighting] = useState(false);
-  const [showVoiceLine, setShowVoiceLine] = useState(false);
+const COIN_REWARD = 100;
+const CRYSTAL_REWARD = 30;
+const PLAYER_MAX_HP_DEFAULT = 100;
 
-  const { classList, activeClassId, updateCharacter } = useClass();
-  const { gainExp } = useLevelSystem();
+function getEventBossKey(imageUrl, fallbackName) {
+  if (!imageUrl && !fallbackName) return null;
+  let name = null;
+  if (typeof imageUrl === "string" && imageUrl.endsWith(".png")) {
+    const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+    name = match ? match[1] : null;
+  }
+  if (!name && fallbackName) {
+    name = fallbackName;
+  }
+  return name ? "eventboss_" + name.toLowerCase() : null;
+}
+
+function getBackgroundKey(bgUrl) {
+  if (!bgUrl) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
+  return match ? "bg_" + match[1].toLowerCase() : null;
+}
+
+export default function StoryScreen({ imageMap = {} }) {
+  const navigation = useNavigation();
+  const { addXp } = useAccountLevel();
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
-  const activeCharacter = classList.find((c) => c.id === activeClassId);
+  const { classList, activeClassId, updateCharacter } = useClass();
+  const { gainExp } = useLevelSystem();
+  const { missions, markMissionCompleted } = useMissions();
+  const completeMissionOnce = useCompleteMissionOnce();
 
-  const findBossForChapter = useCallback((chapter) => {
-    return bossData.find((b) => b.id === chapter.bossId);
-  }, []);
+  const activeCharacter = classList.find((c) => c.id === activeClassId);
+  const maxHp = activeCharacter?.maxHp || PLAYER_MAX_HP_DEFAULT;
+
+  const [selectedChapter, setSelectedChapter] = useState(null);
+  const [currentBoss, setCurrentBoss] = useState(null);
+  const [bossHp, setBossHp] = useState(100);
+
+  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
   useEffect(() => {
-    const boss = findBossForChapter(selectedChapter);
+    if (!selectedChapter) return;
+    const boss = bossData.find((b) => b.id === selectedChapter.bossId);
     setCurrentBoss(boss);
     setBossHp(boss?.hp || 100);
-  }, [selectedChapter, findBossForChapter]);
+  }, [selectedChapter]);
 
   const handleFight = useCallback(
     (skill) => {
-      if (!currentBoss || !activeCharacter) return;
-
-      // Reward player for fighting (example: gain exp, coins, crystals)
+      if (!activeCharacter || !currentBoss) return;
 
       const damage = typeof skill?.power === "number" ? skill.power : 20;
+
       setBossHp((prevBossHp) => {
         const newHp = Math.max(prevBossHp - damage, 0);
 
         if (newHp === 0) {
           setTimeout(() => {
-            setIsFighting(false);
-            const boss = findBossForChapter(selectedChapter);
-            setCurrentBoss(boss);
-            setBossHp(boss?.hp || 100);
+            addCoins(COIN_REWARD);
+            addCrystals(CRYSTAL_REWARD);
+            addXp(100);
+            completeMissionOnce("1");
 
-            // EP vergeben
             const updatedCharacter = gainExp(activeCharacter, 120);
             updateCharacter(updatedCharacter);
 
-            // 💰 Belohnung nach Sieg
-            addCoins(100);
-            addCrystals(5);
-
-            // Neue Skills prüfen
             const oldSkillNames = (activeCharacter.skills || []).map(
               (s) => s.name
             );
@@ -84,113 +99,135 @@ export default function StoryScreen() {
 
             if (newSkills.length > 0) {
               setNewUnlockedSkills(newSkills);
+            } else {
+              setSelectedChapter(null);
+              setCurrentBoss(null);
+              setBossHp(100);
             }
-
-            updateCharacter(updatedCharacter);
-
-            if (newSkills.length > 0) {
-              setNewUnlockedSkills(newSkills);
-            }
-          }, 800);
+          }, 300);
         }
 
         return newHp;
       });
     },
     [
-      currentBoss,
-      selectedChapter,
-      findBossForChapter,
       activeCharacter,
+      currentBoss,
+      addCoins,
+      addCrystals,
+      addXp,
       gainExp,
       updateCharacter,
+      completeMissionOnce,
     ]
   );
 
-  function ChapterSelectBar() {
-    return (
-      <FlatList
-        data={chapterData}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: 16, padding: 12 }}
-        showsVerticalScrollIndicator={false}
-        style={{ backgroundColor: BLUE_BG }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => setSelectedChapter(item)}
-            style={[
-              styles.chapterCard,
-              selectedChapter.id === item.id && styles.chapterCardActive,
-            ]}
-          >
-            <Image
-              source={getBossImageUrl(
-                bossData.find((b) => b.id === item.bossId)
-              )}
-              style={styles.chapterImage}
-              contentFit="contain"
-              transition={300}
-            />
+  const handleCloseSkillModal = useCallback(() => {
+    setNewUnlockedSkills(null);
+  }, []);
 
-            <View style={styles.chapterOverlay}>
-              <Text
-                style={[
-                  styles.chapterTitle,
-                  selectedChapter.id === item.id && styles.chapterTitleActive,
-                ]}
-              >
-                {item.label}
-              </Text>
-              <Text style={styles.chapterDesc}>{item.description}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-    );
-  }
-
+  // Prozent-HP für Balkenanzeige
   const bossHpPercent =
     currentBoss && currentBoss.hp
-      ? Math.max(0, Math.round((bossHp / currentBoss.hp) * 100))
+      ? Math.round((bossHp / currentBoss.hp) * 100)
       : 0;
 
-  return (
-    <ScreenLayout style={styles.container}>
-      {!isFighting && <ChapterSelectBar />}
+  // Gemapptes Bossobjekt mit gecachtem Bild
+  const mappedBoss = currentBoss
+    ? {
+        ...currentBoss,
+        image:
+          (getEventBossKey(
+            currentBoss.image,
+            currentBoss.name || currentBoss.id
+          ) &&
+            imageMap[
+              getEventBossKey(
+                currentBoss.image,
+                currentBoss.name || currentBoss.id
+              )
+            ]) ||
+          currentBoss.image,
+      }
+    : null;
 
-      {showVoiceLine &&
-        currentBoss?.voiceLines &&
-        typeof currentBoss.voiceLines === "string" && (
-          <Text
-            style={{ color: "#facc15", textAlign: "center", marginTop: 10 }}
-          >
-            {currentBoss.voiceLines}
-          </Text>
-        )}
+  // Boss-Hintergrund gecacht
+  const bossBgKey = getBackgroundKey(currentBoss?.background);
+  const bossBgSrc =
+    (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
-      {!isFighting && currentBoss && (
-        <Pressable
-          style={styles.startButton}
-          onPress={() => {
-            setShowVoiceLine(true);
-            setIsFighting(true);
-            setTimeout(() => setShowVoiceLine(false), 4000); // 4 Sekunden anzeigen
+  if (!selectedChapter) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Wähle ein Kapitel</Text>
+        <FlatList
+          data={chapterData}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 12, gap: 12 }}
+          renderItem={({ item }) => {
+            const boss = bossData.find((b) => b.id === item.bossId);
+            const bossImage =
+              (boss &&
+                imageMap[getEventBossKey(boss.image, boss.name || boss.id)]) ||
+              boss?.image;
+            return (
+              <TouchableOpacity
+                style={styles.chapterCard}
+                onPress={() => setSelectedChapter(item)}
+              >
+                <Image
+                  source={bossImage}
+                  style={styles.chapterImage}
+                  contentFit="contain"
+                />
+                <View style={styles.chapterOverlay}>
+                  <Text style={styles.chapterTitle}>{item.label}</Text>
+                  <Text style={styles.chapterDesc}>{item.description}</Text>
+                </View>
+              </TouchableOpacity>
+            );
           }}
-        >
-          <Text style={styles.startText}>Kapitel starten</Text>
-        </Pressable>
+        />
+      </View>
+    );
+  }
+  console.log("StoryScreen bossBgSrc:", bossBgSrc);
+  const bossBackgroundSource =
+    bossBgSrc && typeof bossBgSrc === "string" ? { uri: bossBgSrc } : bossBgSrc;
+
+  return (
+    <View style={styles.container}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => setSelectedChapter(null)}
+      >
+        <Text style={styles.backText}>← Zurück zur Kapitel-Auswahl</Text>
+      </Pressable>
+
+      <Text style={styles.chapterTitleFight}>{selectedChapter.label}</Text>
+
+      {bossBgSrc && (
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={
+              typeof bossBgSrc === "string" ? { uri: bossBgSrc } : bossBgSrc
+            }
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={400}
+          />
+          <View style={StyleSheet.absoluteFillObject} />
+        </View>
       )}
 
-      {isFighting && currentBoss && activeCharacter && (
+      {currentBoss && (
         <BattleScene
-          bossName={currentBoss.name}
-          bossImage={getBossImageUrl(currentBoss)}
+          boss={mappedBoss}
           bossHp={bossHpPercent}
-          bossHpAbsolute={bossHp}
-          bossHpMax={currentBoss.hp}
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
-          character={activeCharacter}
+          bossBackground={bossBgSrc}
+          imageMap={imageMap}
         />
       )}
 
@@ -201,8 +238,8 @@ export default function StoryScreen() {
               <Text style={styles.skillModalTitle}>
                 🎉 Neue Skills freigeschaltet!
               </Text>
-              {newUnlockedSkills.map((skill, index) => (
-                <View key={index} style={styles.skillItem}>
+              {newUnlockedSkills.map((skill, idx) => (
+                <View key={idx} style={styles.skillItem}>
                   <Text style={styles.skillName}>{skill.name}</Text>
                   <Text style={styles.skillDescription}>
                     {skill.description}
@@ -212,7 +249,7 @@ export default function StoryScreen() {
               ))}
               <Pressable
                 style={styles.okButton}
-                onPress={() => setNewUnlockedSkills(null)}
+                onPress={handleCloseSkillModal}
               >
                 <Text style={styles.okText}>OK</Text>
               </Pressable>
@@ -220,69 +257,61 @@ export default function StoryScreen() {
           </View>
         </Modal>
       )}
-    </ScreenLayout>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a", // Dunkelblau
+  container: { flex: 1, padding: 20 },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#F9B801",
+    marginBottom: 12,
+    textAlign: "center",
   },
   chapterCard: {
-    width: 300,
-    height: 300,
-    alignSelf: "center",
+    backgroundColor: "#1e293b",
     borderRadius: 16,
+    height: 200,
+    marginVertical: 6,
     overflow: "hidden",
-    backgroundColor: "#1e293b", // tiefer Blauton
-    borderWidth: 2,
-    borderColor: "#3b82f6", // Blau
-  },
-  chapterCardActive: {
-    borderColor: "#60a5fa", // Helles Blau für aktives Kapitel
   },
   chapterImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
+    flex: 1,
     borderRadius: 16,
+    width: "100%",
   },
   chapterOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    padding: 12,
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 8,
   },
   chapterTitle: {
-    color: "#e0f2fe", // helles blauweiß
+    color: "#F9B801",
     fontWeight: "bold",
-    fontSize: 16,
-  },
-  chapterTitleActive: {
-    color: "#93c5fd", // helleres Blau
-    fontSize: 17,
+    fontSize: 18,
   },
   chapterDesc: {
-    color: "#cbd5e1", // hellgrau-blau
-    fontSize: 13,
-    marginTop: 2,
+    color: "#ddd",
+    fontSize: 14,
   },
-  startButton: {
-    margin: 20,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: "#3b82f6", // Primär-Blau
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+  backButton: {
+    marginVertical: 10,
   },
-  startText: {
+  backText: {
+    color: "#60a5fa",
     fontWeight: "bold",
-    color: "#fff",
     fontSize: 16,
+  },
+  chapterTitleFight: {
+    color: "#F9B801",
+    fontWeight: "bold",
+    fontSize: 22,
+    marginBottom: 12,
+    textAlign: "center",
   },
   modalOverlay: {
     flex: 1,
@@ -291,33 +320,30 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
   },
   skillModal: {
-    backgroundColor: "#1e293b",
+    backgroundColor: "#222",
+    padding: 20,
     margin: 32,
     borderRadius: 16,
-    padding: 20,
     borderWidth: 1,
-    borderColor: "#3b82f6",
+    borderColor: "#888",
   },
   skillModalTitle: {
-    fontSize: 18,
+    color: "#F9B801",
     fontWeight: "bold",
-    color: "#bae6fd",
+    fontSize: 18,
     marginBottom: 12,
     textAlign: "center",
   },
   skillItem: { marginBottom: 12 },
-  skillName: { fontSize: 16, fontWeight: "bold", color: "#60a5fa" },
-  skillDescription: { fontSize: 14, color: "#cbd5e1" },
-  skillPower: { fontSize: 12, color: "#94a3b8" },
+  skillName: { fontWeight: "bold", fontSize: 16, color: "#F9B801" },
+  skillDescription: { fontSize: 14, color: "#ccc" },
+  skillPower: { fontSize: 12, color: "#888" },
   okButton: {
-    marginTop: 16,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#F9B801",
     padding: 10,
     borderRadius: 10,
     alignSelf: "center",
+    marginTop: 16,
   },
-  okText: {
-    color: "#f8fafc",
-    fontWeight: "bold",
-  },
+  okText: { color: "#222", fontWeight: "bold" },
 });

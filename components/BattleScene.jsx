@@ -7,12 +7,13 @@ import FireEffect from "./skills/FireEffect";
 import FrostEffect from "./skills/FrostEffect";
 import VoidEffect from "./skills/voidEffect";
 import NaturEffect from "./skills/NaturEffect";
+import StormStrikeEffect from "./skills/StormStrikeEffect";
 import { useClass } from "../context/ClassContext";
 import { skillPool } from "../data/skillPool";
+import { getBossImageUrl } from "../utils/boss/bossUtils";
 
-const BLUE_BG = "#0f172a";
+// Farben & Styles wie gehabt ...
 const BLUE_DARK = "#1e293b";
-const BLUE = "#2563eb";
 const BLUE_ACCENT = "#60a5fa";
 const BLUE_BORDER = "#38bdf8";
 const BLUE_XP = "#38bdf8";
@@ -20,27 +21,37 @@ const HP_BOSS = "#0ea5e9";
 const GOLD = "#facc15";
 const TEXT_MUTED = "#a3bffa";
 
+// Helper für Charakter-Key (für dein imageMap)
+function getClassKey(imageUrl) {
+  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+  return match ? "class_" + match[1].toLowerCase() : null;
+}
+
+// Helper für Bossbild-Key (immer eventboss_ für alle Modi!)
+function getEventBossKey(imageUrl) {
+  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+  return match ? "eventboss_" + match[1].toLowerCase() : null;
+}
+
 export default function BattleScene({
-  bossName,
-  bossImage,
+  boss, // Objekt: { id, name, image, ... }
   bossHp,
   bossDefeated,
   onSkillPress,
   handleFight,
-  bossBackground, // ✅ nicht vergessen
+  bossBackground,
+  imageMap = {},
 }) {
-  console.log("✅ BossBackground in Scene:", bossBackground);
-
   const { classList, activeClassId } = useClass();
   const activeCharacter = classList.find((c) => c.id === activeClassId);
   const [activeEffect, setActiveEffect] = useState(null);
 
-  // Map für Effekte
   const effectMap = {
     FireEffect,
     FrostEffect,
     VoidEffect,
     NaturEffect,
+    StormStrikeEffect,
   };
 
   if (!activeCharacter) {
@@ -51,21 +62,27 @@ export default function BattleScene({
     );
   }
 
-  const { name, level, exp, expToNextLevel, classUrl, element } =
-    activeCharacter;
-
+  const { name, level, exp, expToNextLevel, classUrl } = activeCharacter;
   const bossHpPercent = Math.max(0, Math.min(bossHp, 100)).toFixed(1);
 
-  // Freigeschaltete Skills berechnen:
-  const unlockedSkills = skillPool.filter((skill) => {
-    if ((level || 1) < (skill.level || 1)) return false;
-    if (skill.allowedElements && !skill.allowedElements.includes(element))
-      return false;
-    if (skill.element && skill.element !== element) return false;
-    return true;
-  });
+  // --- Bossbild IMMER über eventboss_ aus imageMap ---
+  const bossImgKey = getEventBossKey(boss?.image);
+  const bossImgSrc =
+    (bossImgKey && imageMap[bossImgKey]) ||
+    boss?.image ||
+    getBossImageUrl(boss?.id);
 
-  // Skill-Klick
+  // Bossname
+  const bossName = boss?.name || boss?.eventName || "Unbekannter Boss";
+
+  // Map-Background (z.B. für Events, kann gecacht sein!)
+  const bgSrc = bossBackground;
+
+  // Charakterbild per Mapping (oder Fallback auf classUrl)
+  const classKey = getClassKey(classUrl);
+  const classImgSrc = imageMap[classKey] || classUrl;
+
+  // --- Skill Handling ---
   const handleSkillPress = (skill) => {
     if (!skill) return;
     onSkillPress?.(skill);
@@ -77,7 +94,6 @@ export default function BattleScene({
     }
   };
 
-  // Effekt nur als Component rendern, wenn aktiv
   let EffectComponent = null;
   if (activeEffect && effectMap[activeEffect]) {
     const Component = effectMap[activeEffect];
@@ -93,13 +109,7 @@ export default function BattleScene({
 
   return (
     <View style={styles.wrapper}>
-      {bossBackground && (
-        <Image
-          source={{ uri: bossBackground }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-      )}
+      {/* Boss-Background (optional) */}
 
       {/* Boss-Anzeige */}
       <View style={styles.bossContainer}>
@@ -121,8 +131,9 @@ export default function BattleScene({
             <Text style={styles.victory}>✅ Du hast {bossName} besiegt!</Text>
           )}
         </BlurView>
+
         <Image
-          source={{ uri: bossImage }}
+          source={boss.image}
           style={styles.bossImage}
           contentFit="contain"
           transition={300}
@@ -154,12 +165,13 @@ export default function BattleScene({
             </View>
           </BlurView>
           <Image
-            source={{ uri: classUrl }}
+            source={classImgSrc}
             style={styles.avatar}
             contentFit="contain"
           />
         </View>
       </Pressable>
+
       {/* Effekt */}
       {EffectComponent}
 
@@ -168,11 +180,13 @@ export default function BattleScene({
         skills={skillPool}
         activeCharacter={activeCharacter}
         onSkillPress={handleSkillPress}
+        imageMap={imageMap}
       />
     </View>
   );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
   wrapper: { flex: 1 },
   bossContainer: {

@@ -19,7 +19,15 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useThemeContext } from "../context/ThemeContext";
 
-export default function NewsScreen() {
+// Helper für alle (Event)Boss-Bilder in der News
+function getEventBossKey(imageUrl) {
+  const match = /\/([\w-]+)\.png$/.exec(imageUrl);
+  if (!match) return null;
+  // Für news/events konsequent "eventboss_"
+  return "eventboss_" + match[1].toLowerCase();
+}
+
+export default function NewsScreen({ imageMap = {} }) {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
@@ -54,6 +62,11 @@ export default function NewsScreen() {
   const renderItem = ({ item }) => {
     const claimed = claimedNews[item.id];
 
+    // Suche nach dem gecachten Image (imageMap), fallback auf Original-URL
+    const bossKey = getEventBossKey(item.image);
+    const imageSource =
+      bossKey && imageMap[bossKey] ? imageMap[bossKey] : item.image;
+
     return (
       <TouchableOpacity
         onLongPress={() => handleLongPress(item)}
@@ -61,9 +74,10 @@ export default function NewsScreen() {
       >
         <View style={styles.item}>
           <Image
-            source={{ uri: item.image }}
+            source={imageSource}
             style={styles.image}
             contentFit="contain"
+            transition={250}
           />
           <Text style={styles.itemText}>{item.title}</Text>
           {claimed ? (

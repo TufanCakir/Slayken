@@ -12,18 +12,20 @@ import { Image } from "expo-image";
 import CircularCooldown from "../effects/CircularCooldown";
 import useCooldownTimer from "../../hooks/useCooldownTimer";
 
+// imageMap als Prop ergänzen!
 export default function ActionBar({
   skills = [],
   activeCharacter,
   onSkillPress,
+  imageMap = {}, // << zentral!
 }) {
   const [tooltipSkill, setTooltipSkill] = useState(null);
   const [cooldowns, setCooldowns] = useState({});
   const [pressedIndex, setPressedIndex] = useState(null);
-  const [unlockedSkill, setUnlockedSkill] = useState(null); // Für Unlock-Popup
+  const [unlockedSkill, setUnlockedSkill] = useState(null);
   const { width } = useWindowDimensions();
   const unlockedSkillIds = useRef(new Set());
-  const prevLevel = useRef(activeCharacter.level);
+  const prevLevel = useRef(activeCharacter?.level);
 
   if (!activeCharacter) {
     return (
@@ -67,7 +69,6 @@ export default function ActionBar({
   useEffect(() => {
     if (!activeCharacter) return;
 
-    // Nur reagieren, wenn Level gestiegen ist
     if (activeCharacter.level > prevLevel.current) {
       filterSkills.forEach((skill) => {
         const unlocked = isUnlocked(skill);
@@ -78,8 +79,6 @@ export default function ActionBar({
         }
       });
     }
-
-    // Update prevLevel
     prevLevel.current = activeCharacter.level;
   }, [activeCharacter.level, activeCharacter.element, filterSkills]);
 
@@ -111,6 +110,10 @@ export default function ActionBar({
     setPressedIndex(null);
   };
 
+  // Hilfsfunktion für sauberen Zugriff auf das Skill-Icon aus imageMap (Fallback auf require)
+  const getSkillImage = (skill) =>
+    imageMap[`skill_${skill.id}`] || require("../../assets/icon.png");
+
   return (
     <>
       <View style={styles.barContainer}>
@@ -119,6 +122,7 @@ export default function ActionBar({
           const isCoolingDown = cooldownEnd > Date.now();
           const remaining = useCooldownTimer(cooldownEnd);
           const unlocked = isUnlocked(skill);
+          const skillImage = getSkillImage(skill);
 
           return (
             <TouchableOpacity
@@ -137,7 +141,7 @@ export default function ActionBar({
               activeOpacity={0.8}
             >
               <Image
-                source={{ uri: skill.image }}
+                source={skillImage}
                 style={styles.skillIcon}
                 contentFit="contain"
                 transition={300}
@@ -206,7 +210,7 @@ export default function ActionBar({
               Neue Fähigkeit freigeschaltet!
             </Text>
             <Image
-              source={{ uri: unlockedSkill?.image }}
+              source={unlockedSkill ? getSkillImage(unlockedSkill) : undefined}
               style={styles.unlockImage}
               contentFit="contain"
             />
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
   },
   cooldownOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(148,163,184,0.7)", // leichtes grau-transparent
+    backgroundColor: "rgba(148,163,184,0.7)",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,

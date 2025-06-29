@@ -1,25 +1,27 @@
 import { View, StyleSheet } from "react-native";
 import BattleScene from "./BattleScene";
 
+// BattleView.jsx
 export default function BattleView({
   selectedEvent,
   bossHp,
   bossDefeated,
   handleFight,
   character,
+  imageMap,
 }) {
   if (!selectedEvent) return null;
 
   return (
     <View style={styles.container}>
       <BattleScene
-        bossName={selectedEvent.eventName || selectedEvent.name}
-        bossImage={selectedEvent.image}
+        boss={selectedEvent} // <- GANZES Event weitergeben!
         bossHp={bossHp}
         bossDefeated={bossDefeated}
         handleFight={handleFight}
         character={character}
-        bossBackground={selectedEvent.background} // <- hier!
+        bossBackground={selectedEvent.background}
+        imageMap={imageMap}
       />
     </View>
   );

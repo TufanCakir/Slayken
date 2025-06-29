@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, Platform, StyleSheet } from "react-native";
+import { View, Text, Platform, StyleSheet } from "react-native";
+import { Image } from "expo-image"; // Wichtig: expo-image für Local/Remote
+// ↑ Achtung! KEIN import { Image } from "react-native" hier, sondern expo-image.
 
 // Farbzuordnung je Element
 const ELEMENT_COLORS = {
@@ -43,7 +45,8 @@ const useCountdown = (targetDateString) => {
   return timeLeft;
 };
 
-export default function TeaserCard({ item }) {
+// imageMap als Prop!
+export default function TeaserCard({ item, imageMap = {} }) {
   if (!item) return null;
 
   const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
@@ -55,6 +58,12 @@ export default function TeaserCard({ item }) {
     return `⏳ Noch ${days} Tag${
       days !== 1 ? "e" : ""
     }, ${hours} Std, ${minutes} Min`;
+  };
+
+  // Key für das Klassenbild (wie du es auch im imageMap verwendest)
+  const classKey = `class_${item.id}`; // z.B. class_voidwarrior
+  const imageSource = imageMap[classKey] || {
+    uri: `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`,
   };
 
   return (
@@ -72,11 +81,10 @@ export default function TeaserCard({ item }) {
 
       <View style={styles.icon}>
         <Image
-          source={{
-            uri: `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`,
-          }}
+          source={imageSource}
           style={styles.image}
-          resizeMode="contain"
+          contentFit="contain"
+          transition={300}
         />
       </View>
 

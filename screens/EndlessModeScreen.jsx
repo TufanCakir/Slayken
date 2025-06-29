@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
@@ -11,15 +10,38 @@ import BattleScene from "../components/BattleScene";
 import { useMissions } from "../context/MissionContext";
 
 import bossData from "../data/bossData.json";
-import { getBossImageUrl } from "../utils/boss/bossUtils";
-import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { Image } from "expo-image";
+import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 const PLAYER_MAX_HP_DEFAULT = 100;
 
-export default function EndlessModeScreen() {
+// Helper für Boss-Image-Key
+function getEventBossKey(imageUrl, fallbackName) {
+  if (!imageUrl && !fallbackName) return null;
+  // Falls eine URL, extrahiere Name
+  let name = null;
+  if (typeof imageUrl === "string" && imageUrl.endsWith(".png")) {
+    const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+    name = match ? match[1] : null;
+  }
+  // Falls es kein Bild oder kein Match gibt, nimm den Namen
+  if (!name && fallbackName) {
+    name = fallbackName;
+  }
+  // Key bauen
+  return name ? "eventboss_" + name.toLowerCase() : null;
+}
+
+// Helper für Background-Key (optional, je nach Caching)
+function getBackgroundKey(bgUrl) {
+  if (!bgUrl) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
+  return match ? "bg_" + match[1].toLowerCase() : null;
+}
+
+export default function EndlessModeScreen({ imageMap = {} }) {
   const navigation = useNavigation();
   const { addXp } = useAccountLevel();
   const { addCoins } = useCoins();
@@ -28,56 +50,47 @@ export default function EndlessModeScreen() {
   const { gainExp } = useLevelSystem();
   const { missions, markMissionCompleted } = useMissions();
   const completeMissionOnce = useCompleteMissionOnce();
-  // Aktiver Charakter & HP
+
   const activeCharacter = classList.find((c) => c.id === activeClassId);
   const maxHp = activeCharacter?.maxHp || PLAYER_MAX_HP_DEFAULT;
 
-  // Boss-State
   const [bossHp, setBossHp] = useState(100);
   const [currentBoss, setCurrentBoss] = useState(null);
 
   // Modal für neue Skills
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  // Initialer Boss beim Mount
   useEffect(() => {
     spawnNewBoss();
     // eslint-disable-next-line
   }, []);
 
-  // Boss spawnen
   const spawnNewBoss = useCallback(() => {
     const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
     setCurrentBoss(randomBoss);
     setBossHp(randomBoss.hp || 100);
   }, []);
 
-  // Kampf-Handler
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
 
-      // Skill absichern (Fehlerquelle!)
       const damage = typeof skill?.power === "number" ? skill.power : 20;
 
       setBossHp((prevBossHp) => {
         const newHp = Math.max(prevBossHp - damage, 0);
 
-        // Boss besiegt?
         if (newHp === 0) {
           setTimeout(() => {
-            // Rewards & XP (nach dem Render!)
             addCoins(COIN_REWARD);
             addCrystals(CRYSTAL_REWARD);
             addXp(100);
 
             completeMissionOnce("1");
 
-            // Charakter hochleveln
             const updatedCharacter = gainExp(activeCharacter, 120);
             updateCharacter(updatedCharacter);
 
-            // Neue Skills identifizieren
             const oldSkillNames = (activeCharacter.skills || []).map(
               (s) => s.name
             );
@@ -88,9 +101,9 @@ export default function EndlessModeScreen() {
             if (newSkills.length > 0) {
               setNewUnlockedSkills(newSkills);
             } else {
-              setTimeout(spawnNewBoss, 500); // sanfte Pause
+              setTimeout(spawnNewBoss, 500);
             }
-          }, 300); // kleine Verzögerung, um Render-Flicker zu vermeiden
+          }, 300);
         }
 
         return newHp;
@@ -105,37 +118,59 @@ export default function EndlessModeScreen() {
       gainExp,
       updateCharacter,
       spawnNewBoss,
-      completeMissionOnce, // 👈 hinzufügen
+      completeMissionOnce,
     ]
   );
 
-  // Modal schließen + nächster Boss
   const handleCloseSkillModal = useCallback(() => {
     setNewUnlockedSkills(null);
-    setTimeout(spawnNewBoss, 400); // kleine Pause für besseres UX
+    setTimeout(spawnNewBoss, 400);
   }, [spawnNewBoss]);
 
-  // Prozent-Anzeige für Boss-HP (für Balken)
+  // Prozent-HP für Balkenanzeige
   const bossHpPercent =
     currentBoss && currentBoss.hp
       ? Math.max(0, Math.round((bossHp / currentBoss.hp) * 100))
       : 0;
 
+  // Background gecacht (optional)
+  const bossBgKey = getBackgroundKey(currentBoss?.background);
+  const bossBgSrc =
+    (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
+
+  // --- Boss-Objekt IMMER gemappt mit eventboss_ ---
+  let mappedBoss = { ...currentBoss };
+  if (currentBoss) {
+    // Nutze Bild ODER fallback auf Name
+    const imgKey = getEventBossKey(
+      currentBoss.image,
+      currentBoss.name || currentBoss.id
+    );
+    console.log(
+      "ENDLESS/Boss:",
+      currentBoss?.name,
+      "| Key:",
+      imgKey,
+      "| In Map:",
+      !!imageMap[imgKey]
+    );
+    mappedBoss.image = (imgKey && imageMap[imgKey]) || currentBoss.image;
+  }
+
   return (
     <View style={styles.container}>
-      {currentBoss?.background && (
+      {/* Boss-Background gecacht */}
+      {bossBgSrc && (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: currentBoss.background }}
+            source={bossBgSrc}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={400}
           />
-          {/* Optional Overlay */}
           <View
             style={{
               ...StyleSheet.absoluteFillObject,
-              backgroundColor: "rgba(0,0,0,0.35)", // für besseren Kontrast
             }}
           />
         </View>
@@ -147,15 +182,12 @@ export default function EndlessModeScreen() {
 
       {currentBoss && (
         <BattleScene
-          bossName={currentBoss.name}
-          bossImage={getBossImageUrl(currentBoss)}
+          boss={mappedBoss} // <-- Bossbild IMMER als eventboss_ gemappt!
           bossHp={bossHpPercent}
-          bossHpAbsolute={bossHp}
-          bossHpMax={currentBoss.hp}
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
-          character={activeCharacter}
-          bossBackground={null} // ❌ kein Hintergrund in BattleScene nötig
+          bossBackground={bossBgSrc}
+          imageMap={imageMap}
         />
       )}
 

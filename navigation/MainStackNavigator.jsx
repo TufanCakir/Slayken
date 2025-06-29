@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useThemeContext } from "../context/ThemeContext";
 
-// Screens
+// Screens...
 import StartScreen from "../screens/StartScreen";
 import HomeScreen from "../screens/HomeScreen";
 import StoryScreen from "../screens/StoryScreen";
@@ -27,10 +27,9 @@ import TeaserScreen from "../screens/TeaserScreen";
 
 const Stack = createNativeStackNavigator();
 
-export default function MainStackNavigator({ data }) {
+export default function MainStackNavigator({ data, localUris, imageMap }) {
   const { theme, uiThemeType } = useThemeContext();
 
-  // Default options for all 'card' screens
   const defaultOptions = {
     headerShown: false,
     gestureEnabled: true,
@@ -41,45 +40,68 @@ export default function MainStackNavigator({ data }) {
     },
   };
 
+  // Helper für prop-injection (inkl. Kommentar für Übersicht)
+  function withAssets(ScreenComponent) {
+    // Mit React.memo für stabile Props (optional, aber hilfreich!)
+    return function WrappedScreen(props) {
+      return (
+        <ScreenComponent
+          {...props}
+          data={data}
+          localUris={localUris}
+          imageMap={imageMap}
+        />
+      );
+    };
+  }
+
   return (
     <Stack.Navigator
       initialRouteName="StartScreen"
       screenOptions={defaultOptions}
     >
-      {/* App entry & main screens */}
-      <Stack.Screen name="StartScreen" component={StartScreen} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="StoryScreen" component={StoryScreen} />
-      <Stack.Screen name="EndlessModeScreen" component={EndlessModeScreen} />
-      <Stack.Screen name="EventScreen" component={EventScreen} />
-      <Stack.Screen name="NewsScreen" component={NewsScreen} />
-      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
-      <Stack.Screen name="GiftScreen" component={GiftScreen} />
-      <Stack.Screen name="MissionScreen" component={MissionScreen} />
-      <Stack.Screen name="ShopScreen" component={ShopScreen} />
-      <Stack.Screen name="ToSScreen" component={ToSScreen} />
-      <Stack.Screen name="ExchangeScreen" component={ExchangeScreen} />
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="TeaserScreen" component={TeaserScreen} />
-
+      <Stack.Screen name="StartScreen" component={withAssets(StartScreen)} />
+      <Stack.Screen name="HomeScreen" component={withAssets(HomeScreen)} />
+      <Stack.Screen name="StoryScreen" component={withAssets(StoryScreen)} />
+      <Stack.Screen
+        name="EndlessModeScreen"
+        component={withAssets(EndlessModeScreen)}
+      />
+      <Stack.Screen name="EventScreen" component={withAssets(EventScreen)} />
+      <Stack.Screen name="NewsScreen" component={withAssets(NewsScreen)} />
+      <Stack.Screen
+        name="SettingsScreen"
+        component={withAssets(SettingsScreen)}
+      />
+      <Stack.Screen name="GiftScreen" component={withAssets(GiftScreen)} />
+      <Stack.Screen
+        name="MissionScreen"
+        component={withAssets(MissionScreen)}
+      />
+      <Stack.Screen name="ShopScreen" component={withAssets(ShopScreen)} />
+      <Stack.Screen name="ToSScreen" component={withAssets(ToSScreen)} />
+      <Stack.Screen
+        name="ExchangeScreen"
+        component={withAssets(ExchangeScreen)}
+      />
+      <Stack.Screen name="LoginScreen" component={withAssets(LoginScreen)} />
+      <Stack.Screen name="TeaserScreen" component={withAssets(TeaserScreen)} />
       <Stack.Screen
         name="PreBattleInfoScreen"
-        component={PreBattleInfoScreen}
+        component={withAssets(PreBattleInfoScreen)}
       />
       <Stack.Screen
         name="CreateCharacterScreen"
-        component={CreateCharacterScreen}
+        component={withAssets(CreateCharacterScreen)}
       />
       <Stack.Screen
         name="CharacterSelectScreen"
-        component={CharacterSelectScreen}
+        component={withAssets(CharacterSelectScreen)}
       />
-
       <Stack.Screen
         name="CharacterOverviewScreen"
-        component={CharacterOverviewScreen}
+        component={withAssets(CharacterOverviewScreen)}
       />
-      {/* Modals (Tutorial, Victory) */}
       <Stack.Group
         screenOptions={{
           presentation: "transparentModal",
@@ -89,9 +111,12 @@ export default function MainStackNavigator({ data }) {
       >
         <Stack.Screen
           name="TutorialStartScreen"
-          component={TutorialStartScreen}
+          component={withAssets(TutorialStartScreen)}
         />
-        <Stack.Screen name="VictoryScreen" component={VictoryScreen} />
+        <Stack.Screen
+          name="VictoryScreen"
+          component={withAssets(VictoryScreen)}
+        />
       </Stack.Group>
     </Stack.Navigator>
   );

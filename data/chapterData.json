@@ -1,9 +1,23 @@
 [
   {
-    "id": "Infermor",
+    "id": "infermor",
     "label": "Kapitel 1",
-    "description": "Der Beginn deiner Reise.",
-    "bossId": "Infermor",
+    "description": "Das Feuer erwacht – beginne deine heldenhafte Reise durch Flammen und Schatten.",
+    "bossId": "infermor",
+    "element": "fire"
+  },
+  {
+    "id": "malzevox",
+    "label": "Kapitel 2",
+    "description": "Im Herzen des Chaos erhebt sich ein neuer Feind – stelle dich der Dunkelheit und bewahre das Licht.",
+    "bossId": "malzevox",
+    "element": "fire"
+  },
+  {
+    "id": "aurelion",
+    "label": "Kapitel 3",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "aurelion",
     "element": "fire"
   }
 ]
