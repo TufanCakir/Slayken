@@ -64,7 +64,6 @@ const createStyles = (theme) =>
       alignItems: "center",
     },
     resetButton: {
-      marginTop: 52,
       backgroundColor: theme.shadowColor,
       borderWidth: 2,
       borderColor: theme.borderColor,

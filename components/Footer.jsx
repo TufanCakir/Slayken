@@ -116,7 +116,7 @@ function createStyles(theme) {
       gap: 10,
       backgroundColor: theme.accentColor,
       borderTopWidth: 2,
-      borderTopColor: theme.borderColor,
+      borderTopColor: theme.textColor,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: -6 },
       shadowOpacity: 0.06,
@@ -127,7 +127,7 @@ function createStyles(theme) {
     },
     tab: {
       borderWidth: 2,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
       backgroundColor: theme.accentColor,
       paddingTop: 6,
       height: 70,

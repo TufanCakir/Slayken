@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import classData from "../data/classData.json";
 import { getClassImageUrl } from "../utils/classUtils";
-import { getSkillImageUrl } from "../utils/skillUtils"; // nicht vergessen
 import { skillPool } from "../data/skillPool";
 
 const CLASS_LIST_KEY = "classList";
@@ -20,7 +19,6 @@ const mergeSkills = (skillRefs = []) => {
 const enrichClassMember = (member) => {
   const original =
     classData.find((c) => c.id === member.baseId || member.id) || {};
-
   return {
     ...original,
     ...member,
@@ -29,6 +27,7 @@ const enrichClassMember = (member) => {
     exp: member.exp ?? 0,
     level: member.level ?? 1,
     expToNextLevel: member.expToNextLevel ?? 100,
+    equipment: member.equipment || {}, // 👈 NEU: default leeres Objekt
   };
 };
 
@@ -80,18 +79,43 @@ export const ClassProvider = ({ children }) => {
     await AsyncStorage.setItem(ACTIVE_CLASS_ID_KEY, id);
   };
 
+  // NEU: addCharacter jetzt INNEN!
+  const addCharacter = async (character) => {
+    // Keine Duplikate
+    if (classList.some((char) => char.id === character.id)) return;
+    const newList = [...classList, enrichClassMember(character)];
+    setClassList(newList);
+    await saveClassList(newList);
+  };
+
   const updateCharacter = async (updatedChar) => {
     const exists = classList.some((char) => char.id === updatedChar.id);
-
     let updatedList;
     if (exists) {
       updatedList = classList.map((char) =>
         char.id === updatedChar.id ? { ...char, ...updatedChar } : char
       );
     } else {
-      updatedList = [...classList, updatedChar]; // ← neue Charaktere anhängen
+      updatedList = [...classList, enrichClassMember(updatedChar)];
     }
+    setClassList(updatedList);
+    await saveClassList(updatedList);
+  };
 
+  const equipItem = async (charId, slot, equipmentId) => {
+    setClassList((prevList) =>
+      prevList.map((char) =>
+        char.id === charId
+          ? {
+              ...char,
+              equipment: {
+                ...(char.equipment || {}),
+                [slot]: equipmentId, // ← Kann auch null sein!
+              },
+            }
+          : char
+      )
+    );
     setClassList(updatedList);
     await saveClassList(updatedList);
   };
@@ -135,7 +159,9 @@ export const ClassProvider = ({ children }) => {
         activeClassId,
         setActiveClassId: updateActiveClass,
         classList,
+        addCharacter, // <--- HIER NEU!
         updateCharacter,
+        equipItem, // 👈 NEU
         resetCharacterList,
         deleteClass,
         clearAllClasses, // 🧼 Neu hinzugefügt

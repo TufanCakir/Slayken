@@ -68,7 +68,6 @@ const createStyles = (theme) =>
   StyleSheet.create({
     section: {
       marginBottom: 30,
-      backgroundColor: theme.accentColor,
       borderRadius: 12,
       padding: 18,
       shadowColor: theme.shadowColor,
@@ -109,7 +108,7 @@ const createStyles = (theme) =>
     button: {
       padding: 14,
       borderRadius: 10,
-      backgroundColor: theme.textColor,
+      backgroundColor: theme.shadowColor,
       borderWidth: 2,
       borderColor: theme.borderColor,
       alignItems: "center",
@@ -122,8 +121,7 @@ const createStyles = (theme) =>
     },
     buttonText: {
       fontSize: 16,
-      fontWeight: "700",
-      color: theme.accentColor,
+      color: theme.textColor,
       letterSpacing: 0.2,
     },
   });

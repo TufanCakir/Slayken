@@ -1,35 +1,68 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import { Image as ExpoImage } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { resetToHome } from "../utils/navigationUtils";
-
-// Blaues Design
-const BLUE_GOLD = "#facc15";
-const BLUE_CARD = "#1e293b";
-const BLUE_BORDER = "#38bdf8";
-const BLUE_BG = "#0f172a";
-const BLUE_TEXT = "#f0f9ff";
-const BLUE_GREEN = "#34d399";
-const BLUE_ACCENT = "#2563eb";
-const BLUE_SHADOW = "#1e40af";
+import { useThemeContext } from "../context/ThemeContext";
+import { getItemImageUrl } from "../utils/item/itemUtils";
 
 export default function VictoryScreen({ route }) {
   const navigation = useNavigation();
+  const { theme } = useThemeContext();
+
   const {
     coinReward = 0,
     crystalReward = 0,
     character = null,
     isEvent = false,
+    newEquipment = null,
+    newCharacter = null,
   } = route.params || {};
+
+  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎉 Sieg!</Text>
+      {/* Dynamisches Hintergrundbild */}
+      {theme.bgImage && (
+        <ExpoImage
+          source={theme.bgImage}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={600}
+        />
+      )}
+      {/* Semi-transparenter Overlay */}
+      <View style={styles.bgOverlay} />
 
+      <Text style={styles.title}>Sieg!</Text>
+
+      {/* Neue Ausrüstung */}
+      {newEquipment && (
+        <View style={styles.rewardBox}>
+          <Text style={styles.equipTitle}>Neue Ausrüstung freigeschaltet!</Text>
+          <Text style={styles.equipLabel}>{newEquipment.label}</Text>
+          <Text style={styles.equipDesc}>{newEquipment.description}</Text>
+        </View>
+      )}
+
+      {/* Neuer Charakter */}
+      {newCharacter && (
+        <View style={styles.rewardBox}>
+          <Text style={styles.charTitle}>🎉 Neuer Held freigeschaltet!</Text>
+          <ExpoImage
+            source={{ uri: newCharacter.classUrl }}
+            style={styles.avatar}
+            contentFit="contain"
+          />
+          <Text style={styles.equipLabel}>{newCharacter.label}</Text>
+        </View>
+      )}
+
+      {/* Charakter-Infos */}
       {character && (
         <View style={styles.characterBox}>
-          <Image
+          <ExpoImage
             source={{ uri: character.classUrl }}
             style={styles.avatar}
             contentFit="contain"
@@ -44,12 +77,25 @@ export default function VictoryScreen({ route }) {
         </View>
       )}
 
+      {/* Rewards */}
       <View style={styles.rewards}>
-        <Text style={styles.rewardText}>💰 +{coinReward} Coins</Text>
-        <Text style={styles.rewardText}>💎 +{crystalReward} Crystals</Text>
-        {isEvent && (
-          <Text style={styles.eventLabel}>📅 Event abgeschlossen!</Text>
-        )}
+        <View style={styles.rewardRow}>
+          <ExpoImage
+            source={{ uri: getItemImageUrl("coin") }}
+            style={styles.rewardIcon}
+            contentFit="contain"
+          />
+          <Text style={styles.rewardText}>+{coinReward} Coins</Text>
+        </View>
+        <View style={styles.rewardRow}>
+          <ExpoImage
+            source={{ uri: getItemImageUrl("crystal") }}
+            style={styles.rewardIcon}
+            contentFit="contain"
+          />
+          <Text style={styles.rewardText}>+{crystalReward} Crystals</Text>
+        </View>
+        {isEvent && <Text style={styles.eventLabel}>Event abgeschlossen!</Text>}
       </View>
 
       <TouchableOpacity
@@ -62,110 +108,203 @@ export default function VictoryScreen({ route }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BLUE_BG,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: BLUE_GOLD,
-    marginBottom: 34,
-    letterSpacing: 0.5,
-    textShadowColor: "#1e293b88",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 6,
-  },
-  characterBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: BLUE_CARD,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: BLUE_BORDER,
-    padding: 14,
-    marginBottom: 24,
-    shadowColor: BLUE_SHADOW,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    elevation: 7,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    marginRight: 14,
-    borderRadius: 14,
-    backgroundColor: "#334155",
-    borderWidth: 2,
-    borderColor: BLUE_BORDER,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: BLUE_TEXT,
-    marginBottom: 2,
-  },
-  level: {
-    fontSize: 14,
-    color: "#bae6fd",
-    marginTop: 3,
-  },
-  xp: {
-    fontSize: 13,
-    color: "#60a5fa",
-    marginTop: 3,
-  },
-  rewards: {
-    marginBottom: 36,
-    alignItems: "center",
-  },
-  rewardText: {
-    fontSize: 18,
-    color: BLUE_GREEN,
-    marginVertical: 4,
-    textAlign: "center",
-    fontWeight: "600",
-    textShadowColor: "#1e293b44",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  eventLabel: {
-    marginTop: 8,
-    fontSize: 15,
-    color: BLUE_TEXT,
-    fontStyle: "italic",
-    fontWeight: "600",
-    textShadowColor: "#0ea5e9bb",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  button: {
-    backgroundColor: BLUE_ACCENT,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#38bdf8",
-    marginTop: 10,
-    shadowColor: BLUE_SHADOW,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 7,
-    elevation: 7,
-  },
-  buttonText: {
-    color: BLUE_TEXT,
-    fontSize: 17,
-    fontWeight: "bold",
-    letterSpacing: 0.4,
-    textAlign: "center",
-    textShadowColor: "#1e293b44",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20,
+      position: "relative",
+      overflow: "hidden",
+    },
+    bgOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: theme.accentColor + "cc",
+      zIndex: 0,
+    },
+    title: {
+      fontSize: 30,
+      marginBottom: 34,
+      letterSpacing: 0.5,
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 3 },
+      textShadowRadius: 12,
+      zIndex: 2,
+    },
+    rewardBox: {
+      borderRadius: 16,
+      borderWidth: 2.5,
+      padding: 16,
+      marginBottom: 24,
+      alignItems: "center",
+      backgroundColor: theme.accentColor + "ee",
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.55,
+      shadowRadius: 24,
+      elevation: 10,
+      zIndex: 2,
+    },
+    equipTitle: {
+      fontSize: 16,
+      fontWeight: "bold",
+      marginBottom: 4,
+      textAlign: "center",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 8,
+    },
+    charTitle: {
+      fontSize: 16,
+      fontWeight: "bold",
+      marginBottom: 4,
+      textAlign: "center",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 8,
+    },
+    equipLabel: {
+      fontSize: 17,
+      fontWeight: "bold",
+      marginBottom: 4,
+      textAlign: "center",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 6,
+    },
+    equipDesc: {
+      fontSize: 15,
+      textAlign: "center",
+      marginBottom: 6,
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+    characterBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 16,
+      borderWidth: 2.5,
+      padding: 14,
+      marginBottom: 24,
+      backgroundColor: theme.shadowColor,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.5,
+      shadowRadius: 24,
+      elevation: 9,
+      zIndex: 2,
+    },
+    avatar: {
+      width: 150,
+      height: 150,
+      marginRight: 14,
+      marginBottom: 6,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.7,
+      shadowRadius: 10,
+      elevation: 7,
+    },
+    name: {
+      fontSize: 18,
+      marginBottom: 2,
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+    level: {
+      fontSize: 14,
+      marginTop: 3,
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
+    },
+    xp: {
+      fontSize: 13,
+      marginTop: 3,
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    rewards: {
+      marginBottom: 36,
+      alignItems: "center",
+      zIndex: 2,
+    },
+    rewardRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: 4,
+      marginBottom: 2,
+      gap: 5,
+    },
+    rewardIcon: {
+      width: 30,
+      height: 30,
+      marginBottom: 8,
+      marginRight: 8,
+      borderRadius: 8,
+      backgroundColor: theme.accentColor + "44",
+      borderColor: theme.borderGlowColor,
+      borderWidth: 2,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.7,
+      shadowRadius: 9,
+      elevation: 8,
+    },
+    rewardText: {
+      fontSize: 18,
+      textAlign: "center",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 5,
+    },
+    eventLabel: {
+      marginTop: 8,
+      fontSize: 15,
+      fontStyle: "italic",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 4,
+    },
+    button: {
+      paddingVertical: 14,
+      paddingHorizontal: 32,
+      borderRadius: 12,
+      borderWidth: 2,
+      marginTop: 10,
+      backgroundColor: theme.shadowColor,
+      borderColor: theme.accentColor,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.21,
+      shadowRadius: 10,
+      elevation: 10,
+      zIndex: 2,
+    },
+    buttonText: {
+      fontSize: 17,
+      letterSpacing: 0.4,
+      textAlign: "center",
+      color: theme.textColor,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+  });
+}

@@ -68,7 +68,7 @@ export default function CreateCharacterScreen({ navigation }) {
         <>
           <Text style={styles.title}>Wähle eine Klasse</Text>
           <FlatList
-            data={classes}
+            data={classes.filter((cls) => !cls.eventReward)} // nur nicht-eventReward!
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.classList}
             renderItem={({ item }) => (
@@ -162,12 +162,12 @@ function createStyles(theme) {
       paddingVertical: 10,
     },
     classCard: {
-      backgroundColor: theme.shadowColor,
+      backgroundColor: theme.accentColor,
       borderRadius: 14,
       padding: 15,
       marginBottom: 16,
       borderWidth: 2,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
     },
     classRow: {
       flexDirection: "row",
@@ -175,11 +175,11 @@ function createStyles(theme) {
       gap: 16,
     },
     avatar: {
-      width: 56,
-      height: 56,
+      width: 100,
+      height: 100,
       borderRadius: 28,
       borderWidth: 2,
-      borderColor: "green",
+      borderColor: theme.textColor,
       marginRight: 14,
     },
     optionTitle: {
@@ -195,9 +195,8 @@ function createStyles(theme) {
     },
     elementLabel: {
       fontSize: 13,
-      color: "#fff",
-      fontWeight: "bold",
-      backgroundColor: theme.textColor,
+      color: theme.textColor,
+      backgroundColor: theme.accentColor,
       alignSelf: "flex-start",
       paddingHorizontal: 7,
       paddingVertical: 2,

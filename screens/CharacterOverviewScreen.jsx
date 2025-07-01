@@ -12,6 +12,7 @@ import elementData from "../data/elementData.json";
 import ScreenLayout from "../components/ScreenLayout";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const CARD_WIDTH = Dimensions.get("window").width / 2 - 24;
 
@@ -27,6 +28,18 @@ export default function CharacterOverviewScreen() {
 
     return (
       <View style={[styles.card, {}]}>
+        {item.eventReward && (
+          <View style={styles.exclusiveBadge}>
+            <MaterialCommunityIcons
+              name="crown"
+              size={14}
+              color="#111"
+              style={{ marginRight: 4 }}
+            />
+            <Text style={styles.exclusiveBadgeText}>Exklusiv</Text>
+          </View>
+        )}
+
         <Image
           source={{ uri: item.classUrl }}
           style={styles.avatar}
@@ -132,6 +145,7 @@ function createStyles(theme) {
       backgroundColor: theme.shadowColor,
       borderWidth: 2,
       borderColor: theme.textColor,
+      top: 20,
     },
     name: {
       fontSize: 18,
@@ -143,6 +157,7 @@ function createStyles(theme) {
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 2,
+      top: 20,
     },
     level: {
       fontSize: 15,
@@ -150,6 +165,7 @@ function createStyles(theme) {
       marginBottom: 3,
       fontWeight: "700",
       opacity: 0.9,
+      top: 20,
     },
     element: {
       fontSize: 14,
@@ -159,6 +175,7 @@ function createStyles(theme) {
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 3,
+      top: 20,
     },
     classText: {
       fontSize: 13,
@@ -205,12 +222,9 @@ function createStyles(theme) {
     },
     activateButton: {
       marginTop: 8,
-      backgroundColor: theme.borderColor,
       borderRadius: 9,
       paddingVertical: 6,
       paddingHorizontal: 16,
-      alignSelf: "stretch",
-      alignItems: "center",
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
@@ -223,6 +237,7 @@ function createStyles(theme) {
       fontWeight: "bold",
       fontSize: 14,
       letterSpacing: 0.14,
+      textAlign: "center",
     },
     deleteButton: {
       marginTop: 6,
@@ -247,7 +262,6 @@ function createStyles(theme) {
       fontWeight: "bold",
       fontSize: 15,
       letterSpacing: 0.15,
-      backgroundColor: theme.shadowColor,
       paddingHorizontal: 12,
       paddingVertical: 4,
       borderRadius: 8,
@@ -257,6 +271,30 @@ function createStyles(theme) {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.18,
       shadowRadius: 5,
+    },
+    exclusiveBadge: {
+      position: "absolute",
+      top: 10,
+      left: 10,
+      backgroundColor: "#FFD700",
+      borderRadius: 9,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      zIndex: 10,
+      elevation: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 3,
+    },
+    exclusiveBadgeText: {
+      fontWeight: "bold",
+      fontSize: 12,
+      color: "#111",
+      letterSpacing: 0.15,
+      marginLeft: 2,
     },
   });
 }

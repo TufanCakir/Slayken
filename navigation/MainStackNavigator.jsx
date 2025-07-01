@@ -24,6 +24,7 @@ import ToSScreen from "../screens/ToSScreen";
 import LoginScreen from "../screens/LoginScreen";
 import PreBattleInfoScreen from "../screens/PreBattleInfoScreen";
 import TeaserScreen from "../screens/TeaserScreen";
+import CharacterEquipmentScreen from "../screens/CharacterEquipmentScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -74,6 +75,10 @@ export default function MainStackNavigator({ data, localUris, imageMap }) {
         component={withAssets(SettingsScreen)}
       />
       <Stack.Screen name="GiftScreen" component={withAssets(GiftScreen)} />
+      <Stack.Screen
+        name="CharacterEquipmentScreen"
+        component={withAssets(CharacterEquipmentScreen)}
+      />
       <Stack.Screen
         name="MissionScreen"
         component={withAssets(MissionScreen)}

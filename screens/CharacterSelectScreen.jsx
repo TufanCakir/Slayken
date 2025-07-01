@@ -117,7 +117,7 @@ function createStyles(theme) {
       shadowRadius: 10,
       elevation: 6,
       borderWidth: 2,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
     },
     avatar: {
       width: 300,
@@ -157,7 +157,7 @@ function createStyles(theme) {
       backgroundColor: theme.accentColor,
       borderRadius: 15,
       borderWidth: 2,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
       paddingVertical: 34,
       paddingHorizontal: 12,
       alignItems: "center",

@@ -16,6 +16,7 @@ import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import BattleScene from "../components/BattleScene";
 import { useMissions } from "../context/MissionContext";
+import { useThemeContext } from "../context/ThemeContext"; // schon vorhanden!
 
 import bossData from "../data/bossData.json";
 import chapterData from "../data/chapterData.json";
@@ -63,6 +64,8 @@ export default function StoryScreen({ imageMap = {} }) {
   const [bossHp, setBossHp] = useState(100);
 
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
 
   useEffect(() => {
     if (!selectedChapter) return;
@@ -261,89 +264,152 @@ export default function StoryScreen({ imageMap = {} }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#F9B801",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  chapterCard: {
-    backgroundColor: "#1e293b",
-    borderRadius: 16,
-    height: 200,
-    marginVertical: 6,
-    overflow: "hidden",
-  },
-  chapterImage: {
-    flex: 1,
-    borderRadius: 16,
-    width: "100%",
-  },
-  chapterOverlay: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 8,
-  },
-  chapterTitle: {
-    color: "#F9B801",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  chapterDesc: {
-    color: "#ddd",
-    fontSize: 14,
-  },
-  backButton: {
-    marginVertical: 10,
-  },
-  backText: {
-    color: "#60a5fa",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  chapterTitleFight: {
-    color: "#F9B801",
-    fontWeight: "bold",
-    fontSize: 22,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.7)",
-  },
-  skillModal: {
-    backgroundColor: "#222",
-    padding: 20,
-    margin: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#888",
-  },
-  skillModalTitle: {
-    color: "#F9B801",
-    fontWeight: "bold",
-    fontSize: 18,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  skillItem: { marginBottom: 12 },
-  skillName: { fontWeight: "bold", fontSize: 16, color: "#F9B801" },
-  skillDescription: { fontSize: 14, color: "#ccc" },
-  skillPower: { fontSize: 12, color: "#888" },
-  okButton: {
-    backgroundColor: "#F9B801",
-    padding: 10,
-    borderRadius: 10,
-    alignSelf: "center",
-    marginTop: 16,
-  },
-  okText: { color: "#222", fontWeight: "bold" },
-});
+// Styles:
+function createStyles(theme) {
+  const accent = theme.accentColor || "#191919";
+  const text = theme.textColor || "#fff";
+  const border = theme.borderColor || "#ff8800";
+  const shadow = theme.shadowColor || "#222";
+  const glow = theme.glowColor || "#ffd70088";
+  const highlight = theme.borderGlowColor || "#ffd700cc";
+  const cardBg = accent + "ee";
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: accent,
+    },
+    header: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: highlight,
+      marginBottom: 12,
+      textAlign: "center",
+      letterSpacing: 0.4,
+      textShadowColor: glow,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 9,
+    },
+    chapterCard: {
+      backgroundColor: cardBg,
+      borderRadius: 18,
+      height: 200,
+      marginVertical: 6,
+      overflow: "hidden",
+      borderWidth: 2,
+      borderColor: border,
+      shadowColor: shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
+      elevation: 7,
+    },
+    chapterImage: {
+      flex: 1,
+      borderRadius: 18,
+      width: "100%",
+    },
+    chapterOverlay: {
+      position: "absolute",
+      bottom: 0,
+      width: "100%",
+      backgroundColor: accent + "cc",
+      padding: 9,
+      borderBottomLeftRadius: 18,
+      borderBottomRightRadius: 18,
+    },
+    chapterTitle: {
+      color: highlight,
+      fontWeight: "bold",
+      fontSize: 18,
+      textShadowColor: glow,
+      textShadowRadius: 5,
+    },
+    chapterDesc: {
+      color: text + "cc",
+      fontSize: 14,
+      marginTop: 3,
+      textShadowColor: shadow,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    backButton: {
+      marginVertical: 10,
+      padding: 4,
+      alignSelf: "flex-start",
+    },
+    backText: {
+      color: border,
+      fontWeight: "bold",
+      fontSize: 16,
+      textShadowColor: glow,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
+    },
+    chapterTitleFight: {
+      color: highlight,
+      fontWeight: "bold",
+      fontSize: 22,
+      marginBottom: 12,
+      textAlign: "center",
+      letterSpacing: 0.5,
+      textShadowColor: glow,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 7,
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0,0,0,0.7)",
+    },
+    skillModal: {
+      backgroundColor: accent + "f5",
+      padding: 20,
+      margin: 32,
+      borderRadius: 16,
+      borderWidth: 2,
+      borderColor: highlight,
+      shadowColor: shadow,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      elevation: 10,
+    },
+    skillModalTitle: {
+      color: highlight,
+      fontWeight: "bold",
+      fontSize: 18,
+      marginBottom: 12,
+      textAlign: "center",
+      textShadowColor: glow,
+      textShadowRadius: 8,
+    },
+    skillItem: { marginBottom: 13 },
+    skillName: {
+      fontWeight: "bold",
+      fontSize: 16,
+      color: highlight,
+      textShadowColor: glow,
+      textShadowRadius: 5,
+    },
+    skillDescription: { fontSize: 14, color: text + "ee" },
+    skillPower: { fontSize: 12, color: border },
+    okButton: {
+      backgroundColor: highlight,
+      padding: 10,
+      borderRadius: 10,
+      alignSelf: "center",
+      marginTop: 16,
+      borderWidth: 1.5,
+      borderColor: border,
+      shadowColor: glow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.21,
+      shadowRadius: 6,
+      elevation: 7,
+    },
+    okText: { color: accent, fontWeight: "bold" },
+  });
+}

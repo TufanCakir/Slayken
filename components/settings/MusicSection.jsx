@@ -144,7 +144,7 @@ const createStyles = (theme) =>
       borderWidth: 2,
       borderRadius: 10,
       alignItems: "center",
-      backgroundColor: theme.accentColor,
+      backgroundColor: theme.shadowColor,
       borderColor: theme.borderColor,
       marginTop: 12,
       marginBottom: 12,

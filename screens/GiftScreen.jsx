@@ -7,11 +7,7 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import {
-  FontAwesome,
-  FontAwesome5,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import { Image } from "expo-image";
 import ScreenLayout from "../components/ScreenLayout";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
@@ -21,6 +17,7 @@ import GiftBox from "../components/GiftBox";
 import giftData from "../data/giftData.json";
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
+import { getItemImageUrl } from "../utils/item/itemUtils";
 
 export default function GiftScreen() {
   const { theme } = useThemeContext();
@@ -36,36 +33,24 @@ export default function GiftScreen() {
   const gifts = useMemo(
     () =>
       giftData.map((gift) => {
-        let icon;
+        let imageUrl = "";
         switch (gift.type) {
           case "coins":
-            icon = () => (
-              <FontAwesome5 name="coins" size={50} color={theme.textColor} />
-            );
+            imageUrl = getItemImageUrl("coin");
             break;
           case "crystals":
-            icon = () => (
-              <MaterialCommunityIcons
-                name="cards-diamond"
-                size={50}
-                color={theme.textColor}
-              />
-            );
+            imageUrl = getItemImageUrl("crystal");
             break;
           case "exp":
-            icon = () => (
-              <FontAwesome5 name="fire" size={50} color={theme.textColor} />
-            );
+            imageUrl = getItemImageUrl("exp");
             break;
           case "box":
-            icon = GiftBox;
+            imageUrl = null;
             break;
           default:
-            icon = () => (
-              <FontAwesome name="gift" size={50} color={theme.textColor} />
-            );
+            imageUrl = getItemImageUrl("coin");
         }
-        return { ...gift, icon };
+        return { ...gift, imageUrl };
       }),
     [theme]
   );
@@ -94,32 +79,33 @@ export default function GiftScreen() {
   };
 
   const renderItem = ({ item }) => {
-    const Icon = item.icon;
     const isCollected = collectedGifts[item.id];
     return (
       <TouchableOpacity
-        style={[
-          styles.giftItem,
-          {
-            backgroundColor: isCollected ? "#222" : theme.accentColor,
-            borderColor: theme.borderColor,
-            shadowColor: isCollected ? "#0000" : theme.shadowColor,
-          },
-        ]}
+        style={[styles.giftItem, isCollected && styles.giftItemCollected]}
         activeOpacity={isCollected ? 1 : 0.8}
         onPress={() => !isCollected && handleCollect(item)}
         disabled={isCollected}
       >
-        <View style={styles.iconWrapper}>
-          <Icon />
+        <View
+          style={[
+            styles.iconWrapper,
+            isCollected && styles.iconWrapperCollected,
+          ]}
+        >
+          {item.type === "box" ? (
+            <GiftBox />
+          ) : (
+            <Image
+              source={item.imageUrl}
+              style={styles.giftIcon}
+              contentFit="contain"
+              transition={300}
+            />
+          )}
         </View>
         <Text
-          style={[
-            styles.giftName,
-            {
-              color: isCollected ? "#666" : theme.textColor,
-            },
-          ]}
+          style={[styles.giftName, isCollected && styles.giftNameCollected]}
         >
           {isCollected ? "✓ " : ""}
           {item.name}
@@ -129,9 +115,8 @@ export default function GiftScreen() {
   };
 
   return (
-    <ScreenLayout style={{ flex: 1 }}>
+    <ScreenLayout style={styles.flex}>
       <Text style={styles.header}>{t("giftsTitle")}</Text>
-
       <FlatList
         data={remainingGifts}
         keyExtractor={(item) => item.id}
@@ -144,11 +129,11 @@ export default function GiftScreen() {
       {!allCollected && (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
-            style={styles.blueButton}
+            style={styles.glowButton}
             onPress={collectAll}
             activeOpacity={0.87}
           >
-            <Text style={styles.blueButtonText}>{t("collectAll")}</Text>
+            <Text style={styles.glowButtonText}>{t("collectAll")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -157,89 +142,146 @@ export default function GiftScreen() {
 }
 
 function createStyles(theme) {
+  const glow = theme.shadowColor || "#ff8800";
+  const borderGlow = theme.borderColor || "#ff5500";
+  const accent = theme.accentColor || "#191919";
+  const textGlow = theme.textColor || "#fff";
+
   return StyleSheet.create({
+    flex: { flex: 1 },
     header: {
-      fontSize: 26,
+      fontSize: 27,
       fontWeight: "bold",
-      marginBottom: 12,
+      marginBottom: 14,
       textAlign: "center",
-      color: theme.textColor,
-      letterSpacing: 0.5,
-      textShadowColor: theme.shadowColor,
+      color: textGlow,
+      letterSpacing: 0.7,
+      textShadowColor: glow,
       textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 5,
-      marginTop: 10,
+      textShadowRadius: 10,
+      marginTop: 15,
+      borderBottomWidth: 2,
+      borderColor: borderGlow,
+      paddingBottom: 7,
+      alignSelf: "center",
+      width: "80%",
+      backgroundColor: accent + "ee",
+      borderRadius: 18,
+      shadowColor: glow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.13,
+      shadowRadius: 10,
+      elevation: 5,
     },
     listContainer: {
       paddingBottom: 80,
       zIndex: 2,
-      paddingHorizontal: 10,
+      paddingHorizontal: 14,
     },
     giftItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 12,
+      paddingVertical: 13,
       paddingHorizontal: 12,
-      borderBottomWidth: 1,
-      borderRadius: 10,
-      marginBottom: 8,
+      borderBottomWidth: 1.5,
+      borderRadius: 14,
+      marginBottom: 10,
+      borderWidth: 2,
+      borderColor: borderGlow,
+      backgroundColor: accent,
       ...Platform.select({
         ios: {
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.18,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.24,
+          shadowRadius: 14,
         },
-        android: { elevation: 4 },
+        android: { elevation: 8 },
       }),
+      shadowColor: glow,
       zIndex: 2,
+      opacity: 1,
+    },
+    giftItemCollected: {
+      backgroundColor: accent + "ee",
+      borderColor: "#3337",
+      shadowColor: "#0000",
+      opacity: 0.45,
     },
     iconWrapper: {
-      width: 54,
-      height: 54,
-      marginRight: 14,
+      width: 56,
+      height: 56,
+      marginRight: 17,
       justifyContent: "center",
       alignItems: "center",
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: borderGlow,
+      backgroundColor: accent,
+      shadowColor: glow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 9,
+      elevation: 5,
+    },
+    iconWrapperCollected: {
+      borderColor: "#3337",
+      shadowColor: "#0000",
+      backgroundColor: accent + "ee",
+    },
+    giftIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 10,
     },
     giftName: {
       fontSize: 19,
-      fontWeight: "600",
+      fontWeight: "700",
       flex: 1,
-      letterSpacing: 0.2,
+      letterSpacing: 0.3,
+      textShadowColor: glow,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 8,
+      color: textGlow,
+      opacity: 1,
+    },
+    giftNameCollected: {
+      color: "#8e9299",
+      opacity: 0.9,
     },
     buttonGroup: {
       marginVertical: 20,
-      paddingHorizontal: 16,
+      paddingHorizontal: 18,
       gap: 12,
       position: "absolute",
       bottom: 95,
       width: "100%",
       alignItems: "center",
     },
-    blueButton: {
-      backgroundColor: theme.textColor,
-      borderRadius: 14,
-      paddingVertical: 16,
-      paddingHorizontal: 34,
+    glowButton: {
+      backgroundColor: accent,
+      borderRadius: 18,
+      paddingVertical: 18,
+      paddingHorizontal: 44,
       alignItems: "center",
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.19,
-      shadowRadius: 8,
-      elevation: 5,
-      borderWidth: 2,
-      borderColor: theme.borderColor,
+      shadowColor: glow,
+      shadowOffset: { width: 0, height: 7 },
+      shadowOpacity: 0.32,
+      shadowRadius: 20,
+      elevation: 10,
+      borderWidth: 2.5,
+      borderColor: borderGlow,
     },
-    blueButtonText: {
-      color: theme.accentColor,
+    glowButtonText: {
+      color: textGlow,
       fontWeight: "bold",
-      fontSize: 18,
-      letterSpacing: 0.18,
+      fontSize: 19,
+      letterSpacing: 0.3,
     },
     empty: {
       textAlign: "center",
       marginTop: 34,
-      fontSize: 17,
-      color: theme.textColor,
+      fontSize: 18,
+      color: textGlow,
       zIndex: 2,
     },
   });

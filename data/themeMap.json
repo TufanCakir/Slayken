@@ -4,48 +4,62 @@
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_dark.png",
     "textColor": "#ffffff",
     "shadowColor": "#000000",
-    "borderColor": "#333333"
+    "borderColor": "#333333",
+    "glowColor": "#ffffff33",
+    "borderGlowColor": "#ffffffcc"
   },
   "light": {
     "accentColor": "#ffffff",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_light.png",
     "textColor": "#111111",
-    "shadowColor": "#aaaaaa",
-    "borderColor": "#dddddd"
+    "shadowColor": "#ffffff",
+    "borderColor": "#dddddd",
+    "glowColor": "#f2eecb77",
+    "borderGlowColor": "#ffd700cc"
   },
   "tech": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg_dark.png",
     "textColor": "#00ff00",
-    "shadowColor": "#00ff00",
-    "borderColor": "#00ff00"
+    "shadowColor": "#00ff0055",
+    "borderColor": "#00ff00",
+    "glowColor": "#39ff1499",
+    "borderGlowColor": "#00ff00ee"
   },
   "fire": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Magmorra.png",
     "textColor": "#fff5e6",
     "shadowColor": "#ff8800",
-    "borderColor": "#ff5500"
+    "borderColor": "#ff5500",
+    "glowColor": "#ff880088",
+    "borderGlowColor": "#ff5500cc"
   },
   "ice": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Karnathor.png",
     "textColor": "#e0f7ff",
     "shadowColor": "#66ccff",
-    "borderColor": "#3399ff"
+    "borderColor": "#3399ff",
+    "glowColor": "#66ccffaa",
+    "borderGlowColor": "#33bbffcc"
   },
   "void": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Lumora.png",
     "textColor": "#e0d0ff",
     "shadowColor": "#bb00ff",
-    "borderColor": "#660099"
+    "borderColor": "#660099",
+    "glowColor": "#bb00ff88",
+    "borderGlowColor": "#aa00ffdd"
   },
   "nature": {
     "accentColor": "#000000",
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/maps/Everglade.png",
     "textColor": "#f0fff0",
     "shadowColor": "#55aa55",
-    "borderColor": "#006600"
+    "borderColor": "#006600",
+    "glowColor": "#55ff5580",
+    "borderGlowColor": "#55ff44cc"
   }
 }

@@ -82,5 +82,18 @@
     "unlockDate": "2025-08",
     "element": "fire",
     "skills": []
+  },
+  {
+    "id": "reon-dragonheart",
+    "exp": 0,
+    "level": 1,
+    "expToNextLevel": 100,
+    "stats": { "strength": 13, "defense": 10, "agility": 6, "intelligence": 8 },
+    "label": "Reon Dragonheart",
+    "description": "Ein legendärer Krieger, der Flammen und Drachenblut vereint.",
+    "unlockDate": "2025-08",
+    "eventReward": true,
+    "element": "fire",
+    "skills": []
   }
 ]

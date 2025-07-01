@@ -36,7 +36,7 @@ const createStyles = (theme) =>
       borderRadius: 10,
       alignItems: "center",
       marginTop: 80,
-      backgroundColor: theme.accentColor,
+      backgroundColor: theme.shadowColor,
       borderColor: theme.borderColor,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 4 },

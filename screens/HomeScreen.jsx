@@ -56,7 +56,15 @@ export default function HomeScreen() {
     switch (tutorialStep) {
       case 1:
         return (
-          <View style={styles.tutorialBlock}>
+          <View
+            style={[
+              styles.tutorialBlock,
+              {
+                borderColor: theme.textColor,
+                backgroundColor: theme.accentColor,
+              },
+            ]}
+          >
             <Text style={[styles.tutorialText, { color: theme.textColor }]}>
               {t("tutorialStep1")}: {t("pleaseCollectGift")}
             </Text>
@@ -142,6 +150,12 @@ export default function HomeScreen() {
             <BattleButton
               onPress={() => navigateTo(navigation, "TeaserScreen")}
               label={t("teaserLabel")}
+              theme={theme}
+              style={styles.fullButton}
+            />
+            <BattleButton
+              onPress={() => navigateTo(navigation, "CharacterEquipmentScreen")}
+              label={t("equipmentLabel")}
               theme={theme}
               style={styles.fullButton}
             />

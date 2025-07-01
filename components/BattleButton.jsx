@@ -19,18 +19,16 @@ export default function BattleButton({ onPress, label, style }) {
 }
 
 function createStyles(theme) {
+  // Dynamische Glow-Farben
+  const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
+  const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";
   return StyleSheet.create({
     button: {
       marginTop: 12,
       borderRadius: 18,
-      backgroundColor: theme.accentColor, // z. B. #111111 (dark) oder #ffffff (light)
-      borderColor: theme.borderColor, // z. B. #333333 oder #dddddd
-      borderWidth: 2,
-      shadowColor: theme.shadowColor, // z. B. #000000 oder #aaaaaa
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.13,
-      shadowRadius: 16,
-      elevation: 7,
+      backgroundColor: theme.accentColor,
+      borderColor: borderGlow, // Glow Border
+      borderWidth: 3,
       flexDirection: "row",
       paddingBottom: 10,
       paddingTop: 6,
@@ -45,10 +43,10 @@ function createStyles(theme) {
       justifyContent: "center",
     },
     text: {
-      fontSize: 30,
-      color: theme.textColor, // z. B. #ffffff oder #111111
-      letterSpacing: 0.5,
-      transform: [{ skewY: "3deg" }],
+      fontSize: 25,
+      color: theme.textColor,
+      fontWeight: "bold",
+      letterSpacing: 0.7,
       textAlign: "center",
     },
   });

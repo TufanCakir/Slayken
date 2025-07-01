@@ -2,40 +2,78 @@
   {
     "id": "infermor",
     "name": "Infermor",
-    "description": "Ein flammender Dämon, der alles in Asche legt.",
     "element": "fire",
-    "rarity": "epic",
     "hp": 120,
     "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
     "phases": 1,
     "attackPattern": "regular",
     "power": 20,
-    "voiceLines": "Hallo ich bin Infermor "
+    "voiceLines": "Hallo ich bin Infermor"
   },
   {
     "id": "malzevox",
     "name": "Malzevox",
-    "description": "Ein flammender Dämon, der alles in Asche legt.",
     "element": "fire",
-    "rarity": "epic",
     "hp": 120,
     "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background2.png",
     "phases": 1,
     "attackPattern": "regular",
     "power": 20,
-    "voiceLines": "Hallo ich bin Malzevox "
+    "voiceLines": "Hallo ich bin Malzevox"
   },
   {
     "id": "aurelion",
     "name": "Aurelion",
-    "description": "Ein flammender Dämon, der alles in Asche legt.",
     "element": "fire",
-    "rarity": "epic",
     "hp": 120,
     "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background3.png",
     "phases": 1,
     "attackPattern": "regular",
     "power": 20,
-    "voiceLines": "Hallo ich bin Aurelion "
+    "voiceLines": "Hallo ich bin Aurelion"
+  },
+  {
+    "id": "orionyx",
+    "name": "Orionyx",
+    "element": "fire",
+    "hp": 120,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background4.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Orionyx"
+  },
+  {
+    "id": "drogmarth",
+    "name": "Drogmarth",
+    "element": "fire",
+    "hp": 120,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background5.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Drogmarth"
+  },
+  {
+    "id": "korathaz",
+    "name": "Korathaz",
+    "element": "fire",
+    "hp": 120,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background6.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Korathaz"
+  },
+  {
+    "id": "ashragul",
+    "name": "Ashragul",
+    "element": "fire",
+    "hp": 120,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background6.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Ashragul"
   }
 ]

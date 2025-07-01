@@ -19,5 +19,33 @@
     "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
     "bossId": "aurelion",
     "element": "fire"
+  },
+  {
+    "id": "orionyx",
+    "label": "Kapitel 4",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "orionyx",
+    "element": "fire"
+  },
+  {
+    "id": "drogmarth",
+    "label": "Kapitel 5",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "drogmarth",
+    "element": "fire"
+  },
+  {
+    "id": "korathaz",
+    "label": "Kapitel 6",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "korathaz",
+    "element": "fire"
+  },
+  {
+    "id": "ashragul",
+    "label": "Kapitel 7",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "ashragul",
+    "element": "fire"
   }
 ]

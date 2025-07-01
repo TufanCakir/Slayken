@@ -10,8 +10,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "../i18n";
+import { useThemeContext } from "../context/ThemeContext";
 
 export default function LoginScreen() {
+  const { theme } = useThemeContext();
   const [username, setUsername] = useState("");
   const navigation = useNavigation();
 
@@ -54,12 +56,14 @@ export default function LoginScreen() {
     );
   };
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{t("loginTitle")}</Text>
       <TextInput
         placeholder={t("playerNameLabels.newNamePlaceholder")}
-        placeholderTextColor="#7dd3fc"
+        placeholderTextColor={theme.placeholderTextColor || "#fff"}
         style={styles.input}
         value={username}
         onChangeText={setUsername}
@@ -81,67 +85,67 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 28,
-  },
-  title: {
-    fontSize: 26,
-    color: "#60a5fa",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 30,
-    letterSpacing: 0.3,
-    textShadowColor: "#1e3a8a",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-  },
-  input: {
-    width: "100%",
-    backgroundColor: "#1e293b",
-    borderColor: "#2563eb",
-    borderWidth: 2,
-    borderRadius: 14,
-    fontSize: 18,
-    color: "#f0f9ff",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    marginBottom: 24,
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  button: {
-    backgroundColor: "#2563eb",
-    borderRadius: 14,
-    paddingVertical: 15,
-    width: "100%",
-    alignItems: "center",
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.17,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 2,
-    borderColor: "#38bdf8",
-  },
-  buttonDisabled: {
-    backgroundColor: "#334155",
-    borderColor: "#64748b",
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#f0f9ff",
-    fontWeight: "bold",
-    fontSize: 18,
-    letterSpacing: 0.15,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-});
+function createStyles(theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 28,
+    },
+    title: {
+      fontSize: 26,
+      color: theme.textColor,
+      textAlign: "center",
+      marginBottom: 30,
+      letterSpacing: 0.3,
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 5,
+    },
+    input: {
+      width: "100%",
+      backgroundColor: theme.inputBackground || theme.shadowColor,
+      borderColor: theme.borderColor,
+      borderWidth: 2,
+      borderRadius: 14,
+      fontSize: 18,
+      color: theme.textColor,
+      paddingVertical: 12,
+      paddingHorizontal: 18,
+      marginBottom: 24,
+      shadowColor: theme.accentColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+    },
+    button: {
+      backgroundColor: theme.accentColor,
+      borderRadius: 14,
+      paddingVertical: 15,
+      width: "100%",
+      alignItems: "center",
+      shadowColor: theme.accentColor,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.17,
+      shadowRadius: 12,
+      elevation: 8,
+      borderWidth: 2,
+      borderColor: theme.borderColor,
+    },
+    buttonDisabled: {
+      backgroundColor: theme.disabledColor || "#334155",
+      borderColor: theme.disabledBorderColor || "#64748b",
+      opacity: 0.7,
+    },
+    buttonText: {
+      color: theme.textColor,
+      fontWeight: "bold",
+      fontSize: 18,
+      letterSpacing: 0.15,
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+  });
+}

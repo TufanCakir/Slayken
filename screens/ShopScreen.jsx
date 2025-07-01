@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,14 @@ import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useThemeContext } from "../context/ThemeContext";
-import Icon from "../components/Icon";
 import SHOP_ITEMS from "../data/shopData.json";
+import EVENT_DATA from "../data/eventData.json";
 import ScreenLayout from "../components/ScreenLayout";
+import { isActive, formatCountdown } from "../utils/helper";
+import { Image } from "expo-image";
 
-const ShopItemCard = React.memo(({ item, onBuy, theme }) => {
-  const { price, currency } = item;
+const ShopItemCard = React.memo(({ item, onBuy, theme, eventData }) => {
+  const { price, currency, linkedEventId } = item;
   let priceLabel = "";
   if (currency.length === 2) {
     priceLabel = `${price} Coins oder ${price} Kristalle`;
@@ -27,23 +29,56 @@ const ShopItemCard = React.memo(({ item, onBuy, theme }) => {
   } else {
     priceLabel = `${price} Kristalle`;
   }
-
   const styles = createStyles(theme);
 
+  // Event-Image holen, falls vorhanden
+  const event = EVENT_DATA.find((e) => e.id === item.linkedEventId);
+  const iconImage = event?.image;
+
+  // --- Countdown-Logik ---
+  const [countdown, setCountdown] = useState(null);
+  useEffect(() => {
+    if (!linkedEventId) return;
+    const event = eventData.find((e) => e.id === linkedEventId && e.activeTo);
+    if (!event) return;
+    function updateCountdown() {
+      setCountdown(formatCountdown(new Date(event.activeTo) - Date.now()));
+    }
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [linkedEventId, eventData]);
+
   return (
-    <View style={styles.card}>
-      <View style={styles.icon}>
-        <Icon name={item.iconName} size={40} color={theme.borderColor} />
+    <View style={styles.cardRow}>
+      {/* --- Icon links --- */}
+      <View style={styles.iconWrapper}>
+        <Image
+          source={iconImage}
+          style={styles.iconImage}
+          contentFit="contain"
+        />
       </View>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>{priceLabel}</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => onBuy(item)}
-        accessibilityRole="button"
-      >
-        <Text style={styles.buttonText}>Kaufen</Text>
-      </TouchableOpacity>
+
+      {/* --- Infos/Mitte + Button rechts --- */}
+      <View style={styles.cardContent}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.price}>{priceLabel}</Text>
+        {countdown && countdown !== "Vorbei!" && (
+          <Text style={styles.countdownActive}>Noch {countdown}</Text>
+        )}
+        {countdown === "Vorbei!" && (
+          <Text style={styles.countdownEnded}>Angebot beendet</Text>
+        )}
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => onBuy(item)}
+          accessibilityRole="button"
+        >
+          <Text style={styles.buttonText}>Kaufen</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 });
@@ -55,6 +90,7 @@ export default function ShopScreen() {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
+  // --- Alle Kategorien automatisch generieren ---
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((i) => i.category))),
     []
@@ -69,6 +105,22 @@ export default function ShopScreen() {
   );
 
   const [index, setIndex] = useState(0);
+
+  const linkedEvents = useMemo(
+    () => EVENT_DATA.filter(isActive).map((e) => e.id),
+    []
+  );
+
+  const getVisibleShopItems = useCallback(
+    (category) =>
+      SHOP_ITEMS.filter(
+        (item) =>
+          item.category === category &&
+          isActive(item) &&
+          (!item.linkedEventId || linkedEvents.includes(item.linkedEventId))
+      ),
+    [linkedEvents]
+  );
 
   const executePurchase = useCallback(
     async ({ id, name, price }, payWith, deductFunc) => {
@@ -109,15 +161,32 @@ export default function ShopScreen() {
   const renderScene = SceneMap(
     routes.reduce((scenes, route) => {
       scenes[route.key] = () => {
-        const data = SHOP_ITEMS.filter((i) => i.category === route.key);
+        const data = getVisibleShopItems(route.key);
         return (
           <FlatList
             data={data}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
-              <ShopItemCard item={item} onBuy={handleBuy} theme={theme} />
+              <ShopItemCard
+                item={item}
+                onBuy={handleBuy}
+                theme={theme}
+                eventData={EVENT_DATA}
+              />
             )}
+            ListEmptyComponent={
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 50,
+                  color: theme.textColor,
+                  opacity: 0.7,
+                }}
+              >
+                Noch keine Angebote in dieser Kategorie.
+              </Text>
+            }
           />
         );
       };
@@ -137,7 +206,7 @@ export default function ShopScreen() {
             {...props}
             scrollEnabled
             style={{ backgroundColor: theme.accentColor }}
-            indicatorStyle={{ backgroundColor: theme.accentColor }}
+            indicatorStyle={{ backgroundColor: theme.textColor }}
             renderLabel={({ route, focused }) => (
               <Text
                 style={{
@@ -164,22 +233,49 @@ function createStyles(theme) {
       padding: 20,
       paddingBottom: 40,
     },
-    card: {
+    // --- ShopCard als Row mit Icon links ---
+    cardRow: {
+      flexDirection: "row",
+      alignItems: "center",
       borderRadius: 18,
       borderWidth: 2,
-      padding: 22,
-      marginBottom: 18,
-      alignItems: "center",
+      borderColor: theme.textColor,
       backgroundColor: theme.shadowColor,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      marginBottom: 16,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.13,
       shadowRadius: 8,
       elevation: Platform.OS === "android" ? 6 : 0,
-      zIndex: 2,
     },
-    icon: {
-      marginBottom: 10,
+    iconWrapper: {
+      width: 100,
+      height: 100,
+      borderRadius: 29,
+      backgroundColor: theme.shadowColor,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 18,
+      borderWidth: 2,
+      borderColor: theme.textColor,
+      overflow: "hidden",
+      // optional: shadow für Icon
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.14,
+      shadowRadius: 5,
+    },
+    iconImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 22,
+    },
+    cardContent: {
+      flex: 1,
+      flexDirection: "column",
+      justifyContent: "center",
     },
     name: {
       fontSize: 17,
@@ -187,19 +283,41 @@ function createStyles(theme) {
       color: theme.textColor,
       marginBottom: 4,
       letterSpacing: 0.05,
+      textAlign: "center",
+      backgroundColor: theme.accentColor,
+      marginBottom: 20,
     },
     price: {
       fontSize: 14,
       color: theme.textColor,
-      marginBottom: 12,
+      marginBottom: 20,
       letterSpacing: 0.03,
+      textAlign: "center",
+      backgroundColor: theme.accentColor,
+    },
+    countdownActive: {
+      backgroundColor: theme.accentColor,
+      color: "#e66262",
+      fontWeight: "bold",
+      marginBottom: 7,
+      textAlign: "center",
+    },
+    countdownEnded: {
+      backgroundColor: theme.accentColor,
+
+      color: "#e66262",
+      fontWeight: "bold",
+      marginBottom: 7,
+      opacity: 0.7,
+      textAlign: "center",
     },
     button: {
       backgroundColor: theme.accentColor,
       borderRadius: 8,
-      paddingVertical: 10,
-      paddingHorizontal: 28,
-      marginTop: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 24,
+      alignSelf: "center",
+      marginTop: 10,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.16,

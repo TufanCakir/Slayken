@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
+import { Image } from "expo-image";
+import { getItemImageUrl } from "../utils/item/itemUtils";
 
 export default function Header() {
   const { coins } = useCoins();
@@ -68,26 +69,20 @@ export default function Header() {
       {/* CURRENCY */}
       <View style={styles.rightBlock}>
         <View style={styles.currencyItem}>
-          <FontAwesome5
-            name="coins"
-            size={14}
-            color={theme.textColor}
+          <Image
+            source={{ uri: getItemImageUrl("coin") }}
             style={styles.icon}
+            contentFit="contain"
           />
-          <Text style={[styles.currencyText, { color: theme.textColor }]}>
-            {coins}
-          </Text>
+          <Text style={styles.currencyText}>{coins}</Text>
         </View>
         <View style={styles.currencyItem}>
-          <MaterialCommunityIcons
-            name="cards-diamond"
-            size={16}
-            color={theme.textColor}
+          <Image
+            source={{ uri: getItemImageUrl("crystal") }}
             style={styles.icon}
+            contentFit="contain"
           />
-          <Text style={[styles.currencyText, { color: theme.textColor }]}>
-            {crystals}
-          </Text>
+          <Text style={styles.currencyText}>{crystals}</Text>
         </View>
       </View>
     </View>
@@ -105,7 +100,7 @@ function createStyles(theme) {
       height: 88,
       backgroundColor: theme.accentColor,
       borderBottomWidth: 2,
-      borderBottomColor: theme.borderColor,
+      borderBottomColor: theme.textColor,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.1,
@@ -135,14 +130,14 @@ function createStyles(theme) {
     centerBlock: {
       flex: 1,
       height: 20,
-      backgroundColor: theme.shadowColor,
+      backgroundColor: "blue",
       marginHorizontal: 20,
       borderRadius: 12,
       overflow: "hidden",
       justifyContent: "center",
       position: "relative",
       borderWidth: 2,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.13,
@@ -153,14 +148,14 @@ function createStyles(theme) {
       left: 0,
       top: 0,
       height: "100%",
-      backgroundColor: theme.textColor,
+      backgroundColor: "green",
       borderRadius: 12,
     },
     xpText: {
       fontSize: 11,
       textAlign: "center",
       fontWeight: "bold",
-      color: theme.accentColor,
+      color: theme.textColor,
       zIndex: 1,
     },
     rightBlock: {
@@ -180,15 +175,18 @@ function createStyles(theme) {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       borderWidth: 1,
-      borderColor: theme.borderColor,
+      borderColor: theme.textColor,
     },
     currencyText: {
       fontSize: 14,
       fontWeight: "bold",
       marginLeft: 3,
       letterSpacing: 0.2,
+      color: theme.textColor,
     },
     icon: {
+      width: 20,
+      height: 20,
       marginRight: 2,
     },
   });
