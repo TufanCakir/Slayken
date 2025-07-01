@@ -80,22 +80,15 @@ function createStyles(theme) {
     container: {
       flex: 1,
       justifyContent: "center",
-      backgroundColor: theme.background + "bb", // Blur/transp. möglich
+      backgroundColor: theme.background,
     },
     overlay: {
-      backgroundColor: theme.shadowColor,
+      backgroundColor: theme.accentColor,
       padding: 28,
       borderRadius: 16,
       marginHorizontal: 16,
       maxWidth: width * 0.92,
-      borderWidth: 2,
-      borderColor: theme.textColor,
       alignSelf: "center",
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.28,
-      shadowRadius: 16,
-      elevation: 8,
     },
     text: {
       fontSize: 19,
@@ -103,9 +96,6 @@ function createStyles(theme) {
       lineHeight: 28,
       color: theme.textColor,
       marginBottom: 10,
-      textShadowColor: theme.borderColor + "88",
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 3,
     },
     button: {
       marginTop: 26,
@@ -116,22 +106,11 @@ function createStyles(theme) {
       alignItems: "center",
       minWidth: 140,
       backgroundColor: theme.accentColor,
-      shadowColor: theme.shadowColor,
-      shadowRadius: 9,
-      shadowOpacity: 0.16,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 7,
-      borderWidth: 2,
-      borderColor: theme.textColor,
     },
     buttonText: {
-      fontWeight: "bold",
       fontSize: 16,
       letterSpacing: 1,
       color: theme.textColor,
-      textShadowColor: theme.shadowColor + "55",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
     },
   });
 }

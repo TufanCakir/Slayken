@@ -19,16 +19,11 @@ export default function BattleButton({ onPress, label, style }) {
 }
 
 function createStyles(theme) {
-  // Dynamische Glow-Farben
-  const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
-  const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";
   return StyleSheet.create({
     button: {
       marginTop: 12,
       borderRadius: 18,
       backgroundColor: theme.accentColor,
-      borderColor: borderGlow, // Glow Border
-      borderWidth: 3,
       flexDirection: "row",
       paddingBottom: 10,
       paddingTop: 6,

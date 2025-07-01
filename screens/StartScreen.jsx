@@ -178,7 +178,6 @@ function createStyles(theme) {
     },
     startText: {
       fontSize: 22,
-      fontWeight: "bold",
       letterSpacing: 1.3,
       textAlign: "center",
       color: theme.textColor,
@@ -190,18 +189,10 @@ function createStyles(theme) {
       backgroundColor: theme.accentColor,
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 13,
     },
     copyrightText: {
       color: theme.textColor,
       fontSize: 14,
-      fontWeight: "700",
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 7,
     },
     settingsIcon: {
       position: "absolute",
@@ -210,13 +201,6 @@ function createStyles(theme) {
       padding: 12,
       borderRadius: 24,
       backgroundColor: theme.accentColor + "f0",
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 1,
-      shadowRadius: 16,
-      elevation: 10,
     },
     modalOverlay: {
       flex: 1,
@@ -230,22 +214,11 @@ function createStyles(theme) {
       padding: 28,
       alignItems: "center",
       backgroundColor: theme.accentColor,
-      borderWidth: 3,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 1,
-      shadowRadius: 30,
-      elevation: 22,
     },
     modalTitle: {
       fontSize: 24,
-      fontWeight: "bold",
       color: theme.textColor,
       marginBottom: 20,
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 14,
     },
     modalItem: {
       flexDirection: "row",
@@ -257,10 +230,6 @@ function createStyles(theme) {
     modalItemText: {
       fontSize: 17,
       color: theme.textColor,
-      fontWeight: "700",
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
     },
     socialIcons: {
       flexDirection: "row",
@@ -269,13 +238,9 @@ function createStyles(theme) {
     },
     closeText: {
       fontSize: 18,
-      fontWeight: "bold",
       color: theme.textColor,
       marginTop: 10,
       letterSpacing: 0.8,
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 9,
     },
   });
 }

@@ -76,11 +76,8 @@ export default function PreBattleInfoScreen() {
 function createStyles(theme) {
   // Theme Werte fallback (für Dark, Fire etc.)
   const accent = theme.accentColor || "#0f172a";
-  const glow = theme.glowColor || "#38bdf8cc";
-  const border = theme.borderColor || "#38bdf8";
   const textMain = theme.textColor || "#c7dfff";
   const highlight = theme.borderGlowColor || "#38bdf8";
-  const shadow = theme.shadowColor || "#1e40af";
 
   return StyleSheet.create({
     container: {
@@ -88,26 +85,15 @@ function createStyles(theme) {
     },
     title: {
       fontSize: 28,
-      fontWeight: "bold",
       color: highlight,
       marginBottom: 18,
       textAlign: "center",
       letterSpacing: 0.45,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 3 },
-      textShadowRadius: 10,
-      borderBottomWidth: 2,
-      borderColor: border,
       paddingBottom: 7,
-      backgroundColor: accent + "dd",
+      backgroundColor: accent,
       borderRadius: 15,
       alignSelf: "center",
       width: "85%",
-      shadowColor: shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.19,
-      shadowRadius: 9,
-      elevation: 5,
     },
     content: {
       paddingVertical: 20,
@@ -121,34 +107,22 @@ function createStyles(theme) {
       textAlign: "center",
       lineHeight: 26,
       letterSpacing: 0.1,
-      fontWeight: "500",
-      backgroundColor: accent + "cc",
+      backgroundColor: accent,
       borderRadius: 9,
       paddingVertical: 7,
       paddingHorizontal: 10,
     },
-    highlight: {
-      color: highlight,
-      fontWeight: "bold",
-    },
+    highlight: { fontSize: 20 },
     button: {
       marginTop: 22,
-      backgroundColor: highlight,
+      backgroundColor: accent,
       borderRadius: 18,
       paddingVertical: 18,
       alignItems: "center",
-      shadowColor: glow,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.18,
-      shadowRadius: 14,
-      elevation: 9,
-      borderWidth: 2.5,
-      borderColor: border,
       marginBottom: 26,
     },
     buttonText: {
-      color: accent,
-      fontWeight: "bold",
+      color: textMain,
       fontSize: 20,
       letterSpacing: 0.2,
     },

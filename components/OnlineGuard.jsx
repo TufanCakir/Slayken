@@ -30,16 +30,7 @@ export default function OnlineGuard({ children }) {
       <View style={StyleSheet.absoluteFill}>
         <BlurView intensity={70} tint="light" style={StyleSheet.absoluteFill} />
         <View style={styles.centered}>
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: "rgba(37, 99, 235, 0.18)", // blue glassy
-                borderColor: theme.accentColor,
-                shadowColor: theme.accentColor,
-              },
-            ]}
-          >
+          <View style={[styles.card]}>
             <Text style={[styles.message, { color: theme.textColor }]}>
               {t("noInternetMessage")}
             </Text>
@@ -47,9 +38,7 @@ export default function OnlineGuard({ children }) {
               style={[
                 styles.button,
                 {
-                  backgroundColor: theme.accentColor + "EE",
-                  borderColor: theme.shadowColor,
-                  shadowColor: theme.accentColor,
+                  backgroundColor: theme.accentColor,
                 },
               ]}
               onPress={retryConnection}
@@ -73,22 +62,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,
   },
   card: {
     padding: 28,
     borderRadius: 22,
     alignItems: "center",
-    borderWidth: 1.5,
     minWidth: 260,
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 12,
   },
   message: {
     fontSize: 19,
-    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 18,
     letterSpacing: 0.1,
@@ -97,16 +79,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 10,
-    borderWidth: 1,
     marginTop: 6,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "bold",
     letterSpacing: 0.3,
     textAlign: "center",
   },

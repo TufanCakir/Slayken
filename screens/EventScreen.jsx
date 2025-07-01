@@ -474,7 +474,6 @@ export default function EventScreen({ imageMap = {} }) {
   );
 }
 
-// --- Styles wie gehabt:
 const styles = StyleSheet.create({
   container: { flex: 1 },
   stickyHeader: { zIndex: 10, backgroundColor: "#000", paddingTop: 8 },
@@ -487,15 +486,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activeTab: { backgroundColor: "#F9B801" },
-  tabText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  tabText: { color: "#fff", fontSize: 16 },
   activeTabText: { color: "#222" },
   skillModal: {
     backgroundColor: "#222",
     margin: 32,
     borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: "#888",
   },
   modalOverlay: {
     flex: 1,
@@ -505,13 +502,12 @@ const styles = StyleSheet.create({
   },
   skillModalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
     color: "#fff",
     marginBottom: 12,
     textAlign: "center",
   },
   skillItem: { marginBottom: 12 },
-  skillName: { fontSize: 16, fontWeight: "bold", color: "#F9B801" },
+  skillName: { fontSize: 16, color: "#F9B801" },
   skillDescription: { fontSize: 14, color: "#ccc" },
   skillPower: { fontSize: 12, color: "#888" },
   okButton: {
@@ -521,5 +517,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignSelf: "center",
   },
-  okText: { color: "#222", fontWeight: "bold" },
+  okText: { color: "#222" },
 });

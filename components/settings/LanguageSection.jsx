@@ -40,18 +40,11 @@ function ControlButton({ label, selected, onPress, theme }) {
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 8,
-        borderWidth: 2,
         marginRight: 8,
         marginBottom: 5,
         minWidth: 90,
         alignItems: "center",
         backgroundColor: selected ? theme.textColor : theme.accentColor,
-        borderColor: theme.borderColor,
-        shadowColor: selected ? theme.shadowColor : "transparent",
-        shadowOpacity: selected ? 0.4 : 0,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 7,
-        elevation: 4,
         opacity: pressed ? 0.8 : 1,
       })}
     >
@@ -85,9 +78,6 @@ const createStyles = (theme) =>
       marginBottom: 12,
       letterSpacing: 1.1,
       color: theme.textColor,
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 2,
     },
     row: {
       flexDirection: "row",

@@ -51,14 +51,10 @@ function createStyles(theme) {
     },
     header: {
       fontSize: 24,
-      fontWeight: "bold",
       letterSpacing: 1.1,
       color: theme.textColor,
       textAlign: "center",
       marginVertical: 24,
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 3 },
-      textShadowRadius: 8,
     },
     listContainer: {
       paddingBottom: 80,

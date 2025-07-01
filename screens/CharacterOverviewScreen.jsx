@@ -129,13 +129,6 @@ function createStyles(theme) {
       padding: 14,
       margin: 6,
       alignItems: "center",
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 7 },
-      shadowOpacity: 0.16,
-      shadowRadius: 12,
-      elevation: 8,
-      borderWidth: 2,
-      borderColor: theme.borderColor,
     },
     avatar: {
       width: 82,

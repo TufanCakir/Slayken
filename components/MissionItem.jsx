@@ -105,11 +105,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     borderRadius: 14,
     padding: 18,
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.13,
-    shadowRadius: 7,
-    elevation: 4,
     transition: "background-color 220ms",
   },
   collectedItem: {
@@ -119,7 +114,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     letterSpacing: 0.7,
     color: "#bae6fd",
-    fontWeight: "600",
   },
   missionTextCollected: {
     textDecorationLine: "line-through",
@@ -136,21 +130,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "#22c55e",
-    // kleine Animation/Transition wäre möglich!
   },
   collectButton: {
     marginTop: 14,
     backgroundColor: "#2563eb",
     paddingVertical: 11,
     borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "#38bdf8",
     alignItems: "center",
-    shadowColor: "#38bdf8",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 5,
   },
   rewardRow: {
     flexDirection: "row",
@@ -159,7 +145,6 @@ const styles = StyleSheet.create({
   },
   collectText: {
     color: "#f0f9ff",
-    fontWeight: "bold",
     fontSize: 15,
     letterSpacing: 0.1,
   },

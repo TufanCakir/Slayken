@@ -102,11 +102,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 20,
     marginBottom: 20,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: Platform.OS === "android" ? 6 : 0,
   },
   header: {
     flexDirection: "row",
@@ -114,7 +109,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    fontWeight: "bold",
     fontSize: 15,
     letterSpacing: 0.5,
   },
@@ -123,7 +117,6 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: "bold",
     color: "#f8fafc",
     textAlign: "center",
     marginVertical: 10,

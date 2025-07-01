@@ -143,7 +143,6 @@ export default function GiftScreen() {
 
 function createStyles(theme) {
   const glow = theme.shadowColor || "#ff8800";
-  const borderGlow = theme.borderColor || "#ff5500";
   const accent = theme.accentColor || "#191919";
   const textGlow = theme.textColor || "#fff";
 
@@ -151,27 +150,16 @@ function createStyles(theme) {
     flex: { flex: 1 },
     header: {
       fontSize: 27,
-      fontWeight: "bold",
       marginBottom: 14,
       textAlign: "center",
       color: textGlow,
       letterSpacing: 0.7,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 10,
       marginTop: 15,
-      borderBottomWidth: 2,
-      borderColor: borderGlow,
       paddingBottom: 7,
       alignSelf: "center",
       width: "80%",
-      backgroundColor: accent + "ee",
+      backgroundColor: accent,
       borderRadius: 18,
-      shadowColor: glow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.13,
-      shadowRadius: 10,
-      elevation: 5,
     },
     listContainer: {
       paddingBottom: 80,
@@ -183,27 +171,14 @@ function createStyles(theme) {
       alignItems: "center",
       paddingVertical: 13,
       paddingHorizontal: 12,
-      borderBottomWidth: 1.5,
       borderRadius: 14,
       marginBottom: 10,
       borderWidth: 2,
-      borderColor: borderGlow,
       backgroundColor: accent,
-      ...Platform.select({
-        ios: {
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.24,
-          shadowRadius: 14,
-        },
-        android: { elevation: 8 },
-      }),
       shadowColor: glow,
-      zIndex: 2,
-      opacity: 1,
     },
     giftItemCollected: {
       backgroundColor: accent + "ee",
-      borderColor: "#3337",
       shadowColor: "#0000",
       opacity: 0.45,
     },
@@ -214,14 +189,7 @@ function createStyles(theme) {
       justifyContent: "center",
       alignItems: "center",
       borderRadius: 14,
-      borderWidth: 1.5,
-      borderColor: borderGlow,
       backgroundColor: accent,
-      shadowColor: glow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 9,
-      elevation: 5,
     },
     iconWrapperCollected: {
       borderColor: "#3337",
@@ -238,9 +206,6 @@ function createStyles(theme) {
       fontWeight: "700",
       flex: 1,
       letterSpacing: 0.3,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 8,
       color: textGlow,
       opacity: 1,
     },
@@ -263,13 +228,6 @@ function createStyles(theme) {
       paddingVertical: 18,
       paddingHorizontal: 44,
       alignItems: "center",
-      shadowColor: glow,
-      shadowOffset: { width: 0, height: 7 },
-      shadowOpacity: 0.32,
-      shadowRadius: 20,
-      elevation: 10,
-      borderWidth: 2.5,
-      borderColor: borderGlow,
     },
     glowButtonText: {
       color: textGlow,

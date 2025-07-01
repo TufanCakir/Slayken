@@ -69,19 +69,10 @@ function createStyles(theme) {
       marginHorizontal: 6,
       height: 74,
       borderRadius: 16,
-      borderWidth: 2.5,
-      borderColor: borderGlow,
       backgroundColor: theme.accentColor,
       justifyContent: "center",
       alignItems: "center",
       overflow: "visible",
-      // Glow-Shadow
-      shadowColor: glow,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.46,
-      shadowRadius: 18,
-      elevation: 8,
-      // leichtes „Inset“-Feeling durch dickere Border und Glow
     },
     inner: {
       alignItems: "center",
@@ -92,12 +83,7 @@ function createStyles(theme) {
       marginTop: 7,
       textAlign: "center",
       color: theme.textColor,
-      fontWeight: "bold",
       letterSpacing: 0.4,
-      // Text Glow/Shadow
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 7,
     },
   });
 }

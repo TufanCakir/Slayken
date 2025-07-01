@@ -77,7 +77,7 @@ export default function CharacterEquipmentScreen() {
 
   if (!selectedChar) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.accentColor }]}>
+      <View style={styles.container}>
         <Text style={{ color: theme.textColor }}>Kein Charakter gefunden.</Text>
       </View>
     );
@@ -97,14 +97,7 @@ export default function CharacterEquipmentScreen() {
               style={[
                 styles.charButton,
                 {
-                  borderColor:
-                    char.id === selectedChar.id
-                      ? theme.borderColor
-                      : "transparent",
-                  backgroundColor:
-                    char.id === selectedChar.id
-                      ? theme.shadowColor
-                      : theme.accentColor,
+                  backgroundColor: theme.accentColor,
                 },
               ]}
               onPress={() => setSelectedCharacterId(char.id)}
@@ -121,9 +114,7 @@ export default function CharacterEquipmentScreen() {
           style={[
             styles.statsBox,
             {
-              backgroundColor: theme.accentColor + "ee",
-              borderColor: theme.borderColor,
-              shadowColor: theme.shadowColor,
+              backgroundColor: theme.accentColor,
             },
           ]}
         >
@@ -135,7 +126,7 @@ export default function CharacterEquipmentScreen() {
               key={stat}
               style={[styles.statText, { color: theme.textColor }]}
             >
-              {stat}: <Text style={{ fontWeight: "bold" }}>{value}</Text>
+              {stat}: <Text>{value}</Text>
               {percentBonuses[stat]
                 ? ` (+${Math.round(percentBonuses[stat] * 100)}%)`
                 : ""}
@@ -167,8 +158,7 @@ export default function CharacterEquipmentScreen() {
                 style={[
                   styles.equipItem,
                   {
-                    borderColor: theme.borderColor,
-                    backgroundColor: theme.accentColor + "cc",
+                    backgroundColor: theme.accentColor,
                   },
                 ]}
               >
@@ -214,8 +204,7 @@ export default function CharacterEquipmentScreen() {
           style={[
             styles.equippedBox,
             {
-              borderColor: theme.borderColor,
-              backgroundColor: theme.accentColor + "ee",
+              backgroundColor: theme.accentColor,
             },
           ]}
         >
@@ -251,31 +240,25 @@ export default function CharacterEquipmentScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 14, justifyContent: "flex-start" },
+  container: { flex: 1, justifyContent: "flex-start" },
   charRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
   charButton: {
     padding: 10,
     borderRadius: 10,
-    borderWidth: 2,
     marginRight: 6,
     minWidth: 60,
     alignItems: "center",
   },
-  charButtonText: { fontWeight: "bold" },
+  charButtonText: {},
   statsBox: {
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1.5,
     marginBottom: 12,
     marginTop: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.13,
-    shadowRadius: 7,
   },
-  statsTitle: { fontWeight: "bold", marginBottom: 8, fontSize: 16 },
+  statsTitle: { marginBottom: 8, fontSize: 16 },
   statText: { fontSize: 14 },
   equipTitle: {
-    fontWeight: "bold",
     fontSize: 16,
     marginBottom: 6,
     marginTop: 4,
@@ -292,7 +275,7 @@ const styles = StyleSheet.create({
   equipLabel: { fontWeight: "bold" },
   equipDesc: { fontSize: 13, opacity: 0.85 },
   equipBtn: {
-    backgroundColor: "#52525b",
+    backgroundColor: "000",
     padding: 8,
     borderRadius: 8,
     minWidth: 74,
@@ -300,15 +283,14 @@ const styles = StyleSheet.create({
   },
   equippedTitle: {
     marginTop: 10,
-    fontWeight: "bold",
     fontSize: 16,
     marginBottom: 3,
+    bottom: 50,
   },
   equippedBox: {
     borderRadius: 10,
     padding: 10,
-    borderWidth: 1.2,
-    marginTop: 4,
+    bottom: 50,
   },
-  equippedItem: { fontSize: 14, fontWeight: "bold" },
+  equippedItem: { fontSize: 14 },
 });

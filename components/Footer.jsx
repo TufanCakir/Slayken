@@ -115,19 +115,12 @@ function createStyles(theme) {
       zIndex: 99,
       gap: 10,
       backgroundColor: theme.accentColor,
-      borderTopWidth: 2,
-      borderTopColor: theme.textColor,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: -6 },
-      shadowOpacity: 0.06,
-      shadowRadius: 16,
     },
     tabWrapper: {
       flex: 1,
     },
     tab: {
-      borderWidth: 2,
-      borderColor: theme.textColor,
+      borderWidth: 1,
       backgroundColor: theme.accentColor,
       paddingTop: 6,
       height: 70,
@@ -135,17 +128,10 @@ function createStyles(theme) {
       justifyContent: "center",
       borderRadius: 13,
       marginHorizontal: 3,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 7,
-      elevation: 2,
-      zIndex: 99,
     },
     activeTab: {
       backgroundColor: theme.accentColor,
       borderColor: theme.textColor,
-      shadowColor: theme.shadowColor,
     },
     label: {
       fontSize: 13,
@@ -161,6 +147,7 @@ function createStyles(theme) {
       alignItems: "center",
       justifyContent: "center",
       transform: [{ scale: 1.5 }],
+      margin: 5,
     },
   });
 }

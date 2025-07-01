@@ -249,10 +249,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    fontWeight: "bold",
     textAlign: "center",
     paddingHorizontal: 20,
-    fontFamily: "sans-serif",
   },
   loadingContainer: {
     flex: 1,
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 12,
     fontSize: 16,
-    fontFamily: "sans-serif",
   },
   progressBarBackground: {
     width: "80%",

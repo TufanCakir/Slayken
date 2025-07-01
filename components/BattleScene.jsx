@@ -192,7 +192,6 @@ export default function BattleScene({
 }
 
 function createStyles(theme) {
-  const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
   const shadow = theme.shadowColor || "#222";
   const border = theme.borderColor || "#ff8800";
@@ -214,25 +213,14 @@ function createStyles(theme) {
       marginRight: 12,
       borderRadius: 14,
       padding: 16,
-      borderWidth: 2,
-      borderColor: border,
-      backgroundColor: theme.shadowColor,
+      backgroundColor: theme.accentColor,
       minWidth: 160,
-      shadowColor: shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.16,
-      shadowRadius: 9,
-      elevation: 7,
     },
     title: {
       fontSize: 18,
-      fontWeight: "bold",
       color: highlight,
       marginBottom: 4,
       letterSpacing: 0.5,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 8,
     },
     hpLabel: {
       fontSize: 13,
@@ -274,21 +262,14 @@ function createStyles(theme) {
       width: 90,
       height: 90,
       borderRadius: 12,
-      borderWidth: 2,
-      backgroundColor: theme.shadowColor,
       borderColor: highlight,
     },
     victory: {
       fontSize: 15,
-      fontWeight: "bold",
       marginTop: 10,
       color: highlight,
       letterSpacing: 0.2,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 6,
     },
-
     playerArea: { flex: 1, alignItems: "center", justifyContent: "center" },
     avatarWrapper: {
       flexDirection: "row",
@@ -300,26 +281,14 @@ function createStyles(theme) {
       flex: 1,
       borderRadius: 13,
       padding: 15,
-      borderWidth: 2,
-      borderColor: highlight,
-      backgroundColor: accent + "ee",
+      backgroundColor: theme.accentColor,
       minWidth: 160,
       marginRight: 10,
-      shadowColor: shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 5,
-      elevation: 5,
-      backgroundColor: theme.shadowColor,
     },
     charName: {
       fontSize: 15,
-      fontWeight: "bold",
       color: highlight,
       marginBottom: 2,
-      textShadowColor: glow,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 4,
     },
     charLevel: {
       fontSize: 12,
@@ -349,9 +318,6 @@ function createStyles(theme) {
       width: 90,
       height: 90,
       borderRadius: 12,
-      backgroundColor: theme.shadowColor,
-      borderWidth: 2,
-      borderColor: highlight,
     },
     textLight: {
       fontSize: 14,

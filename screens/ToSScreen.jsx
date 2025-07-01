@@ -88,19 +88,13 @@ const styles = StyleSheet.create({
     paddingTop: 52,
     paddingBottom: 14,
     zIndex: 2,
-    backgroundColor: "#1e293b80", // leichtes Blue für bessere Lesbarkeit
-    borderBottomWidth: 1,
-    borderColor: "#2563eb22",
+    backgroundColor: "#1e293b80",
   },
   title: {
     fontSize: 21,
-    fontWeight: "bold",
     marginLeft: 14,
     color: BLUE_ACCENT,
     letterSpacing: 0.3,
-    textShadowColor: "#1e40af",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   scrollContent: {
     paddingHorizontal: 18,
@@ -120,10 +114,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293bcc",
     borderRadius: 12,
     padding: 15,
-    shadowColor: "#2563eb",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
   },
   sectionTitle: {
     fontSize: 17,

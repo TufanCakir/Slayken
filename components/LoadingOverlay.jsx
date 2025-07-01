@@ -71,16 +71,8 @@ const styles = StyleSheet.create({
     pointerEvents: "auto",
   },
   spinnerCard: {
-    backgroundColor: "rgba(37, 99, 235, 0.17)", // blue glassy
     padding: 30,
     borderRadius: 24,
-    shadowColor: "#2563eb",
-    shadowOpacity: 0.28,
-    shadowRadius: 26,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 12,
-    borderWidth: 1.5,
-    borderColor: "#60a5fa55", // blauer Glow
     alignItems: "center",
     justifyContent: "center",
   },
