@@ -9,6 +9,15 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useThemeContext } from "../context/ThemeContext";
 
+const INFO_POINTS = [
+  "Im Kampf kannst du je nach Charakter-Level neue Fähigkeiten freischalten.",
+  "Du verdienst Münzen und Kristalle, wenn du Gegner besiegst.",
+  "Der Boss wird dich aktiv angreifen – achte auf deine Lebenspunkte!",
+  "Standardmäßig besitzt jeder Charakter den Heilungszauber.",
+  "Dieser Zauber verursacht Schaden am Boss und heilt dich gleichzeitig um einen Teil.",
+  "Nutze Skills taktisch, sammle Erfahrung, steigere dein Level und werde stärker!",
+];
+
 export default function PreBattleInfoScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
@@ -25,47 +34,12 @@ export default function PreBattleInfoScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Im Kampf kannst du je nach Charakter-Level neue Fähigkeiten
-            freischalten.
+        {INFO_POINTS.map((text, i) => (
+          <Text key={i} style={styles.infoText}>
+            {text}
           </Text>
-        </Text>
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Du verdienst Münzen und Kristalle, wenn du Gegner besiegst.
-          </Text>
-        </Text>
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Der Boss wird dich aktiv angreifen – achte auf deine Lebenspunkte!
-          </Text>
-        </Text>
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Standardmäßig besitzt jeder Charakter den Heilungszauber.
-          </Text>
-        </Text>
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Dieser Zauber verursacht Schaden am Boss und heilt dich gleichzeitig
-            um einen Teil.
-          </Text>
-        </Text>
-        <Text style={styles.text}>
-          {" "}
-          <Text style={styles.highlight}>
-            Nutze Skills taktisch, sammle Erfahrung, steigere dein Level und
-            werde stärker!
-          </Text>
-        </Text>
+        ))}
       </ScrollView>
-
       <TouchableOpacity style={styles.button} onPress={handleStartBattle}>
         <Text style={styles.buttonText}>Weiter zum Kampf</Text>
       </TouchableOpacity>
@@ -74,7 +48,6 @@ export default function PreBattleInfoScreen() {
 }
 
 function createStyles(theme) {
-  // Theme Werte fallback (für Dark, Fire etc.)
   const accent = theme.accentColor || "#0f172a";
   const textMain = theme.textColor || "#c7dfff";
   const highlight = theme.borderGlowColor || "#38bdf8";
@@ -82,49 +55,68 @@ function createStyles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
+      justifyContent: "flex-start",
     },
     title: {
       fontSize: 28,
       color: highlight,
-      marginBottom: 18,
+      marginTop: 22,
+      marginBottom: 12,
       textAlign: "center",
-      letterSpacing: 0.45,
-      paddingBottom: 7,
-      backgroundColor: accent,
+      fontWeight: "bold",
+      letterSpacing: 0.35,
+      paddingVertical: 8,
       borderRadius: 15,
+      width: "90%",
       alignSelf: "center",
-      width: "85%",
+      backgroundColor: accent,
+      shadowColor: highlight,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.13,
+      shadowRadius: 12,
+      elevation: 3,
     },
     content: {
-      paddingVertical: 20,
-      paddingHorizontal: 7,
+      paddingVertical: 16,
+      paddingHorizontal: 18,
       gap: 14,
     },
-    text: {
+    infoText: {
       fontSize: 18,
       color: textMain,
-      marginBottom: 8,
       textAlign: "center",
       lineHeight: 26,
-      letterSpacing: 0.1,
+      letterSpacing: 0.09,
       backgroundColor: accent,
-      borderRadius: 9,
-      paddingVertical: 7,
+      borderRadius: 11,
+      paddingVertical: 11,
       paddingHorizontal: 10,
+      shadowColor: highlight,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.09,
+      shadowRadius: 6,
+      elevation: 2,
     },
-    highlight: { fontSize: 20 },
     button: {
-      marginTop: 22,
-      backgroundColor: accent,
+      marginTop: 16,
+      backgroundColor: highlight,
       borderRadius: 18,
       paddingVertical: 18,
       alignItems: "center",
-      marginBottom: 26,
+      marginBottom: 34,
+      width: "82%",
+      alignSelf: "center",
+      shadowColor: highlight,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.14,
+      shadowRadius: 12,
+      elevation: 3,
     },
     buttonText: {
-      color: textMain,
+      color: accent,
       fontSize: 20,
-      letterSpacing: 0.2,
+      fontWeight: "bold",
+      letterSpacing: 0.16,
     },
   });
 }

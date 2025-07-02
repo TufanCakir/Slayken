@@ -17,7 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const CARD_WIDTH = Dimensions.get("window").width / 2 - 24;
 
 export default function CharacterOverviewScreen() {
-  const { theme } = useThemeContext(); // Aktuelles Theme
+  const { theme } = useThemeContext();
   const styles = createStyles(theme);
   const { classList, activeClassId, setActiveClassId, deleteClass } =
     useClass();
@@ -27,7 +27,7 @@ export default function CharacterOverviewScreen() {
     const element = elementData[item.element] || {};
 
     return (
-      <View style={[styles.card, {}]}>
+      <View style={[styles.card, isActive && styles.cardActive]}>
         {item.eventReward && (
           <View style={styles.exclusiveBadge}>
             <MaterialCommunityIcons
@@ -45,14 +45,13 @@ export default function CharacterOverviewScreen() {
           style={styles.avatar}
           contentFit="contain"
         />
-        <Text style={[styles.name]}>{item.name}</Text>
+        <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.level}>Level {item.level}</Text>
         <Text style={[styles.element, { color: element.color }]}>
           {element.icon} {element.label}
         </Text>
         <Text style={styles.classText}>{item.type}</Text>
 
-        {/* 🧠 Skills anzeigen */}
         <Text style={styles.skillTitle}>Skills:</Text>
         {item.skills.map((skill, i) => (
           <View key={i} style={styles.skillItem}>
@@ -62,7 +61,6 @@ export default function CharacterOverviewScreen() {
           </View>
         ))}
 
-        {/* ✅ Klassen-Auswahl */}
         {!isActive ? (
           <>
             <TouchableOpacity
@@ -71,7 +69,6 @@ export default function CharacterOverviewScreen() {
             >
               <Text style={styles.activateText}>Als Klasse aktivieren</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() =>
@@ -114,13 +111,10 @@ export default function CharacterOverviewScreen() {
 
 function createStyles(theme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+    container: { flex: 1 },
     grid: {
       paddingHorizontal: 12,
       paddingBottom: 32,
-      gap: 14,
     },
     card: {
       width: CARD_WIDTH,
@@ -129,28 +123,31 @@ function createStyles(theme) {
       padding: 14,
       margin: 6,
       alignItems: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    cardActive: {
+      borderColor: theme.textColor,
     },
     avatar: {
       width: 82,
       height: 82,
-      borderRadius: 40,
-      marginBottom: 8,
+      borderRadius: 41,
+      marginBottom: 10,
       backgroundColor: theme.shadowColor,
       borderWidth: 2,
       borderColor: theme.textColor,
-      top: 20,
     },
     name: {
       fontSize: 18,
       fontWeight: "bold",
       marginBottom: 2,
-      textAlign: "center",
       color: theme.textColor,
+      textAlign: "center",
       letterSpacing: 0.2,
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 2,
-      top: 20,
     },
     level: {
       fontSize: 15,
@@ -158,7 +155,6 @@ function createStyles(theme) {
       marginBottom: 3,
       fontWeight: "700",
       opacity: 0.9,
-      top: 20,
     },
     element: {
       fontSize: 14,
@@ -168,11 +164,10 @@ function createStyles(theme) {
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 3,
-      top: 20,
     },
     classText: {
       fontSize: 13,
-      color: theme.textColor,
+      color: theme.textColor + "99",
       marginBottom: 6,
       fontWeight: "bold",
       letterSpacing: 0.12,
@@ -192,10 +187,6 @@ function createStyles(theme) {
       borderRadius: 8,
       paddingVertical: 4,
       paddingHorizontal: 8,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 5,
     },
     skillName: {
       fontSize: 13,
@@ -218,19 +209,16 @@ function createStyles(theme) {
       borderRadius: 9,
       paddingVertical: 6,
       paddingHorizontal: 16,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
       borderWidth: 1.5,
       borderColor: theme.textColor,
+      alignSelf: "stretch",
+      alignItems: "center",
     },
     activateText: {
       color: theme.textColor,
       fontWeight: "bold",
       fontSize: 14,
       letterSpacing: 0.14,
-      textAlign: "center",
     },
     deleteButton: {
       marginTop: 6,
@@ -258,12 +246,7 @@ function createStyles(theme) {
       paddingHorizontal: 12,
       paddingVertical: 4,
       borderRadius: 8,
-      overflow: "hidden",
       textAlign: "center",
-      shadowColor: theme.textColor,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.18,
-      shadowRadius: 5,
     },
     exclusiveBadge: {
       position: "absolute",
@@ -274,7 +257,6 @@ function createStyles(theme) {
       paddingHorizontal: 8,
       paddingVertical: 2,
       zIndex: 10,
-      elevation: 10,
       flexDirection: "row",
       alignItems: "center",
       shadowColor: "#000",

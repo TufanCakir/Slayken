@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 import ScreenLayout from "../components/ScreenLayout";
@@ -28,94 +27,109 @@ export default function GiftScreen() {
   const { addXp } = useAccountLevel();
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
-  const [refreshFlag, setRefreshFlag] = useState(false);
-
   const gifts = useMemo(
     () =>
       giftData.map((gift) => {
-        let imageUrl = "";
-        switch (gift.type) {
-          case "coins":
-            imageUrl = getItemImageUrl("coin");
-            break;
-          case "crystals":
-            imageUrl = getItemImageUrl("crystal");
-            break;
-          case "exp":
-            imageUrl = getItemImageUrl("exp");
-            break;
-          case "box":
-            imageUrl = null;
-            break;
-          default:
-            imageUrl = getItemImageUrl("coin");
-        }
-        return { ...gift, imageUrl };
+        let imageType = gift.type;
+        if (imageType === "coins") imageType = "coin";
+        if (imageType === "crystals") imageType = "crystal";
+        return {
+          ...gift,
+          imageUrl: gift.type === "box" ? null : getItemImageUrl(imageType),
+        };
       }),
-    [theme]
+    []
   );
 
-  const remainingGifts = gifts.filter((gift) => !collectedGifts[gift.id]);
+  const remainingGifts = useMemo(
+    () => gifts.filter((gift) => !collectedGifts[gift.id]),
+    [gifts, collectedGifts]
+  );
+
   const allCollected = remainingGifts.length === 0;
 
-  const handleCollect = async (item) => {
-    if (collectedGifts[item.id]) return;
-    await collectGift(item.id);
-    if (item.type === "coins" && item.amount) addCoins(item.amount);
-    if (item.type === "crystals" && item.amount) addCrystals(item.amount);
-    if (item.type === "exp" && item.amount) addXp(item.amount);
-    setRefreshFlag((prev) => !prev);
-  };
+  const handleCollect = useCallback(
+    async (item) => {
+      if (collectedGifts[item.id]) return;
+      await collectGift(item.id);
+      if (item.type === "coins" && item.amount) addCoins(item.amount);
+      if (item.type === "crystals" && item.amount) addCrystals(item.amount);
+      if (item.type === "exp" && item.amount) addXp(item.amount);
+    },
+    [collectedGifts, collectGift, addCoins, addCrystals, addXp]
+  );
 
-  const collectAll = async () => {
+  const collectAll = useCallback(async () => {
     const idsToCollect = remainingGifts.map((gift) => gift.id);
+    if (idsToCollect.length === 0) return;
     await collectMultipleGifts(idsToCollect);
     for (const gift of remainingGifts) {
       if (gift.type === "coins" && gift.amount) addCoins(gift.amount);
       if (gift.type === "crystals" && gift.amount) addCrystals(gift.amount);
       if (gift.type === "exp" && gift.amount) addXp(gift.amount);
     }
-    setRefreshFlag((prev) => !prev);
-  };
+  }, [remainingGifts, collectMultipleGifts, addCoins, addCrystals, addXp]);
 
-  const renderItem = ({ item }) => {
-    const isCollected = collectedGifts[item.id];
-    return (
-      <TouchableOpacity
-        style={[styles.giftItem, isCollected && styles.giftItemCollected]}
-        activeOpacity={isCollected ? 1 : 0.8}
-        onPress={() => !isCollected && handleCollect(item)}
-        disabled={isCollected}
-      >
-        <View
+  const renderItem = useCallback(
+    ({ item }) => {
+      const isCollected = collectedGifts[item.id];
+      return (
+        <TouchableOpacity
           style={[
-            styles.iconWrapper,
-            isCollected && styles.iconWrapperCollected,
+            styles.giftItem,
+            isCollected && styles.giftItemCollected,
+            {
+              borderColor: theme.borderGlowColor,
+              shadowColor: theme.glowColor,
+            },
           ]}
+          activeOpacity={isCollected ? 1 : 0.82}
+          onPress={() => !isCollected && handleCollect(item)}
+          disabled={isCollected}
         >
-          {item.type === "box" ? (
-            <GiftBox />
-          ) : (
-            <Image
-              source={item.imageUrl}
-              style={styles.giftIcon}
-              contentFit="contain"
-              transition={300}
-            />
-          )}
-        </View>
-        <Text
-          style={[styles.giftName, isCollected && styles.giftNameCollected]}
-        >
-          {isCollected ? "✓ " : ""}
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+          <View style={styles.iconWrapper}>
+            {item.type === "box" ? (
+              <GiftBox />
+            ) : (
+              <Image
+                source={item.imageUrl}
+                style={styles.giftIcon}
+                contentFit="contain"
+                transition={300}
+              />
+            )}
+          </View>
+          <Text
+            style={[
+              styles.giftName,
+              isCollected && styles.giftNameCollected,
+              { color: isCollected ? theme.borderGlowColor : theme.textColor },
+            ]}
+          >
+            {isCollected ? "✓ " : ""}
+            {item.name}
+          </Text>
+        </TouchableOpacity>
+      );
+    },
+    [styles, collectedGifts, handleCollect, theme]
+  );
+
+  // Hintergrundbild (bgImage im Theme, falls vorhanden)
+  const bgImage =
+    typeof theme.bgImage === "string" ? { uri: theme.bgImage } : theme.bgImage;
 
   return (
-    <ScreenLayout style={styles.flex}>
+    <ScreenLayout style={[styles.flex]}>
+      {bgImage && (
+        <Image
+          source={bgImage}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={500}
+          blurRadius={theme.bgBlur || 0}
+        />
+      )}
       <Text style={styles.header}>{t("giftsTitle")}</Text>
       <FlatList
         data={remainingGifts}
@@ -123,15 +137,13 @@ export default function GiftScreen() {
         renderItem={renderItem}
         ListEmptyComponent={<Text style={styles.empty}>{t("noGifts")}</Text>}
         contentContainerStyle={styles.listContainer}
-        extraData={refreshFlag}
       />
-
       {!allCollected && (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
             style={styles.glowButton}
             onPress={collectAll}
-            activeOpacity={0.87}
+            activeOpacity={0.88}
           >
             <Text style={styles.glowButtonText}>{t("collectAll")}</Text>
           </TouchableOpacity>
@@ -142,105 +154,112 @@ export default function GiftScreen() {
 }
 
 function createStyles(theme) {
-  const glow = theme.shadowColor || "#ff8800";
-  const accent = theme.accentColor || "#191919";
-  const textGlow = theme.textColor || "#fff";
-
   return StyleSheet.create({
     flex: { flex: 1 },
     header: {
-      fontSize: 27,
-      marginBottom: 14,
+      fontSize: 26,
+      marginBottom: 16,
       textAlign: "center",
-      color: textGlow,
-      letterSpacing: 0.7,
-      marginTop: 15,
-      paddingBottom: 7,
+      letterSpacing: 0.6,
+      marginTop: 20,
+      paddingBottom: 9,
       alignSelf: "center",
-      width: "80%",
-      backgroundColor: accent,
+      width: "81%",
+      backgroundColor: theme.accentColor,
       borderRadius: 18,
+      color: theme.textColor,
+      borderWidth: 2,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
     },
     listContainer: {
       paddingBottom: 80,
-      zIndex: 2,
       paddingHorizontal: 14,
     },
     giftItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 13,
-      paddingHorizontal: 12,
+      paddingVertical: 14,
+      paddingHorizontal: 13,
       borderRadius: 14,
-      marginBottom: 10,
+      marginBottom: 12,
       borderWidth: 2,
-      backgroundColor: accent,
-      shadowColor: glow,
+      backgroundColor: theme.accentColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.13,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+      opacity: 1,
     },
     giftItemCollected: {
-      backgroundColor: accent + "ee",
-      shadowColor: "#0000",
-      opacity: 0.45,
+      opacity: 0.4,
     },
     iconWrapper: {
-      width: 56,
-      height: 56,
-      marginRight: 17,
+      width: 54,
+      height: 54,
+      marginRight: 15,
       justifyContent: "center",
       alignItems: "center",
       borderRadius: 14,
-      backgroundColor: accent,
-    },
-    iconWrapperCollected: {
-      borderColor: "#3337",
-      shadowColor: "#0000",
-      backgroundColor: accent + "ee",
+      backgroundColor: theme.accentColor,
+      borderWidth: 1,
+      borderColor: theme.borderGlowColor,
     },
     giftIcon: {
-      width: 46,
-      height: 46,
+      width: 45,
+      height: 45,
       borderRadius: 10,
     },
     giftName: {
-      fontSize: 19,
-      fontWeight: "700",
+      fontSize: 18,
       flex: 1,
-      letterSpacing: 0.3,
-      color: textGlow,
+      letterSpacing: 0.28,
       opacity: 1,
+      fontWeight: "600",
     },
     giftNameCollected: {
-      color: "#8e9299",
-      opacity: 0.9,
+      opacity: 0.7,
     },
     buttonGroup: {
-      marginVertical: 20,
-      paddingHorizontal: 18,
-      gap: 12,
+      marginVertical: 18,
+      paddingHorizontal: 16,
+      gap: 10,
       position: "absolute",
-      bottom: 95,
+      bottom: 88,
       width: "100%",
       alignItems: "center",
     },
     glowButton: {
-      backgroundColor: accent,
-      borderRadius: 18,
-      paddingVertical: 18,
-      paddingHorizontal: 44,
+      backgroundColor: theme.accentColor,
+      borderRadius: 16,
+      paddingVertical: 15,
+      paddingHorizontal: 40,
       alignItems: "center",
+      borderWidth: 2,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.18,
+      shadowRadius: 12,
+      elevation: 3,
     },
     glowButtonText: {
-      color: textGlow,
-      fontWeight: "bold",
-      fontSize: 19,
-      letterSpacing: 0.3,
+      fontSize: 18,
+      letterSpacing: 0.28,
+      color: theme.textColor,
+      fontWeight: "700",
     },
     empty: {
       textAlign: "center",
-      marginTop: 34,
-      fontSize: 18,
-      color: textGlow,
-      zIndex: 2,
+      marginTop: 38,
+      fontSize: 19,
+      color: theme.textColor,
+      opacity: 0.85,
+      fontWeight: "600",
     },
   });
 }

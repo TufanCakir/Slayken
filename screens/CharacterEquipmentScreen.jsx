@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import React from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,6 +15,26 @@ import { getEquipmentImageUrl } from "../utils/equipment/equipment";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ScreenLayout from "../components/ScreenLayout";
 
+// -------- Custom Hook ausgelagert --------
+function useUnlockedEquipment() {
+  const [unlockedItemIds, setUnlockedItemIds] = useState([]);
+
+  useEffect(() => {
+    const loadUnlocked = async () => {
+      const keys = await AsyncStorage.getAllKeys();
+      const unlocked = keys
+        .filter((k) => k.startsWith("unlocked_item_"))
+        .map((k) => k.replace("unlocked_item_", ""));
+      setUnlockedItemIds(unlocked);
+    };
+    loadUnlocked();
+  }, []);
+
+  return unlockedItemIds;
+}
+
+const EQUIP_SLOTS = ["weapon"];
+
 export default function CharacterEquipmentScreen() {
   const { classList, equipItem } = useClass();
   const { theme } = useThemeContext();
@@ -23,246 +42,250 @@ export default function CharacterEquipmentScreen() {
   const [selectedCharacterId, setSelectedCharacterId] = useState(
     classList[0]?.id
   );
-  const selectedChar = classList.find((c) => c.id === selectedCharacterId);
+
+  const selectedChar = useMemo(
+    () => classList.find((c) => c.id === selectedCharacterId),
+    [classList, selectedCharacterId]
+  );
 
   const unlockedItemIds = useUnlockedEquipment();
 
-  const filteredEquipmentPool = equipmentPool.filter((item) =>
-    unlockedItemIds.includes(item.id)
+  const filteredEquipmentPool = useMemo(
+    () => equipmentPool.filter((item) => unlockedItemIds.includes(item.id)),
+    [unlockedItemIds]
   );
 
-  function useUnlockedEquipment() {
-    const [unlockedItemIds, setUnlockedItemIds] = useState([]);
-    useEffect(() => {
-      const loadUnlocked = async () => {
-        const keys = await AsyncStorage.getAllKeys();
-        const unlocked = keys
-          .filter((k) => k.startsWith("unlocked_item_"))
-          .map((k) => k.replace("unlocked_item_", ""));
-        setUnlockedItemIds(unlocked);
-      };
-      loadUnlocked();
-    }, []);
-    return unlockedItemIds;
-  }
+  const getEquipped = useCallback(
+    (slot) => {
+      const equippedId = selectedChar?.equipment?.[slot];
+      return equippedId
+        ? equipmentPool.find((eq) => eq.id === equippedId)
+        : null;
+    },
+    [selectedChar]
+  );
 
-  const handleEquip = (equipment, slot) => {
-    equipItem(selectedChar.id, slot, equipment.id);
-  };
-  const handleRemove = (slot) => {
-    equipItem(selectedChar.id, slot, null);
-  };
+  const handleEquip = useCallback(
+    (equipment, slot) => equipItem(selectedChar.id, slot, equipment.id),
+    [selectedChar, equipItem]
+  );
 
-  const getEquipped = (slot) =>
-    equipmentPool.find((eq) => eq.id === selectedChar?.equipment?.[slot]);
+  const handleRemove = useCallback(
+    (slot) => equipItem(selectedChar.id, slot, null),
+    [selectedChar, equipItem]
+  );
 
-  // Stat-Berechnung mit Equipment-Boni
-  const baseStats = selectedChar?.stats ?? {};
-  let bonusStats = { ...baseStats };
-  let percentBonuses = { attack: 0, expGain: 0 };
+  const { totalStats, percentBonuses } = useMemo(() => {
+    const baseStats = selectedChar?.stats ?? {};
+    const mergedStats = { ...baseStats };
+    const pBonuses = {};
 
-  ["weapon"].forEach((slot) => {
-    const item = getEquipped(slot);
-    if (item) {
-      item.bonuses.forEach((bonus) => {
-        if (bonus.type === "flat") {
-          bonusStats[bonus.stat] = (bonusStats[bonus.stat] || 0) + bonus.value;
-        } else if (bonus.type === "percent") {
-          percentBonuses[bonus.stat] =
-            (percentBonuses[bonus.stat] || 0) + bonus.value;
-        }
-      });
-    }
-  });
+    EQUIP_SLOTS.forEach((slot) => {
+      const item = getEquipped(slot);
+      if (item) {
+        item.bonuses.forEach((bonus) => {
+          if (bonus.type === "flat") {
+            mergedStats[bonus.stat] =
+              (mergedStats[bonus.stat] || 0) + bonus.value;
+          } else if (bonus.type === "percent") {
+            pBonuses[bonus.stat] = (pBonuses[bonus.stat] || 0) + bonus.value;
+          }
+        });
+      }
+    });
+
+    return { totalStats: mergedStats, percentBonuses: pBonuses };
+  }, [selectedChar, getEquipped]);
 
   if (!selectedChar) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centeredContainer}>
         <Text style={{ color: theme.textColor }}>Kein Charakter gefunden.</Text>
       </View>
     );
   }
 
-  return (
-    <ScreenLayout>
-      <ImageBackground
-        source={theme.bgImage}
-        style={[styles.container, { backgroundColor: theme.accentColor }]}
-      >
-        {/* Charakterauswahl */}
-        <View style={styles.charRow}>
-          {classList.map((char) => (
-            <TouchableOpacity
-              key={char.id}
-              style={[
-                styles.charButton,
-                {
-                  backgroundColor: theme.accentColor,
-                },
-              ]}
-              onPress={() => setSelectedCharacterId(char.id)}
-            >
-              <Text style={[styles.charButtonText, { color: theme.textColor }]}>
-                {char.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  const renderEquipItem = useCallback(
+    ({ item }) => {
+      const equipped = getEquipped(item.slot);
+      const alreadyEquipped = equipped?.id === item.id;
 
-        {/* Stats mit Boni */}
-        <View
-          style={[
-            styles.statsBox,
-            {
-              backgroundColor: theme.accentColor,
-            },
-          ]}
-        >
-          <Text style={[styles.statsTitle, { color: theme.textColor }]}>
-            Stats
-          </Text>
-          {Object.entries(bonusStats).map(([stat, value]) => (
+      return (
+        <ItemCard
+          item={item}
+          alreadyEquipped={alreadyEquipped}
+          theme={theme}
+          onEquip={() =>
+            alreadyEquipped
+              ? handleRemove(item.slot)
+              : handleEquip(item, item.slot)
+          }
+        />
+      );
+    },
+    [getEquipped, handleEquip, handleRemove, theme]
+  );
+
+  return (
+    <ScreenLayout style={styles.container}>
+      {/* Charakterauswahl */}
+      <View style={styles.charRow}>
+        {classList.map((char) => (
+          <TouchableOpacity
+            key={char.id}
+            style={[
+              styles.charButton,
+              {
+                backgroundColor:
+                  selectedCharacterId === char.id
+                    ? theme.accentColor
+                    : theme.cardColor,
+              },
+            ]}
+            onPress={() => setSelectedCharacterId(char.id)}
+          >
+            <Text style={[styles.charButtonText, { color: theme.textColor }]}>
+              {char.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Stats */}
+      <View style={[styles.statsBox, { backgroundColor: theme.accentColor }]}>
+        <Text style={[styles.statsTitle, { color: theme.textColor }]}>
+          Stats
+        </Text>
+        {Object.entries(totalStats).map(([stat, value]) => {
+          const percent = percentBonuses[stat] || 0;
+          return (
             <Text
               key={stat}
               style={[styles.statText, { color: theme.textColor }]}
             >
-              {stat}: <Text>{value}</Text>
-              {percentBonuses[stat]
-                ? ` (+${Math.round(percentBonuses[stat] * 100)}%)`
-                : ""}
+              {stat}: {value}
+              {percent ? ` (+${Math.round(percent)}%)` : ""}
             </Text>
-          ))}
-          {percentBonuses.attack > 0 && (
-            <Text style={[styles.statText, { color: theme.textColor }]}>
-              Attack-Bonus: +{Math.round(percentBonuses.attack * 100)}%
-            </Text>
-          )}
-          {percentBonuses.expGain > 0 && (
-            <Text style={[styles.statText, { color: theme.textColor }]}>
-              EXP-Bonus: +{Math.round(percentBonuses.expGain * 100)}%
-            </Text>
-          )}
-        </View>
+          );
+        })}
+      </View>
 
-        {/* Ausrüstungswahl */}
-        <Text style={[styles.equipTitle, { color: theme.textColor }]}>
-          Ausrüstung
-        </Text>
-        <FlatList
-          data={filteredEquipmentPool}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const alreadyEquipped = getEquipped(item.slot)?.id === item.id;
-            return (
-              <View
-                style={[
-                  styles.equipItem,
-                  {
-                    backgroundColor: theme.accentColor,
-                  },
-                ]}
-              >
+      {/* Ausrüstungsliste */}
+      <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
+        Ausrüstung
+      </Text>
+      <FlatList
+        data={filteredEquipmentPool}
+        keyExtractor={(item) => item.id}
+        renderItem={renderEquipItem}
+        style={{ flexGrow: 0, marginBottom: 10 }}
+      />
+
+      {/* Ausgerüstet */}
+      <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
+        Aktuell ausgerüstet:
+      </Text>
+      <View
+        style={[styles.equippedBox, { backgroundColor: theme.accentColor }]}
+      >
+        {EQUIP_SLOTS.map((slot) => {
+          const eq = getEquipped(slot);
+          return (
+            <View key={slot} style={styles.equippedRow}>
+              {eq && (
                 <Image
-                  source={{ uri: getEquipmentImageUrl(item.id) }}
-                  style={{ width: 40, height: 40, marginRight: 8 }}
+                  source={{ uri: getEquipmentImageUrl(eq.id) }}
+                  style={styles.equippedIcon}
                   contentFit="contain"
                   transition={200}
                 />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.equipLabel, { color: theme.textColor }]}>
-                    {item.label}
-                  </Text>
-                  <Text style={[styles.equipDesc, { color: theme.textColor }]}>
-                    {item.description}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.equipBtn,
-                    alreadyEquipped && { backgroundColor: "#d97706" },
-                  ]}
-                  onPress={() =>
-                    alreadyEquipped
-                      ? handleRemove(item.slot)
-                      : handleEquip(item, item.slot)
-                  }
-                >
-                  <Text style={{ color: "#fff" }}>
-                    {alreadyEquipped ? "Entfernen" : "Ausrüsten"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            );
-          }}
-        />
-
-        {/* Ausgerüstete Items mit Bild anzeigen */}
-        <Text style={[styles.equippedTitle, { color: theme.textColor }]}>
-          Aktuell ausgerüstet:
-        </Text>
-        <View
-          style={[
-            styles.equippedBox,
-            {
-              backgroundColor: theme.accentColor,
-            },
-          ]}
-        >
-          {["weapon"].map((slot) => {
-            const eq = getEquipped(slot);
-            return (
-              <View
-                key={slot}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 4,
-                }}
-              >
-                {eq && (
-                  <Image
-                    source={{ uri: getEquipmentImageUrl(eq.id) }}
-                    style={{ width: 32, height: 32, marginRight: 6 }}
-                    contentFit="contain"
-                    transition={200}
-                  />
-                )}
-                <Text style={[styles.equippedItem, { color: theme.textColor }]}>
-                  {slot}: {eq ? eq.label : "–"}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      </ImageBackground>
+              )}
+              <Text style={[styles.equippedItem, { color: theme.textColor }]}>
+                {slot}: {eq ? eq.label : "–"}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
     </ScreenLayout>
   );
 }
 
+// --------- Separate ItemCard-Komponente ---------
+const ItemCard = React.memo(({ item, alreadyEquipped, theme, onEquip }) => (
+  <View
+    style={[
+      styles.equipItem,
+      { backgroundColor: theme.accentColor, borderColor: theme.textColor },
+    ]}
+  >
+    <Image
+      source={{ uri: getEquipmentImageUrl(item.id) }}
+      style={styles.equipIcon}
+      contentFit="contain"
+      transition={200}
+    />
+    <View style={{ flex: 1 }}>
+      <Text style={[styles.equipLabel, { color: theme.textColor }]}>
+        {item.label}
+      </Text>
+      <Text style={[styles.equipDesc, { color: theme.textColor }]}>
+        {item.description}
+      </Text>
+    </View>
+    <TouchableOpacity
+      style={[
+        styles.equipBtn,
+        alreadyEquipped && { backgroundColor: "#d97706" },
+      ]}
+      onPress={onEquip}
+    >
+      <Text style={{ color: "#fff" }}>
+        {alreadyEquipped ? "Entfernen" : "Ausrüsten"}
+      </Text>
+    </TouchableOpacity>
+  </View>
+));
+
+// --------- Styles ---------
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "flex-start" },
-  charRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  charRow: {
+    flexDirection: "row",
+    marginBottom: 12,
+    marginTop: 10,
+    paddingHorizontal: 8,
+    flexWrap: "wrap",
+  },
   charButton: {
     padding: 10,
     borderRadius: 10,
     marginRight: 6,
+    marginBottom: 6,
     minWidth: 60,
     alignItems: "center",
   },
-  charButtonText: {},
+  charButtonText: { fontWeight: "500" },
   statsBox: {
     padding: 12,
     borderRadius: 12,
     marginBottom: 12,
     marginTop: 2,
   },
-  statsTitle: { marginBottom: 8, fontSize: 16 },
+  statsTitle: { marginBottom: 8, fontSize: 16, fontWeight: "bold" },
   statText: { fontSize: 14 },
-  equipTitle: {
+  sectionTitle: {
     fontSize: 16,
     marginBottom: 6,
     marginTop: 4,
     letterSpacing: 0.5,
+    fontWeight: "bold",
+    paddingHorizontal: 8,
   },
   equipItem: {
     flexDirection: "row",
@@ -271,26 +294,30 @@ const styles = StyleSheet.create({
     borderWidth: 1.3,
     padding: 8,
     marginBottom: 8,
+    marginHorizontal: 8,
   },
+  equipIcon: { width: 40, height: 40, marginRight: 8 },
   equipLabel: { fontWeight: "bold" },
   equipDesc: { fontSize: 13, opacity: 0.85 },
   equipBtn: {
-    backgroundColor: "000",
+    backgroundColor: "#222",
     padding: 8,
     borderRadius: 8,
     minWidth: 74,
     alignItems: "center",
-  },
-  equippedTitle: {
-    marginTop: 10,
-    fontSize: 16,
-    marginBottom: 3,
-    bottom: 50,
+    marginLeft: 8,
   },
   equippedBox: {
     borderRadius: 10,
     padding: 10,
-    bottom: 50,
+    marginHorizontal: 8,
+    marginBottom: 30,
   },
+  equippedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  equippedIcon: { width: 32, height: 32, marginRight: 6 },
   equippedItem: { fontSize: 14 },
 });

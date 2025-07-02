@@ -22,6 +22,8 @@ import { getClassImageUrl } from "./utils/classUtils";
 import { getBossImageUrl } from "./utils/boss/bossUtils";
 import { getSkillImageUrl } from "./utils/skillUtils";
 import { getBossBackgroundUrl } from "./utils/boss/backgroundUtils";
+import { getEquipmentImageUrl } from "./utils/equipment/equipment";
+import { getItemImageUrl } from "./utils/item/itemUtils";
 import newsData from "./data/newsData.json";
 import { AppProviders } from "./providers/AppProviders";
 import useUpdateChecker from "./hooks/useUpdateChecker";
@@ -32,11 +34,52 @@ import useDataLoader from "./hooks/useDataLoader";
 import useNavigationLoading from "./hooks/useNavigationLoading";
 import OnlineGuard from "./components/OnlineGuard";
 import UpdateOverlay from "./components/UpdateOverlay";
-
 import useImagePreloader from "./hooks/useImagePreloader";
 
 // --------------------------------------------
 
+const skillKeys = [
+  "fire",
+  "frostball",
+  "voidrift",
+  "naturball",
+  "stormstrike",
+  "windblade",
+];
+const classKeys = [
+  "sylas",
+  "void-warrior",
+  "ice-warrior",
+  "ice-swordswoman",
+  "ice-mage",
+  "fire-rogue",
+  "fire-warrior",
+  "fire-knight",
+];
+const bossKeys = [
+  "infermor",
+  "Malzevox",
+  "Aurelion",
+  "Orionyx",
+  "Drogmarth",
+  "Korathaz",
+  "Ashragul",
+];
+const bgKeys = [
+  "background1",
+  "background2",
+  "background3",
+  "background4",
+  "background5",
+  "background6",
+  "background7",
+  "bg_dark",
+  "bg_light",
+];
+const equipmentKeys = ["sword_of_flames"];
+const itemKeys = ["coin", "crystal"];
+
+// Helper für News/EventBoss Keys
 function getEventBossKey(url) {
   const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
@@ -47,114 +90,85 @@ function AppContent() {
   const [updateDone, setUpdateDone] = useState(false);
   const { theme, uiThemeType } = useThemeContext();
   const { data, error } = useDataLoader();
-  const onNavigationStateChange = useNavigationLoading();
+  const onNavigationStateChange = useNavigationLoading({ delay: 700 });
 
   useUpdateChecker(setUpdateVisible, setUpdateDone);
 
-  const bgImage = theme.bgImage;
+  // Theme für Navigation
   const baseNavTheme = uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme;
-  const navigationTheme = {
-    ...baseNavTheme,
-    colors: {
-      ...baseNavTheme.colors,
-      background: "transparent",
-    },
-  };
+  const navigationTheme = useMemo(
+    () => ({
+      ...baseNavTheme,
+      colors: { ...baseNavTheme.colors, background: "transparent" },
+    }),
+    [baseNavTheme]
+  );
 
-  // 1. ALLE wichtigen URLs als Array (wichtig: Reihenfolge behalten!)
+  // --- Wichtige Images zusammenstellen ---
+  const skillImages = skillKeys.map(getSkillImageUrl);
+  const classImages = classKeys.map(getClassImageUrl);
+  const bossImages = bossKeys.map(getBossImageUrl);
+  const bgImages = bgKeys.map(getBossBackgroundUrl);
+  const equipmentImages = equipmentKeys.map(getEquipmentImageUrl);
+  const itemImages = itemKeys.map(getItemImageUrl);
+  const newsImages = newsData.map((e) => e.image);
+
   const importantImages = [
-    getSkillImageUrl("fire"),
-    getSkillImageUrl("frostball"),
-    getSkillImageUrl("voidrift"),
-    getSkillImageUrl("naturball"),
-    getSkillImageUrl("stormstrike"),
-    getSkillImageUrl("windblade"),
-    getClassImageUrl("sylas"),
-    getClassImageUrl("void-warrior"),
-    getClassImageUrl("ice-warrior"),
-    getClassImageUrl("ice-swordswoman"),
-    getClassImageUrl("ice-mage"),
-    getClassImageUrl("fire-rogue"),
-    getClassImageUrl("fire-warrior"),
-    getClassImageUrl("fire-knight"),
-    getBossImageUrl("infermor"),
-    getBossBackgroundUrl("background1"),
-    getBossBackgroundUrl("background2"),
-    getBossBackgroundUrl("background3"),
-    getBossBackgroundUrl("background4"),
-    getBossBackgroundUrl("background5"),
-    getBossBackgroundUrl("background6"),
-    getBossBackgroundUrl("background7"),
-    getBossBackgroundUrl("bg_dark"),
-    getBossBackgroundUrl("bg_light"),
-    bgImage,
-    ...newsData.map((e) => e.image),
+    ...skillImages,
+    ...classImages,
+    ...bossImages,
+    ...bgImages,
+    ...equipmentImages,
+    ...itemImages,
+    theme.bgImage,
+    ...newsImages,
   ];
 
-  // 2. Preloader nutzen
-  const { loaded, progress, localUris } = useImagePreloader(importantImages);
+  // Preloader
+  const { loaded, progress, localUris } = useImagePreloader(importantImages, 5); // 5 Bilder pro Chunk
 
-  // Debug-Log: Zeigt alle geladenen URIs
-  console.log("importantImages:", importantImages);
-  console.log("localUris:", localUris);
-
-  // 3. Mapping für Skills, Klassen, Bosse, BGs und Eventbosse
+  // imageMap bauen (zuverlässige Reihenfolge!)
   const imageMap = useMemo(() => {
-    const map = {
-      skill_fire: localUris[0],
-      skill_frostball: localUris[1],
-      skill_voidrift: localUris[2],
-      skill_naturball: localUris[3],
-      skill_stormstrike: localUris[4],
-      skill_windblade: localUris[5],
+    const map = {};
+    let idx = 0;
 
-      class_sylas: localUris[6],
-      class_voidwarrior: localUris[7],
-      class_icewarrior: localUris[8],
-      class_iceswordswoman: localUris[9],
-      class_icemage: localUris[10],
-      class_firerogue: localUris[11],
-      class_firewarrior: localUris[12],
-      class_fireknight: localUris[13],
+    skillKeys.forEach((k) => {
+      map[`skill_${k}`] = localUris[idx++];
+    });
+    classKeys.forEach((k) => {
+      map[`class_${k.replace(/-/g, "")}`] = localUris[idx++];
+    });
+    bossKeys.forEach((k) => {
+      map[`boss_${k.toLowerCase()}`] = localUris[idx++];
+    });
+    bgKeys.forEach((k, i) => {
+      map[`bg_${i + 1}`] = localUris[idx++];
+      if (k.startsWith("bg_")) map[k] = localUris[idx - 1];
+    });
+    equipmentKeys.forEach((k) => {
+      map[`equipment_${k}`] = localUris[idx++];
+    });
+    itemKeys.forEach((k) => {
+      map[k] = localUris[idx++];
+    });
 
-      boss_infermor: localUris[14],
-
-      bg_1: localUris[15],
-      bg_2: localUris[16],
-      bg_3: localUris[17],
-      bg_4: localUris[18],
-      bg_5: localUris[19],
-      bg_6: localUris[20],
-      bg_7: localUris[21],
-      bg_dark: localUris[22],
-      bg_light: localUris[23],
-      bg_main: localUris[24],
-    };
-
-    // Eventbosse/News ab 25:
-    const startIdx = 25;
-    newsData.forEach((event, idx) => {
-      const key = getEventBossKey(event.image);
-      if (key && localUris[startIdx + idx]) {
-        map[key] = localUris[startIdx + idx];
+    map["bg_main"] = localUris[idx++];
+    newsImages.forEach((img, i) => {
+      const key = getEventBossKey(img);
+      if (key && localUris[idx + i]) {
+        map[key] = localUris[idx + i];
       }
     });
 
-    // Debug-Log: Mapping zeigen
-    console.log("imageMap KEYS:", Object.keys(map));
-    console.log("imageMap.boss_infermor:", map["boss_infermor"]);
     return map;
-  }, [localUris]);
+  }, [localUris, newsImages]);
 
-  // 4. Dein gecachtes BG-Image (z.B. für den Hintergrund)
+  // Hintergrund aus Map, fallback auf theme.bgImage
   const localBgImage = imageMap[theme.bgImage] || theme.bgImage;
-  // Debug-Log für Backgrounds
-  console.log("theme.bgImage:", theme.bgImage);
-  console.log("localBgImage:", localBgImage);
 
+  // Ladebildschirm
   if (!loaded) {
     const progressPercent = Math.min(Math.round(progress * 100), 100);
-
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#fff" />
@@ -168,6 +182,7 @@ function AppContent() {
     );
   }
 
+  // Fehlerbildschirm
   if (error) {
     return (
       <RNSafeAreaView style={styles.errorContainer}>
@@ -186,7 +201,7 @@ function AppContent() {
     );
   }
 
-  // Für weitere Screens das imageMap weitergeben!
+  // Main App-UI
   return (
     <OnlineGuard>
       <SafeAreaView style={styles.safeArea}>
@@ -205,7 +220,6 @@ function AppContent() {
           theme={navigationTheme}
           onStateChange={onNavigationStateChange}
         >
-          {/* imageMap und localUris können als Prop weitergereicht werden */}
           <MainStackNavigator
             data={data}
             localUris={localUris}
@@ -236,14 +250,13 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "transparent",
   },
   errorContainer: {
     flex: 1,
   },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(60, 29, 29, 0.6)",
     justifyContent: "center",
     alignItems: "center",
   },

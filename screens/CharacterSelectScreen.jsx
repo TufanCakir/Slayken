@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
-
 import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
@@ -20,6 +19,11 @@ export default function CharacterSelectScreen() {
   const styles = createStyles(theme);
 
   const [selectedId, setSelectedId] = useState(activeClassId);
+  const maxSlots = 15;
+  const fullCharacterList = [
+    ...classList,
+    ...Array(Math.max(maxSlots - classList.length, 0)).fill(null),
+  ];
 
   const handleStart = () => {
     const selectedCharacter = classList.find((c) => c.id === selectedId);
@@ -29,26 +33,20 @@ export default function CharacterSelectScreen() {
     }
   };
 
-  const maxSlots = 15;
-  const fullCharacterList = [
-    ...classList,
-    ...Array(Math.max(maxSlots - classList.length, 0)).fill(null),
-  ];
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Wähle deinen Kämpfer</Text>
-
       <FlatList
         data={fullCharacterList}
-        keyExtractor={(_, index) => index.toString()}
-        numColumns={1}
+        keyExtractor={(_, idx) => idx.toString()}
         contentContainerStyle={styles.list}
         renderItem={({ item }) =>
           item ? (
             <TouchableOpacity
-              key={item.id}
-              style={styles.card}
+              style={[
+                styles.card,
+                selectedId === item.id && styles.selectedCard,
+              ]}
               onPress={() => setSelectedId(item.id)}
             >
               <Image
@@ -74,7 +72,6 @@ export default function CharacterSelectScreen() {
           )
         }
       />
-
       {selectedId && (
         <TouchableOpacity style={styles.startButton} onPress={handleStart}>
           <Text style={styles.startText}>Starten</Text>
@@ -85,48 +82,61 @@ export default function CharacterSelectScreen() {
 }
 
 function createStyles(theme) {
+  const accent = theme.accentColor;
+  const text = theme.textColor;
+  const shadow = theme.shadowColor;
+
   return StyleSheet.create({
     container: {
       flex: 1,
       paddingTop: 22,
       paddingHorizontal: 14,
+      backgroundColor: theme.background,
     },
     title: {
       fontSize: 26,
       fontWeight: "bold",
-      color: theme.textColor,
+      color: text,
       marginBottom: 18,
       textAlign: "center",
       letterSpacing: 0.4,
-      textShadowColor: theme.shadowColor,
+      textShadowColor: shadow,
       textShadowOffset: { width: 0, height: 2 },
       textShadowRadius: 5,
     },
     list: {
-      paddingBottom: 28,
+      paddingBottom: 30,
     },
     card: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       borderRadius: 17,
       padding: 18,
       marginBottom: 18,
       alignItems: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    selectedCard: {
+      borderColor: text,
     },
     avatar: {
-      width: 300,
-      height: 300,
+      width: 160,
+      height: 160,
+      borderRadius: 14,
+      marginBottom: 10,
+      backgroundColor: accent,
     },
     name: {
       fontSize: 19,
       fontWeight: "bold",
-      color: theme.textColor,
+      color: text,
       marginBottom: 2,
       textAlign: "center",
       letterSpacing: 0.17,
     },
     level: {
       fontSize: 15,
-      color: theme.textColor,
+      color: text,
       fontWeight: "700",
       marginBottom: 2,
     },
@@ -135,40 +145,47 @@ function createStyles(theme) {
       fontWeight: "600",
       marginBottom: 4,
       letterSpacing: 0.1,
+      color: text,
     },
     classText: {
       fontSize: 13,
-      color: "#e0eaff",
+      color: text + "99",
       marginBottom: 2,
       fontWeight: "bold",
       letterSpacing: 0.12,
     },
     emptySlot: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       borderRadius: 15,
-      paddingVertical: 34,
+      paddingVertical: 42,
       paddingHorizontal: 12,
       alignItems: "center",
       marginBottom: 16,
+      borderWidth: 1.5,
+      borderColor: accent,
+      opacity: 0.7,
     },
     emptyText: {
-      color: theme.textColor,
+      color: text,
       fontSize: 16,
       fontWeight: "bold",
       letterSpacing: 0.16,
+      opacity: 0.8,
     },
     startButton: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       borderRadius: 20,
-      paddingVertical: 18,
+      paddingVertical: 16,
       marginTop: 10,
-      marginBottom: 8,
+      marginBottom: 12,
       alignSelf: "center",
       width: "80%",
       alignItems: "center",
+      borderWidth: 2,
+      borderColor: text,
     },
     startText: {
-      color: theme.textColor,
+      color: text,
       fontSize: 21,
       fontWeight: "bold",
       letterSpacing: 0.2,

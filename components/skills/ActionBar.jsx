@@ -12,9 +12,8 @@ import CircularCooldown from "../effects/CircularCooldown";
 import useCooldownTimer from "../../hooks/useCooldownTimer";
 import { useThemeContext } from "../../context/ThemeContext";
 
-// Stell sicher, dass du immer skillPool oder ein fixes Array verwendest!
 export default function ActionBar({
-  skills = [], // skillPool!
+  skills = [],
   activeCharacter,
   onSkillPress,
   imageMap = {},
@@ -28,16 +27,8 @@ export default function ActionBar({
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  if (!activeCharacter) {
-    return (
-      <View style={styles.barContainer}>
-        <Text style={{ color: "#dbeafe", opacity: 0.5 }}>Kein Charakter</Text>
-      </View>
-    );
-  }
-
-  // Ist der Skill für diesen Char wirklich nutzbar? (deine Logik)
-  function isUnlocked(skill) {
+  // --- Freischalt-Logik ---
+  const isUnlocked = (skill) => {
     if (!skill || !activeCharacter) return false;
     if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
     if (
@@ -53,15 +44,14 @@ export default function ActionBar({
       }
     }
     return true;
-  }
+  };
 
+  // Unlock-Feedback bei LevelUp
   useEffect(() => {
     if (!activeCharacter) return;
-
     if (activeCharacter.level > prevLevel.current) {
       skills.forEach((skill) => {
-        const unlocked = isUnlocked(skill);
-        if (unlocked && !unlockedSkillIds.current.has(skill.id)) {
+        if (isUnlocked(skill) && !unlockedSkillIds.current.has(skill.id)) {
           unlockedSkillIds.current.add(skill.id);
           setUnlockedSkill(skill);
           Vibration.vibrate(100);
@@ -71,49 +61,53 @@ export default function ActionBar({
     prevLevel.current = activeCharacter.level;
   }, [activeCharacter.level, activeCharacter.element, skills]);
 
+  // Skill-Bild holen
+  const getSkillImage = (skill) =>
+    imageMap[`skill_${skill.id}`] || require("../../assets/icon.png");
+
+  // Skill Cooldown starten
   const handlePress = (skill) => {
     if (!isUnlocked(skill)) return;
-    const now = Date.now();
-    const cooldownUntil = cooldowns[skill.id] || 0;
-
-    if (now < cooldownUntil) return;
-
+    if ((cooldowns[skill.id] || 0) > Date.now()) return;
     onSkillPress?.(skill);
-
     if (skill.cooldown) {
       setCooldowns((prev) => ({
         ...prev,
-        [skill.id]: now + skill.cooldown,
+        [skill.id]: Date.now() + skill.cooldown,
       }));
     }
   };
 
+  // Tooltip und Langdruck
   const handleLongPress = (skill, idx) => {
     Vibration.vibrate(12);
     setTooltipSkill(skill);
     setPressedIndex(idx);
   };
-
   const handleTooltipClose = () => {
     setTooltipSkill(null);
     setPressedIndex(null);
   };
 
-  const getSkillImage = (skill) =>
-    imageMap[`skill_${skill.id}`] || require("../../assets/icon.png");
-
-  // HOOKS: IMMER für alle Skills
-  const cooldownEnds = skills.map((skill) => cooldowns[skill.id] || 0);
-  const cooldownRemains = cooldownEnds.map((end) => useCooldownTimer(end));
+  if (!activeCharacter) {
+    return (
+      <View style={styles.barContainer}>
+        <Text style={{ color: "#dbeafe", opacity: 0.5 }}>Kein Charakter</Text>
+      </View>
+    );
+  }
 
   return (
     <>
       <View style={styles.barContainer}>
         {skills.map((skill, index) => {
-          const cooldownEnd = cooldownEnds[index];
-          const isCoolingDown = cooldownEnd > Date.now();
-          const remaining = cooldownRemains[index];
           const unlocked = isUnlocked(skill);
+          const cooldownEnd = cooldowns[skill.id] || 0;
+          // INDIVIDUELLER HOOK pro Button (sauber & performant)
+          const seconds = useCooldownTimer(cooldownEnd, 100, () =>
+            setCooldowns((prev) => ({ ...prev, [skill.id]: 0 }))
+          );
+          const isCoolingDown = cooldownEnd > Date.now();
           const skillImage = getSkillImage(skill);
 
           return (
@@ -146,19 +140,9 @@ export default function ActionBar({
                     strokeWidth={3}
                   />
                   <Text style={styles.cooldownTextOverlay}>
-                    {remaining.toFixed(1)}s
+                    {seconds.toFixed(1)}s
                   </Text>
                 </View>
-              )}
-              {!unlocked && (
-                <View
-                  style={{
-                    ...StyleSheet.absoluteFillObject,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  pointerEvents="none"
-                />
               )}
             </TouchableOpacity>
           );
@@ -169,7 +153,7 @@ export default function ActionBar({
       <Modal
         transparent
         animationType="fade"
-        visible={tooltipSkill !== null}
+        visible={!!tooltipSkill}
         onRequestClose={handleTooltipClose}
       >
         <TouchableOpacity
@@ -220,7 +204,7 @@ export default function ActionBar({
   );
 }
 
-// Dynamische Glow-Farben
+// Styles bleiben wie gehabt (konsolidiert!)
 function createStyles(theme) {
   const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
   const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";
@@ -260,7 +244,7 @@ function createStyles(theme) {
     },
     cooldownOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: "#222c" /* leicht transparent */,
+      backgroundColor: "#222c",
       justifyContent: "center",
       alignItems: "center",
       borderRadius: 14,

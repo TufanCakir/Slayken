@@ -1,4 +1,3 @@
-// components/UpdateOverlay.jsx
 import React, { useEffect, useRef } from "react";
 import {
   View,
@@ -8,28 +7,33 @@ import {
   Animated,
 } from "react-native";
 
-export default function UpdateOverlay({ done = false }) {
+// Optional: Theme-Prop als Argument für Farben
+export default function UpdateOverlay({
+  done = false,
+  text = "Update wird geladen…",
+}) {
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Starte Fake-Progress bis ~90 %
-    Animated.timing(progressAnim, {
-      toValue: 0.9,
-      duration: 4000,
-      useNativeDriver: false,
-    }).start();
-  }, []);
+    // Progress läuft bis 90%, pausiert dann bis done
+    if (!done) {
+      Animated.timing(progressAnim, {
+        toValue: 0.9,
+        duration: 4000,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [done, progressAnim]);
 
   useEffect(() => {
     if (done) {
-      // Danach auf 100 % auffüllen
       Animated.timing(progressAnim, {
         toValue: 1,
         duration: 500,
         useNativeDriver: false,
       }).start();
     }
-  }, [done]);
+  }, [done, progressAnim]);
 
   const widthInterpolate = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -37,45 +41,53 @@ export default function UpdateOverlay({ done = false }) {
   });
 
   return (
-    <View style={styles.overlay}>
-      <ActivityIndicator size="large" color="#fff" />
-      <Text style={styles.text}>Update wird geladen…</Text>
+    <View style={styles.overlay} pointerEvents="auto">
+      <ActivityIndicator size="large" color="#38bdf8" />
+      <Text style={styles.text}>{text}</Text>
       <View style={styles.progressBar}>
         <Animated.View
           style={[styles.progressFill, { width: widthInterpolate }]}
         />
       </View>
+      {done && <Text style={styles.doneText}>✓ Update abgeschlossen!</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "rgba(16,22,32,0.94)",
     zIndex: 1000,
+    paddingHorizontal: 20,
   },
   text: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: 18,
+    fontSize: 17,
     color: "#fff",
+    letterSpacing: 0.2,
+    fontWeight: "600",
   },
   progressBar: {
-    marginTop: 16,
-    width: 200,
-    height: 8,
-    backgroundColor: "#444",
-    borderRadius: 4,
+    marginTop: 22,
+    width: 220,
+    height: 10,
+    backgroundColor: "#334155",
+    borderRadius: 5,
     overflow: "hidden",
   },
   progressFill: {
-    height: 8,
-    backgroundColor: "#22d3ee",
+    height: "100%",
+    backgroundColor: "#38bdf8", // cyan-400
+    borderRadius: 5,
+  },
+  doneText: {
+    marginTop: 24,
+    color: "#22d3ee",
+    fontWeight: "bold",
+    fontSize: 16,
+    letterSpacing: 0.3,
   },
 });

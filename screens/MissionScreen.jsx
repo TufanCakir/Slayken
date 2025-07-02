@@ -15,18 +15,11 @@ export default function MissionScreen() {
 
   const handleCollect = (mission) => {
     if (mission.completed && !mission.collected) {
-      if (mission.reward.type === "crystal") {
-        addCrystals(mission.reward.amount);
-      } else if (mission.reward.type === "coin") {
-        addCoins(mission.reward.amount);
-      }
+      if (mission.reward.type === "crystal") addCrystals(mission.reward.amount);
+      else if (mission.reward.type === "coin") addCoins(mission.reward.amount);
       collectReward(mission.id);
     }
   };
-
-  const renderItem = ({ item }) => (
-    <MissionItem item={item} onCollect={handleCollect} />
-  );
 
   return (
     <ScreenLayout style={styles.container}>
@@ -34,11 +27,14 @@ export default function MissionScreen() {
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <MissionItem item={item} onCollect={handleCollect} />
+        )}
         ListEmptyComponent={
           <Text style={styles.empty}>Keine Missionen verfügbar</Text>
         }
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
     </ScreenLayout>
   );
@@ -48,24 +44,32 @@ function createStyles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: theme.accentColor,
     },
     header: {
-      fontSize: 24,
-      letterSpacing: 1.1,
+      fontSize: 26,
+      fontWeight: "bold",
+      letterSpacing: 0.9,
       color: theme.textColor,
       textAlign: "center",
-      marginVertical: 24,
+      marginTop: 26,
+      marginBottom: 16,
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
     },
     listContainer: {
       paddingBottom: 80,
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
+      gap: 10,
     },
     empty: {
       textAlign: "center",
-      marginTop: 36,
+      marginTop: 44,
       fontSize: 17,
       color: theme.textColor,
       fontStyle: "italic",
+      opacity: 0.7,
       letterSpacing: 0.3,
     },
   });

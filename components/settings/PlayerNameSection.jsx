@@ -12,26 +12,25 @@ import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 
 export default function PlayerNameSection() {
-  const { theme } = useThemeContext(); // 🎨 Theme
+  const { theme } = useThemeContext();
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    const loadUsername = async () => {
-      const savedUser = await AsyncStorage.getItem("user");
+    AsyncStorage.getItem("user").then((savedUser) => {
       if (savedUser) setUsername(savedUser);
-    };
-    loadUsername();
+    });
   }, []);
 
   const handleSave = async () => {
-    if (!username.trim()) {
+    const name = username.trim();
+    if (!name) {
       Alert.alert(
         t("playerNameLabels.errorTitle"),
         t("playerNameLabels.errorEmptyName")
       );
       return;
     }
-    await AsyncStorage.setItem("user", username.trim());
+    await AsyncStorage.setItem("user", name);
     Alert.alert(
       t("playerNameLabels.savedTitle"),
       t("playerNameLabels.nameSaved")
@@ -47,7 +46,7 @@ export default function PlayerNameSection() {
       <TextInput
         style={styles.input}
         placeholder={t("playerNameLabels.newNamePlaceholder")}
-        placeholderTextColor="#93c5fd"
+        placeholderTextColor={theme.placeholderTextColor || "#93c5fd"}
         value={username}
         onChangeText={setUsername}
       />
@@ -78,7 +77,7 @@ const createStyles = (theme) =>
       marginBottom: 8,
     },
     label: {
-      color: "#93c5fd",
+      color: theme.placeholderTextColor || "#93c5fd",
       marginBottom: 6,
       fontSize: 15,
       fontWeight: "500",
@@ -91,6 +90,7 @@ const createStyles = (theme) =>
       fontSize: 16,
       color: theme.textColor,
       backgroundColor: theme.accentColor,
+      borderColor: theme.textColor + "44", // dezente Border passend zum Theme
     },
     button: {
       padding: 14,
@@ -103,5 +103,6 @@ const createStyles = (theme) =>
       fontSize: 16,
       color: theme.textColor,
       letterSpacing: 0.2,
+      fontWeight: "bold",
     },
   });

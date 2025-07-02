@@ -11,9 +11,7 @@ export default function BattleButton({ onPress, label, style }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <View style={styles.content}>
-        <Text style={styles.text}>{label}</Text>
-      </View>
+      <Text style={styles.text}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -23,19 +21,13 @@ function createStyles(theme) {
     button: {
       marginTop: 12,
       borderRadius: 18,
+      borderWidth: 2.5,
+      borderColor: theme.borderColor,
       backgroundColor: theme.accentColor,
-      flexDirection: "row",
-      paddingBottom: 10,
-      paddingTop: 6,
-      height: 100,
       width: "100%",
-      zIndex: 1,
-      transform: [{ skewY: "-3deg" }],
-    },
-    content: {
-      flex: 1,
       alignItems: "center",
       justifyContent: "center",
+      transform: [{ skewY: "-3deg" }],
     },
     text: {
       fontSize: 25,

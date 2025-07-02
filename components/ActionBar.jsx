@@ -52,7 +52,6 @@ export default function ActionBar({ navigation, t }) {
 
 function createStyles(theme) {
   // Hole Glow- und Border-Farben aus deinem Theme (Fallbacks inklusive)
-  const glow = theme.glowColor || theme.shadowColor || "#facc15";
   const borderGlow = theme.borderGlowColor || theme.borderColor || "#facc15";
 
   return StyleSheet.create({
@@ -65,6 +64,8 @@ function createStyles(theme) {
       width: "100%",
     },
     button: {
+      borderWidth: 2.5,
+      borderColor: theme.borderColor,
       flex: 1,
       marginHorizontal: 6,
       height: 74,

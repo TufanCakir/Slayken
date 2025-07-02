@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import classData from "../data/classData.json";
 import { getClassImageUrl } from "../utils/classUtils";
@@ -7,14 +13,13 @@ import { skillPool } from "../data/skillPool";
 const CLASS_LIST_KEY = "classList";
 const ACTIVE_CLASS_ID_KEY = "activeClassId";
 
-const mergeSkills = (skillRefs = []) => {
-  return skillRefs
+const mergeSkills = (skillRefs = []) =>
+  skillRefs
     .map((ref) => {
       const full = skillPool.find((s) => s.id === ref.id);
       return full ? { ...full, ...ref } : null;
     })
     .filter(Boolean);
-};
 
 const enrichClassMember = (member) => {
   const original =
@@ -27,7 +32,7 @@ const enrichClassMember = (member) => {
     exp: member.exp ?? 0,
     level: member.level ?? 1,
     expToNextLevel: member.expToNextLevel ?? 100,
-    equipment: member.equipment || {}, // 👈 NEU: default leeres Objekt
+    equipment: member.equipment || {},
   };
 };
 
@@ -37,15 +42,17 @@ export const ClassProvider = ({ children }) => {
   const [activeClassId, setActiveClassId] = useState(null);
   const [classList, setClassList] = useState([]);
 
+  // Lädt Daten aus AsyncStorage beim Mount
   useEffect(() => {
-    const loadFromStorage = async () => {
+    let mounted = true;
+    (async () => {
       try {
-        const savedList = await AsyncStorage.getItem(CLASS_LIST_KEY);
+        const savedListRaw = await AsyncStorage.getItem(CLASS_LIST_KEY);
         const savedId = await AsyncStorage.getItem(ACTIVE_CLASS_ID_KEY);
-
-        const parsedList = savedList
-          ? JSON.parse(savedList).map(enrichClassMember)
-          : []; // 🚫 kein Fallback zu classData
+        const parsedList = savedListRaw
+          ? JSON.parse(savedListRaw).map(enrichClassMember)
+          : [];
+        if (!mounted) return;
 
         setClassList(parsedList);
 
@@ -58,14 +65,16 @@ export const ClassProvider = ({ children }) => {
         } else {
           setActiveClassId(null);
         }
-      } catch (error) {
-        console.error("Fehler beim Laden der Klassen:", error);
+      } catch (e) {
+        console.error("Fehler beim Laden der Klassen:", e);
       }
+    })();
+    return () => {
+      mounted = false;
     };
-
-    loadFromStorage();
   }, []);
 
+  // Speichert die Liste im Storage (immer als Utility, kein useCallback nötig)
   const saveClassList = async (list) => {
     try {
       await AsyncStorage.setItem(CLASS_LIST_KEY, JSON.stringify(list));
@@ -74,101 +83,113 @@ export const ClassProvider = ({ children }) => {
     }
   };
 
-  const updateActiveClass = async (id) => {
+  // Setzt aktive Klasse und speichert im Storage
+  const updateActiveClass = useCallback(async (id) => {
     setActiveClassId(id);
     await AsyncStorage.setItem(ACTIVE_CLASS_ID_KEY, id);
-  };
+  }, []);
 
-  // NEU: addCharacter jetzt INNEN!
-  const addCharacter = async (character) => {
-    // Keine Duplikate
-    if (classList.some((char) => char.id === character.id)) return;
-    const newList = [...classList, enrichClassMember(character)];
-    setClassList(newList);
-    await saveClassList(newList);
-  };
+  // Fügt einen neuen Charakter hinzu, falls nicht vorhanden
+  const addCharacter = useCallback(async (character) => {
+    setClassList((prevList) => {
+      if (prevList.some((char) => char.id === character.id)) return prevList;
+      const newList = [...prevList, enrichClassMember(character)];
+      saveClassList(newList);
+      return newList;
+    });
+  }, []);
 
-  const updateCharacter = async (updatedChar) => {
-    const exists = classList.some((char) => char.id === updatedChar.id);
-    let updatedList;
-    if (exists) {
-      updatedList = classList.map((char) =>
-        char.id === updatedChar.id ? { ...char, ...updatedChar } : char
-      );
-    } else {
-      updatedList = [...classList, enrichClassMember(updatedChar)];
-    }
-    setClassList(updatedList);
-    await saveClassList(updatedList);
-  };
+  // Aktualisiert existierenden Charakter oder fügt neuen hinzu
+  const updateCharacter = useCallback(async (updatedChar) => {
+    setClassList((prevList) => {
+      const exists = prevList.some((char) => char.id === updatedChar.id);
+      let updatedList;
+      if (exists) {
+        updatedList = prevList.map((char) =>
+          char.id === updatedChar.id ? { ...char, ...updatedChar } : char
+        );
+      } else {
+        updatedList = [...prevList, enrichClassMember(updatedChar)];
+      }
+      saveClassList(updatedList);
+      return updatedList;
+    });
+  }, []);
 
-  const equipItem = async (charId, slot, equipmentId) => {
-    setClassList((prevList) =>
-      prevList.map((char) =>
+  // Item ausrüsten
+  const equipItem = useCallback(async (charId, slot, equipmentId) => {
+    setClassList((prevList) => {
+      const updatedList = prevList.map((char) =>
         char.id === charId
           ? {
               ...char,
               equipment: {
                 ...(char.equipment || {}),
-                [slot]: equipmentId, // ← Kann auch null sein!
+                [slot]: equipmentId,
               },
             }
           : char
-      )
-    );
-    setClassList(updatedList);
-    await saveClassList(updatedList);
-  };
+      );
+      saveClassList(updatedList);
+      return updatedList;
+    });
+  }, []);
 
-  const deleteClass = async (id) => {
-    const newList = classList.filter((cls) => cls.id !== id);
-    setClassList(newList);
-    await saveClassList(newList);
+  // Löscht Klasse aus Liste und passt activeClassId an
+  const deleteClass = useCallback(
+    async (id) => {
+      setClassList((prevList) => {
+        const newList = prevList.filter((cls) => cls.id !== id);
+        saveClassList(newList);
 
-    if (activeClassId === id) {
-      const fallbackId = newList[0]?.id || null;
-      setActiveClassId(fallbackId);
+        if (activeClassId === id) {
+          const fallbackId = newList[0]?.id || null;
+          setActiveClassId(fallbackId);
+          if (fallbackId) {
+            AsyncStorage.setItem(ACTIVE_CLASS_ID_KEY, fallbackId);
+          } else {
+            AsyncStorage.removeItem(ACTIVE_CLASS_ID_KEY);
+          }
+        }
+        return newList;
+      });
+    },
+    [activeClassId]
+  );
 
-      if (fallbackId) {
-        await AsyncStorage.setItem(ACTIVE_CLASS_ID_KEY, fallbackId);
-      } else {
-        await AsyncStorage.removeItem(ACTIVE_CLASS_ID_KEY);
-      }
-    }
-  };
-
-  const resetCharacterList = async () => {
+  // Setzt alles zurück zu den Daten aus classData.json
+  const resetCharacterList = useCallback(async () => {
     const resetList = classData.map(enrichClassMember);
     setClassList(resetList);
     const fallbackId = resetList[0]?.id;
     setActiveClassId(fallbackId);
     await AsyncStorage.setItem(CLASS_LIST_KEY, JSON.stringify(resetList));
     await AsyncStorage.setItem(ACTIVE_CLASS_ID_KEY, fallbackId);
-  };
+  }, []);
 
-  const clearAllClasses = async () => {
+  // Löscht alles
+  const clearAllClasses = useCallback(async () => {
     setClassList([]);
     setActiveClassId(null);
     await AsyncStorage.removeItem(CLASS_LIST_KEY);
     await AsyncStorage.removeItem(ACTIVE_CLASS_ID_KEY);
+  }, []);
+
+  // Context Value
+  const value = {
+    activeClassId,
+    setActiveClassId: updateActiveClass,
+    classList,
+    addCharacter,
+    updateCharacter,
+    equipItem,
+    resetCharacterList,
+    deleteClass,
+    clearAllClasses,
   };
 
   return (
-    <ClassContext.Provider
-      value={{
-        activeClassId,
-        setActiveClassId: updateActiveClass,
-        classList,
-        addCharacter, // <--- HIER NEU!
-        updateCharacter,
-        equipItem, // 👈 NEU
-        resetCharacterList,
-        deleteClass,
-        clearAllClasses, // 🧼 Neu hinzugefügt
-      }}
-    >
-      {children}
-    </ClassContext.Provider>
+    <ClassContext.Provider value={value}>{children}</ClassContext.Provider>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,44 +19,19 @@ export default function SettingsScreen() {
   const navigation = useNavigation();
   const { language } = useLanguage();
   const { theme } = useThemeContext();
-  const [username, setUsername] = useState("");
 
   useEffect(() => {
     navigation.setOptions({ title: t("settingsTitle") });
-
-    const loadUsername = async () => {
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedUser) setUsername(savedUser);
-    };
-    loadUsername();
-  }, [language]);
+  }, [navigation, language]);
 
   return (
     <ScreenLayout style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Spielername ändern */}
-        <PlayerNameSection
-          theme={theme}
-          username={username}
-          setUsername={setUsername}
-        />
-
-        {/* Sprache wählen */}
-        <LanguageSection
-          accentColor={theme.accentColor}
-          textColor={theme.textColor}
-        />
-
-        {/* UI-Thema (Light/Dark) */}
+        <PlayerNameSection />
+        <LanguageSection />
         <UIThemeSection />
-
-        {/* Musiksteuerung */}
-        <MusicSection theme={theme} />
-
-        {/* Nutzungsbedingungen */}
+        <MusicSection />
         <ToSSection />
-
-        {/* App zurücksetzen */}
         <DeleteSection />
       </ScrollView>
     </ScreenLayout>

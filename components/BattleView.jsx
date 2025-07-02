@@ -15,7 +15,7 @@ export default function BattleView({
   return (
     <View style={styles.container}>
       <BattleScene
-        boss={selectedEvent} // <- GANZES Event weitergeben!
+        boss={selectedEvent}
         bossHp={bossHp}
         bossDefeated={bossDefeated}
         handleFight={handleFight}

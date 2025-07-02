@@ -13,17 +13,20 @@ import { skillPool } from "../data/skillPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useThemeContext } from "../context/ThemeContext";
 
-const BLUE_XP = "blue";
-const HP_BOSS = "red";
+// Effekt Mapping (direkt aus Komponentenname)
+const EFFECT_MAP = {
+  FireEffect,
+  FrostEffect,
+  VoidEffect,
+  NaturEffect,
+  StormStrikeEffect,
+};
 
-// Helper
-function getClassKey(imageUrl) {
-  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
-  return match ? "class_" + match[1].toLowerCase() : null;
-}
-function getEventBossKey(imageUrl) {
-  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
-  return match ? "eventboss_" + match[1].toLowerCase() : null;
+// Generiert einen sicheren ImageMap-Key
+function imageKey(prefix, url) {
+  if (typeof url !== "string") return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
+  return match ? `${prefix}_${match[1].toLowerCase()}` : null;
 }
 
 export default function BattleScene({
@@ -33,19 +36,14 @@ export default function BattleScene({
   onSkillPress,
   handleFight,
   imageMap = {},
-  expReward = 120,
-  accountExpReward = 100,
-  coinReward = 100,
-  crystalReward = 30,
   skillDmg = 30,
 }) {
-  // HOOKS: immer oben!
   const { classList, activeClassId } = useClass();
   const [activeEffect, setActiveEffect] = useState(null);
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  // Finde aktiven Char
+  // Aktiver Charakter
   const activeCharacter = classList.find((c) => c.id === activeClassId);
   if (!activeCharacter) {
     return (
@@ -55,46 +53,54 @@ export default function BattleScene({
     );
   }
 
-  // EffectMap als Konstante (nicht als useState!)
-  const effectMap = {
-    FireEffect,
-    FrostEffect,
-    VoidEffect,
-    NaturEffect,
-    StormStrikeEffect,
-  };
-
-  // Werte aus Char
-  const { name, level, exp, expToNextLevel, classUrl } = activeCharacter;
-  const maxHp = boss?.maxHp || 100;
-  const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
-  const bossName = boss?.name || boss?.eventName || "Unbekannter Boss";
-
-  // Bild-Mapping
-  const bossImgKey = getEventBossKey(boss?.image);
+  // Boss Image Key Lookup
+  const bossImgKey = imageKey("eventboss", boss?.image);
   const bossImgSrc =
     (bossImgKey && imageMap[bossImgKey]) ||
     boss?.image ||
     getBossImageUrl(boss?.id);
 
-  const classKey = getClassKey(classUrl);
-  const classImgSrc = imageMap[classKey] || classUrl;
+  // Charakter Image Key Lookup
+  const classImgKey = imageKey("class", activeCharacter.classUrl);
+  const classImgSrc =
+    (classImgKey && imageMap[classImgKey]) || activeCharacter.classUrl;
+
+  // Fortschritt
+  const { name, level, exp, expToNextLevel } = activeCharacter;
+  const maxHp = boss?.hp || 100;
+  const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
+  const bossName = boss?.name || boss?.eventName || "Unbekannter Boss";
+  const expPercent = Math.min((exp / expToNextLevel) * 100, 100);
+
+  // Skills aus Charakter oder globalem Pool
+  const characterSkills =
+    activeCharacter.skills?.length > 0 ? activeCharacter.skills : skillPool;
 
   // Skill Handling
-  const handleSkillPress = (skill) => {
+  const handleSkill = (skill) => {
     if (!skill) return;
     onSkillPress?.(skill);
-    if (effectMap[skill.effect]) {
+
+    if (EFFECT_MAP[skill.effect]) {
       setActiveEffect(skill.effect);
     } else {
-      handleFight?.(skill);
+      // Stats aus aktivem Charakter holen
+      const charStats = activeCharacter.stats || {};
+      const damage = calculateSkillDamage({
+        charStats,
+        skill,
+        enemyDefense: boss?.bossDefense || 0,
+      });
+
+      // Weitergeben an handleFight mit berechnetem Damage
+      handleFight?.({ effect: skill.effect, power: damage });
     }
   };
 
-  // Effekt-Komponente, falls aktiv
+  // Effekt-Komponente bei aktiver Animation
   let EffectComponent = null;
-  if (activeEffect && effectMap[activeEffect]) {
-    const Component = effectMap[activeEffect];
+  if (activeEffect && EFFECT_MAP[activeEffect]) {
+    const Component = EFFECT_MAP[activeEffect];
     EffectComponent = (
       <Component
         onEnd={() => {
@@ -112,27 +118,11 @@ export default function BattleScene({
         <BlurView intensity={55} tint="dark" style={styles.bossInfo}>
           <Text style={styles.title}>{bossName}</Text>
           <Text style={styles.hpLabel}>
-            HP: <Text style={bossHp}>{bossHp}</Text> / {maxHp}
+            HP: <Text style={styles.hpValue}>{bossHp}</Text> / {maxHp}
           </Text>
-          <View style={styles.hpBarContainer}>
-            <View
-              style={[
-                styles.hpBar,
-                {
-                  width: `${bossHpPercent}%`,
-                  backgroundColor: HP_BOSS,
-                },
-              ]}
-            />
+          <View style={styles.barContainer}>
+            <View style={[styles.hpBar, { width: `${bossHpPercent}%` }]} />
           </View>
-          {/* Rewards
-          <View style={styles.rewardsRow}>
-            <Text style={styles.rewardText}>Belohnungen:</Text>
-            <Text style={styles.rewardText}>+{expReward} EXP</Text>
-            <Text style={styles.rewardText}>+{accountExpReward} AccXP</Text>
-            <Text style={styles.rewardText}>+{coinReward}💰</Text>
-            <Text style={styles.rewardText}>+{crystalReward}💎</Text>
-          </View> */}
           {bossDefeated && (
             <Text style={styles.victory}>✅ Du hast {bossName} besiegt!</Text>
           )}
@@ -157,16 +147,8 @@ export default function BattleScene({
             <Text style={styles.charXp}>
               XP {exp} / {expToNextLevel}
             </Text>
-            <View style={styles.xpBarContainer}>
-              <View
-                style={[
-                  styles.xpBar,
-                  {
-                    width: `${Math.min((exp / expToNextLevel) * 100, 100)}%`,
-                    backgroundColor: BLUE_XP,
-                  },
-                ]}
-              />
+            <View style={styles.barContainer}>
+              <View style={[styles.xpBar, { width: `${expPercent}%` }]} />
             </View>
           </BlurView>
           <Image
@@ -177,14 +159,14 @@ export default function BattleScene({
         </View>
       </Pressable>
 
-      {/* Effekt */}
+      {/* Effekte */}
       {EffectComponent}
 
       {/* Skills */}
       <ActionBar
-        skills={skillPool}
+        skills={characterSkills}
         activeCharacter={activeCharacter}
-        onSkillPress={handleSkillPress}
+        onSkillPress={handleSkill}
         imageMap={imageMap}
       />
     </View>
@@ -193,14 +175,11 @@ export default function BattleScene({
 
 function createStyles(theme) {
   const text = theme.textColor || "#fff";
-  const shadow = theme.shadowColor || "#222";
   const border = theme.borderColor || "#ff8800";
-  const glow = theme.glowColor || "#ffd70088";
   const highlight = theme.borderGlowColor || "#ffd700cc";
-
+  const hpBg = theme.shadowColor || "#222";
   return StyleSheet.create({
     wrapper: { flex: 1 },
-
     bossContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -227,42 +206,32 @@ function createStyles(theme) {
       color: text,
       marginBottom: 5,
     },
-    bossHp: {
+    hpValue: {
       fontSize: 12,
       color: highlight,
-      marginBottom: 5,
     },
-    hpBarContainer: {
+    barContainer: {
       width: "100%",
       height: 20,
       borderRadius: 7,
-      backgroundColor: shadow,
+      backgroundColor: hpBg,
       marginBottom: 6,
       overflow: "hidden",
     },
     hpBar: {
       height: "100%",
       borderRadius: 7,
-      backgroundColor: highlight,
+      backgroundColor: "red",
     },
-    rewardsRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 8,
-      alignItems: "center",
-      marginBottom: 4,
-      marginTop: 2,
-    },
-    rewardText: {
-      fontSize: 12,
-      color: highlight,
-      marginRight: 6,
+    xpBar: {
+      height: "100%",
+      borderRadius: 5,
+      backgroundColor: "blue",
     },
     bossImage: {
       width: 90,
       height: 90,
       borderRadius: 12,
-      borderColor: highlight,
     },
     victory: {
       fontSize: 15,
@@ -300,19 +269,6 @@ function createStyles(theme) {
       fontSize: 12,
       color: highlight,
       marginBottom: 5,
-    },
-    xpBarContainer: {
-      width: "100%",
-      height: 20,
-      borderRadius: 7,
-      backgroundColor: shadow,
-      marginBottom: 6,
-      overflow: "hidden",
-    },
-    xpBar: {
-      height: "100%",
-      borderRadius: 5,
-      backgroundColor: border,
     },
     avatar: {
       width: 90,

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Platform,
   Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,30 +18,36 @@ import ScreenLayout from "../components/ScreenLayout";
 import { isActive, formatCountdown } from "../utils/helper";
 import { Image } from "expo-image";
 
-const ShopItemCard = React.memo(({ item, onBuy, theme, eventData }) => {
+const ShopItemCard = React.memo(function ShopItemCard({
+  item,
+  onBuy,
+  theme,
+  eventData,
+}) {
   const { price, currency, linkedEventId } = item;
-  let priceLabel = "";
-  if (currency.length === 2) {
-    priceLabel = `${price} Coins oder ${price} Kristalle`;
-  } else if (currency[0] === "coin") {
-    priceLabel = `${price} Coins`;
-  } else {
-    priceLabel = `${price} Kristalle`;
-  }
+  const priceLabel =
+    currency.length === 2
+      ? `${price} Coins oder ${price} Kristalle`
+      : currency[0] === "coin"
+      ? `${price} Coins`
+      : `${price} Kristalle`;
+
   const styles = createStyles(theme);
 
-  // Event-Image holen, falls vorhanden
-  const event = EVENT_DATA.find((e) => e.id === item.linkedEventId);
+  // Event-Image, falls vorhanden
+  const event = EVENT_DATA.find((e) => e.id === linkedEventId);
   const iconImage = event?.image;
 
-  // --- Countdown-Logik ---
+  // Countdown-Logik für Events
   const [countdown, setCountdown] = useState(null);
   useEffect(() => {
     if (!linkedEventId) return;
-    const event = eventData.find((e) => e.id === linkedEventId && e.activeTo);
-    if (!event) return;
+    const foundEvent = eventData.find(
+      (e) => e.id === linkedEventId && e.activeTo
+    );
+    if (!foundEvent) return;
     function updateCountdown() {
-      setCountdown(formatCountdown(new Date(event.activeTo) - Date.now()));
+      setCountdown(formatCountdown(new Date(foundEvent.activeTo) - Date.now()));
     }
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
@@ -51,26 +56,24 @@ const ShopItemCard = React.memo(({ item, onBuy, theme, eventData }) => {
 
   return (
     <View style={styles.cardRow}>
-      {/* --- Icon links --- */}
       <View style={styles.iconWrapper}>
-        <Image
-          source={iconImage}
-          style={styles.iconImage}
-          contentFit="contain"
-        />
+        {iconImage && (
+          <Image
+            source={iconImage}
+            style={styles.iconImage}
+            contentFit="contain"
+          />
+        )}
       </View>
-
-      {/* --- Infos/Mitte + Button rechts --- */}
       <View style={styles.cardContent}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.price}>{priceLabel}</Text>
-        {countdown && countdown !== "Vorbei!" && (
+        {!!countdown && countdown !== "Vorbei!" && (
           <Text style={styles.countdownActive}>Noch {countdown}</Text>
         )}
         {countdown === "Vorbei!" && (
           <Text style={styles.countdownEnded}>Angebot beendet</Text>
         )}
-
         <TouchableOpacity
           style={styles.button}
           onPress={() => onBuy(item)}
@@ -90,7 +93,7 @@ export default function ShopScreen() {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  // --- Alle Kategorien automatisch generieren ---
+  // Kategorien automatisch generieren
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((i) => i.category))),
     []
@@ -158,6 +161,7 @@ export default function ShopScreen() {
     [coins, crystals, executePurchase, spendCoins, spendCrystals]
   );
 
+  // Szenen dynamisch erzeugen
   const renderScene = SceneMap(
     routes.reduce((scenes, route) => {
       scenes[route.key] = () => {
@@ -233,7 +237,6 @@ function createStyles(theme) {
       padding: 20,
       paddingBottom: 40,
     },
-    // --- ShopCard als Row mit Icon links ---
     cardRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -266,17 +269,16 @@ function createStyles(theme) {
       fontSize: 17,
       fontWeight: "bold",
       color: theme.textColor,
-      marginBottom: 4,
       letterSpacing: 0.05,
       textAlign: "center",
-      marginBottom: 20,
+      marginBottom: 4,
     },
     price: {
       fontSize: 14,
       color: theme.textColor,
-      marginBottom: 20,
       letterSpacing: 0.03,
       textAlign: "center",
+      marginBottom: 12,
     },
     countdownActive: {
       color: theme.textColor,

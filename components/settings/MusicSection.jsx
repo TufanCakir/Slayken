@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -23,11 +23,11 @@ export default function MusicSection() {
     allTracks,
     playMusic,
   } = useMusic();
-
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
-  const [isLoadingTrack, setIsLoadingTrack] = React.useState(false);
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
+  // Track navigation handlers
   const handlePrevTrack = async () => {
     if (currentIndex > 0) {
       setIsLoadingTrack(true);
@@ -35,9 +35,8 @@ export default function MusicSection() {
       setIsLoadingTrack(false);
     }
   };
-
   const handleNextTrack = async () => {
-    const nextIdx = currentIndex + 1 < allTracks.length ? currentIndex + 1 : 0;
+    const nextIdx = (currentIndex + 1) % allTracks.length;
     setIsLoadingTrack(true);
     await playMusic(allTracks[nextIdx]);
     setIsLoadingTrack(false);
@@ -45,15 +44,14 @@ export default function MusicSection() {
 
   return (
     <>
+      {/* Play/Pause Button */}
       <Pressable
-        onPress={() => {
-          isPlaying ? pauseMusic() : resumeMusic();
-        }}
+        onPress={isPlaying ? pauseMusic : resumeMusic}
         accessibilityRole="button"
         accessibilityState={{ selected: isPlaying }}
         style={({ pressed }) => [
           styles.linkButton,
-          { opacity: pressed ? 0.8 : 1 },
+          pressed && styles.buttonPressed,
         ]}
       >
         <Text style={styles.linkText}>
@@ -61,6 +59,7 @@ export default function MusicSection() {
         </Text>
       </Pressable>
 
+      {/* Volume Slider */}
       <View style={styles.volumeContainer}>
         <Text style={styles.current}>
           {`${t("volumeLabel")}: ${Math.round(volume * 100)}%`}
@@ -77,35 +76,20 @@ export default function MusicSection() {
         />
       </View>
 
+      {/* Track Info */}
       <View style={styles.trackInfoContainer}>
         <Text style={styles.currentTrackLabel}>{`${t("currentTrack")}:`}</Text>
         <Text style={styles.trackTitle}>{currentTrack?.title || "—"}</Text>
       </View>
 
+      {/* Track Controls */}
       <View style={styles.trackControls}>
-        <Pressable
+        <TrackButton
+          label={t("prevTrack")}
           onPress={handlePrevTrack}
           disabled={currentIndex === 0 || isLoadingTrack}
-          style={({ pressed }) => [
-            styles.controlButton,
-            currentIndex === 0 || isLoadingTrack
-              ? styles.controlButtonDisabled
-              : {},
-            { opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Text
-            style={[
-              styles.controlButtonText,
-              currentIndex === 0 || isLoadingTrack
-                ? styles.controlButtonTextDisabled
-                : {},
-            ]}
-          >
-            {t("prevTrack")}
-          </Text>
-        </Pressable>
-
+          theme={theme}
+        />
         {isLoadingTrack && (
           <ActivityIndicator
             size="small"
@@ -113,32 +97,50 @@ export default function MusicSection() {
             style={{ marginHorizontal: 8 }}
           />
         )}
-
-        <Pressable
+        <TrackButton
+          label={t("nextTrack")}
           onPress={handleNextTrack}
           disabled={isLoadingTrack}
-          style={({ pressed }) => [
-            styles.controlButton,
-            isLoadingTrack ? styles.controlButtonDisabled : {},
-            { opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Text
-            style={[
-              styles.controlButtonText,
-              isLoadingTrack ? styles.controlButtonTextDisabled : {},
-            ]}
-          >
-            {t("nextTrack")}
-          </Text>
-        </Pressable>
+          theme={theme}
+        />
       </View>
     </>
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+function TrackButton({ label, onPress, disabled, theme }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          flex: 1,
+          paddingVertical: 11,
+          borderRadius: 9,
+          marginHorizontal: 6,
+          alignItems: "center",
+          backgroundColor: theme.accentColor,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Text
+        style={{
+          color: disabled ? "#cbd5e1" : theme.textColor,
+          fontWeight: "bold",
+          fontSize: 14,
+          letterSpacing: 0.2,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function createStyles(theme) {
+  return StyleSheet.create({
     linkButton: {
       padding: 14,
       borderRadius: 10,
@@ -146,6 +148,9 @@ const createStyles = (theme) =>
       backgroundColor: theme.accentColor,
       marginTop: 12,
       marginBottom: 12,
+    },
+    buttonPressed: {
+      opacity: 0.8,
     },
     linkText: {
       fontSize: 16,
@@ -160,6 +165,7 @@ const createStyles = (theme) =>
     current: {
       fontSize: 16,
       marginBottom: 10,
+      color: theme.textColor,
     },
     trackInfoContainer: {
       marginTop: 14,
@@ -168,6 +174,7 @@ const createStyles = (theme) =>
     currentTrackLabel: {
       fontSize: 15,
       marginBottom: 2,
+      color: theme.textColor,
     },
     trackTitle: {
       fontSize: 16,
@@ -180,24 +187,5 @@ const createStyles = (theme) =>
       alignItems: "center",
       marginTop: 14,
     },
-    controlButton: {
-      flex: 1,
-      paddingVertical: 11,
-      borderRadius: 9,
-      marginHorizontal: 6,
-      alignItems: "center",
-      backgroundColor: theme.accentColor,
-    },
-    controlButtonDisabled: {
-      backgroundColor: theme.accentColor,
-    },
-    controlButtonText: {
-      color: theme.textColor,
-      fontWeight: "bold",
-      fontSize: 14,
-      letterSpacing: 0.2,
-    },
-    controlButtonTextDisabled: {
-      color: "#cbd5e1",
-    },
   });
+}

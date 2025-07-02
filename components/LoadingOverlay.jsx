@@ -4,17 +4,18 @@ import { useLoading } from "../context/LoadingContext";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 
-// Schön blaues Glass-Overlay mit Blur!
 export default function LoadingOverlay() {
   const { loading } = useLoading();
   const spinAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const animationRef = useRef(null);
+  const spinLoopRef = useRef();
 
   useEffect(() => {
     if (loading) {
+      // Spin immer zurücksetzen und Animation neu starten
       spinAnim.setValue(0);
-      animationRef.current = Animated.loop(
+      fadeAnim.setValue(0);
+      spinLoopRef.current = Animated.loop(
         Animated.timing(spinAnim, {
           toValue: 1,
           duration: 1000,
@@ -22,28 +23,34 @@ export default function LoadingOverlay() {
           useNativeDriver: true,
         })
       );
-      animationRef.current.start();
+      spinLoopRef.current.start();
 
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 280,
+        duration: 220,
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 250,
+        duration: 200,
         useNativeDriver: true,
       }).start(() => {
-        animationRef.current?.stop();
+        spinLoopRef.current?.stop();
       });
     }
-  }, [loading]);
+    // Clean-Up bei Unmount
+    return () => {
+      spinLoopRef.current?.stop();
+    };
+  }, [loading, spinAnim, fadeAnim]);
 
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
+
+  if (!loading) return null;
 
   return (
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
@@ -75,6 +82,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(30, 41, 59, 0.28)",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
   },
   spinner: {
     width: 88,

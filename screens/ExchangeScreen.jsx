@@ -1,5 +1,4 @@
 // screens/ExchangeScreen.js
-import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import ScreenLayout from "../components/ScreenLayout";

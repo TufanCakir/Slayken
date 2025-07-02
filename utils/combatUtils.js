@@ -4,45 +4,48 @@ export function calculateSkillDamage({
   skill = {},
   enemyDefense = 0,
 }) {
-  // Basis: attack ODER strength
-  const baseAttack = charStats.attack || charStats.strength || 1;
-  const attackWithBonus = baseAttack * (1 + (percentBonuses.attack || 0));
+  // Basiswert: attack, fallback auf strength, sonst 1
+  const baseAttack = charStats.attack ?? charStats.strength ?? 1;
 
-  // Stärke: +1% pro Punkt (optional)
-  const strength = charStats.strength || 0;
-  const strengthBonus = attackWithBonus * (strength * 0.01);
+  // Prozent-Bonus (z.B. aus Equipment), default 0
+  const attackBonusPercent = percentBonuses.attack ?? 0;
 
-  // Level: +1% pro Level über 1 (optional)
-  const level = charStats.level || 1;
-  const levelBonus = attackWithBonus * ((level - 1) * 0.01);
+  // Angriff mit Prozent-Bonus
+  let attackWithBonus = baseAttack * (1 + attackBonusPercent / 100);
 
-  // Multiplikator (z. B. 35 = 0.35)
-  const skillMultiplier = (skill.skillDmg || 100) / 100;
+  // Stärke-Bonus: +1% pro Strength-Punkt
+  const strength = charStats.strength ?? 0;
+  attackWithBonus *= 1 + strength * 0.01;
 
-  let totalDamage =
-    (attackWithBonus + strengthBonus + levelBonus) * skillMultiplier;
-
-  // Flat-SkillPower
-  if (skill.basePower) totalDamage += skill.basePower;
-
-  // Enemy Defense
-  if (enemyDefense) {
-    totalDamage -= enemyDefense;
-    totalDamage = Math.max(1, totalDamage);
+  // Level-Bonus: +1% pro Level über 1
+  const level = charStats.level ?? 1;
+  if (level > 1) {
+    attackWithBonus *= 1 + (level - 1) * 0.01;
   }
 
-  // Debugging
-  console.log("SkillDamage-DEBUG", {
-    charStats,
-    percentBonuses,
-    skill,
+  // Skill-Multiplikator (z.B. 35 => 0.35), fallback = 1 (100%)
+  const skillMultiplier = (skill.skillDmg ?? 100) / 100;
+  let totalDamage = attackWithBonus * skillMultiplier;
+
+  // Flat-Bonus hinzufügen
+  const flatBonus = skill.basePower ?? 0;
+  totalDamage += flatBonus;
+
+  // Defense abziehen
+  totalDamage -= enemyDefense;
+  totalDamage = Math.max(1, totalDamage);
+
+  // Debug
+  console.log("SkillDamage DEBUG", {
     baseAttack,
-    attackWithBonus,
-    strengthBonus,
-    levelBonus,
+    attackBonusPercent,
+    attackWithBonus: Math.round(attackWithBonus),
+    strength,
+    level,
     skillMultiplier,
-    totalDamage,
+    flatBonus,
     enemyDefense,
+    totalDamage: Math.round(totalDamage),
   });
 
   return Math.round(totalDamage);

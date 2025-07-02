@@ -5,7 +5,6 @@ import {
   FlatList,
   StyleSheet,
   Dimensions,
-  Platform,
   TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
@@ -15,16 +14,13 @@ import { t } from "../i18n";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { FontAwesome5 } from "@expo/vector-icons";
 import { useThemeContext } from "../context/ThemeContext";
+import { getItemImageUrl } from "../utils/item/itemUtils";
 
-// Helper für alle (Event)Boss-Bilder in der News
+// Helper: Extrahiert eventboss-Key aus einer Bild-URL
 function getEventBossKey(imageUrl) {
   const match = /\/([\w-]+)\.png$/.exec(imageUrl);
-  if (!match) return null;
-  // Für news/events konsequent "eventboss_"
-  return "eventboss_" + match[1].toLowerCase();
+  return match ? "eventboss_" + match[1].toLowerCase() : null;
 }
 
 export default function NewsScreen({ imageMap = {} }) {
@@ -39,7 +35,6 @@ export default function NewsScreen({ imageMap = {} }) {
     const key = `claimed_news_${item.id}`;
     const alreadyClaimed = await AsyncStorage.getItem(key);
     if (alreadyClaimed) return;
-
     addCoins(100);
     addCrystals(10);
     await AsyncStorage.setItem(key, "true");
@@ -61,8 +56,6 @@ export default function NewsScreen({ imageMap = {} }) {
 
   const renderItem = ({ item }) => {
     const claimed = claimedNews[item.id];
-
-    // Suche nach dem gecachten Image (imageMap), fallback auf Original-URL
     const bossKey = getEventBossKey(item.image);
     const imageSource =
       bossKey && imageMap[bossKey] ? imageMap[bossKey] : item.image;
@@ -85,18 +78,16 @@ export default function NewsScreen({ imageMap = {} }) {
           ) : (
             <View style={styles.tooltip}>
               <Text style={styles.tooltipText}>Halten für Belohnung: </Text>
-              <FontAwesome5
-                name="coins"
-                size={14}
-                color="#facc15"
-                style={styles.icon}
+              <Image
+                source={getItemImageUrl("coin")}
+                style={styles.rewardIcon}
+                contentFit="contain"
               />
               <Text style={styles.tooltipText}> +100 </Text>
-              <MaterialCommunityIcons
-                name="cards-diamond"
-                size={16}
-                color="#38bdf8"
-                style={styles.icon}
+              <Image
+                source={getItemImageUrl("crystal")}
+                style={styles.rewardIcon}
+                contentFit="contain"
               />
               <Text style={styles.tooltipText}> +10</Text>
             </View>
@@ -121,8 +112,6 @@ export default function NewsScreen({ imageMap = {} }) {
     </ScreenLayout>
   );
 }
-
-const { height } = Dimensions.get("window");
 
 function createStyles(theme) {
   return StyleSheet.create({
@@ -169,8 +158,10 @@ function createStyles(theme) {
       fontSize: 13,
       color: theme.textColor,
     },
-    icon: {
-      marginHorizontal: 3,
+    rewardIcon: {
+      width: 18,
+      height: 18,
+      marginHorizontal: 2,
       marginBottom: -1,
     },
     claimed: {

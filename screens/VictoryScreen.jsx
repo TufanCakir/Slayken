@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -23,7 +22,6 @@ export default function VictoryScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      {/* Dynamisches Hintergrundbild */}
       {theme.bgImage && (
         <ExpoImage
           source={theme.bgImage}
@@ -32,34 +30,39 @@ export default function VictoryScreen({ route }) {
           transition={600}
         />
       )}
-      {/* Semi-transparenter Overlay */}
       <View style={styles.bgOverlay} />
 
       <Text style={styles.title}>Sieg!</Text>
 
-      {/* Neue Ausrüstung */}
-      {newEquipment && (
+      {/* Freigeschaltete Ausrüstung oder Charakter */}
+      {(newEquipment || newCharacter) && (
         <View style={styles.rewardBox}>
-          <Text style={styles.equipTitle}>Neue Ausrüstung freigeschaltet!</Text>
-          <Text style={styles.equipLabel}>{newEquipment.label}</Text>
-          <Text style={styles.equipDesc}>{newEquipment.description}</Text>
+          {newEquipment && (
+            <>
+              <Text style={styles.rewardTitle}>
+                Neue Ausrüstung freigeschaltet!
+              </Text>
+              <Text style={styles.rewardLabel}>{newEquipment.label}</Text>
+              <Text style={styles.rewardDesc}>{newEquipment.description}</Text>
+            </>
+          )}
+          {newCharacter && (
+            <>
+              <Text style={styles.rewardTitle}>
+                🎉 Neuer Held freigeschaltet!
+              </Text>
+              <ExpoImage
+                source={{ uri: newCharacter.classUrl }}
+                style={styles.avatar}
+                contentFit="contain"
+              />
+              <Text style={styles.rewardLabel}>{newCharacter.label}</Text>
+            </>
+          )}
         </View>
       )}
 
-      {/* Neuer Charakter */}
-      {newCharacter && (
-        <View style={styles.rewardBox}>
-          <Text style={styles.charTitle}>🎉 Neuer Held freigeschaltet!</Text>
-          <ExpoImage
-            source={{ uri: newCharacter.classUrl }}
-            style={styles.avatar}
-            contentFit="contain"
-          />
-          <Text style={styles.equipLabel}>{newCharacter.label}</Text>
-        </View>
-      )}
-
-      {/* Charakter-Infos */}
+      {/* Charakter-Info, falls vorhanden */}
       {character && (
         <View style={styles.characterBox}>
           <ExpoImage
@@ -67,34 +70,28 @@ export default function VictoryScreen({ route }) {
             style={styles.avatar}
             contentFit="contain"
           />
-          <View>
-            <Text style={styles.name}>{character.name}</Text>
-            <Text style={styles.level}>Level {character.level}</Text>
-            <Text style={styles.xp}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.charName}>{character.name}</Text>
+            <Text style={styles.charLevel}>Level {character.level}</Text>
+            <Text style={styles.charXp}>
               XP: {character.exp} / {character.expToNextLevel}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Rewards */}
+      {/* Währungs-Belohnungen */}
       <View style={styles.rewards}>
-        <View style={styles.rewardRow}>
-          <ExpoImage
-            source={{ uri: getItemImageUrl("coin") }}
-            style={styles.rewardIcon}
-            contentFit="contain"
-          />
-          <Text style={styles.rewardText}>+{coinReward} Coins</Text>
-        </View>
-        <View style={styles.rewardRow}>
-          <ExpoImage
-            source={{ uri: getItemImageUrl("crystal") }}
-            style={styles.rewardIcon}
-            contentFit="contain"
-          />
-          <Text style={styles.rewardText}>+{crystalReward} Crystals</Text>
-        </View>
+        <RewardRow
+          icon={getItemImageUrl("coin")}
+          label={`+${coinReward} Coins`}
+          theme={theme}
+        />
+        <RewardRow
+          icon={getItemImageUrl("crystal")}
+          label={`+${crystalReward} Crystals`}
+          theme={theme}
+        />
         {isEvent && <Text style={styles.eventLabel}>Event abgeschlossen!</Text>}
       </View>
 
@@ -108,132 +105,151 @@ export default function VictoryScreen({ route }) {
   );
 }
 
+// Kleine Subkomponente für Rewards
+function RewardRow({ icon, label, theme }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginVertical: 4,
+        gap: 6,
+      }}
+    >
+      <ExpoImage
+        source={{ uri: icon }}
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          backgroundColor: theme.accentColor,
+          marginRight: 8,
+        }}
+        contentFit="contain"
+      />
+      <Text style={{ fontSize: 17, color: theme.textColor }}>{label}</Text>
+    </View>
+  );
+}
+
 function createStyles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      padding: 20,
+      padding: 22,
       position: "relative",
       overflow: "hidden",
     },
     bgOverlay: {
       ...StyleSheet.absoluteFillObject,
+      backgroundColor: theme.glowColor,
       zIndex: 0,
     },
     title: {
-      fontSize: 30,
-      marginBottom: 34,
+      fontSize: 32,
+      marginBottom: 32,
       letterSpacing: 0.5,
       color: theme.textColor,
       zIndex: 2,
+      fontWeight: "bold",
     },
     rewardBox: {
       borderRadius: 16,
-      padding: 16,
+      padding: 18,
       marginBottom: 24,
       alignItems: "center",
       backgroundColor: theme.accentColor,
       zIndex: 2,
+      minWidth: 220,
     },
-    equipTitle: {
-      fontSize: 16,
-      marginBottom: 4,
-      textAlign: "center",
-      color: theme.textColor,
-    },
-    charTitle: {
-      fontSize: 16,
-      marginBottom: 4,
-      textAlign: "center",
-      color: theme.textColor,
-    },
-    equipLabel: {
+    rewardTitle: {
       fontSize: 17,
+      marginBottom: 6,
+      textAlign: "center",
+      color: theme.borderGlowColor,
+      fontWeight: "bold",
+      letterSpacing: 0.2,
+    },
+    rewardLabel: {
+      fontSize: 16,
       marginBottom: 4,
       textAlign: "center",
       color: theme.textColor,
     },
-    equipDesc: {
-      fontSize: 15,
+    rewardDesc: {
+      fontSize: 14,
       textAlign: "center",
-      marginBottom: 6,
       color: theme.textColor,
+      marginBottom: 2,
+      opacity: 0.8,
     },
     characterBox: {
       flexDirection: "row",
       alignItems: "center",
       borderRadius: 16,
       padding: 14,
-      marginBottom: 24,
+      marginBottom: 26,
       backgroundColor: theme.accentColor,
       zIndex: 2,
+      width: "100%",
+      maxWidth: 350,
     },
     avatar: {
-      width: 150,
-      height: 150,
-      marginRight: 14,
-      marginBottom: 6,
+      width: 92,
+      height: 92,
+      borderRadius: 16,
+      marginRight: 13,
+      backgroundColor: theme.shadowColor,
     },
-    name: {
-      fontSize: 18,
-      marginBottom: 2,
+    charName: {
+      fontSize: 17,
+      marginBottom: 3,
       color: theme.textColor,
+      fontWeight: "bold",
     },
-    level: {
-      fontSize: 14,
-      marginTop: 3,
-      color: theme.textColor,
-    },
-    xp: {
+    charLevel: {
       fontSize: 13,
-      marginTop: 3,
+      color: theme.borderGlowColor,
+      marginBottom: 1,
+    },
+    charXp: {
+      fontSize: 13,
       color: theme.textColor,
+      opacity: 0.8,
+      marginBottom: 1,
     },
     rewards: {
-      marginBottom: 36,
+      marginBottom: 38,
       alignItems: "center",
       zIndex: 2,
-    },
-    rewardRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginVertical: 4,
-      marginBottom: 2,
-      gap: 5,
-    },
-    rewardIcon: {
-      width: 30,
-      height: 30,
-      marginBottom: 8,
-      marginRight: 8,
-      borderRadius: 8,
-      backgroundColor: theme.accentColor,
-    },
-    rewardText: {
-      fontSize: 18,
-      textAlign: "center",
-      color: theme.textColor,
+      width: "100%",
+      maxWidth: 350,
     },
     eventLabel: {
       marginTop: 8,
       fontSize: 15,
-      color: theme.textColor,
+      color: theme.borderGlowColor,
+      fontWeight: "bold",
+      letterSpacing: 0.1,
     },
     button: {
       paddingVertical: 14,
-      paddingHorizontal: 32,
+      paddingHorizontal: 36,
       borderRadius: 12,
       marginTop: 10,
-      backgroundColor: theme.accentColor,
+      backgroundColor: theme.borderGlowColor,
       zIndex: 2,
+      minWidth: 200,
+      alignItems: "center",
     },
     buttonText: {
       fontSize: 17,
       letterSpacing: 0.4,
+      color: theme.accentColor,
+      fontWeight: "bold",
       textAlign: "center",
-      color: theme.textColor,
     },
   });
 }

@@ -17,7 +17,6 @@ import { useThemeContext } from "../context/ThemeContext";
 export default function CreateCharacterScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-
   const { theme } = useThemeContext();
   const { setActiveClassId, updateCharacter } = useClass();
   const styles = createStyles(theme);
@@ -30,13 +29,12 @@ export default function CreateCharacterScreen({ navigation }) {
       baseId: selectedClass.id,
       id: `${selectedClass.id}-${Date.now()}`,
       label: name,
-      name: name,
+      name,
       level: 1,
       exp: 0,
       skills: selectedClass.skills ?? [],
       classUrl: getClassImageUrl(selectedClass.id),
     };
-
     await updateCharacter(newChar);
     await setActiveClassId(newChar.id);
     navigation.replace("CharacterSelectScreen");
@@ -68,7 +66,7 @@ export default function CreateCharacterScreen({ navigation }) {
         <>
           <Text style={styles.title}>Wähle eine Klasse</Text>
           <FlatList
-            data={classes.filter((cls) => !cls.eventReward)} // nur nicht-eventReward!
+            data={classes.filter((cls) => !cls.eventReward)}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.classList}
             renderItem={({ item }) => (
@@ -114,6 +112,7 @@ function createStyles(theme) {
     container: {
       flex: 1,
       paddingHorizontal: 16,
+      backgroundColor: theme.background,
     },
     title: {
       fontSize: 25,
@@ -134,6 +133,7 @@ function createStyles(theme) {
       paddingHorizontal: 18,
       marginBottom: 20,
       marginTop: 10,
+      borderRadius: 12,
     },
     nextButton: {
       backgroundColor: theme.textColor,
@@ -149,9 +149,7 @@ function createStyles(theme) {
       letterSpacing: 0.15,
     },
     nextButtonDisabled: {
-      backgroundColor: theme.accentColor,
-      borderColor: theme.accentColor,
-      opacity: 0.7,
+      opacity: 0.5,
     },
     classList: {
       paddingVertical: 10,
@@ -181,7 +179,7 @@ function createStyles(theme) {
     },
     optionDescription: {
       fontSize: 13,
-      color: "#c7dfff",
+      color: theme.textColor + "aa",
       marginBottom: 4,
     },
     elementLabel: {
@@ -198,11 +196,13 @@ function createStyles(theme) {
     },
     backButton: {
       position: "absolute",
+      bottom: 18,
+      left: 18,
       backgroundColor: theme.shadowColor,
       paddingVertical: 10,
-      paddingHorizontal: 20,
+      paddingHorizontal: 22,
       borderRadius: 14,
-      left: 5,
+      zIndex: 20,
     },
     backText: {
       color: theme.textColor,

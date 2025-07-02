@@ -13,11 +13,11 @@ export default function ToSSection() {
     <View style={styles.section}>
       <Pressable
         accessibilityRole="button"
+        onPress={() => navigation.navigate("ToSScreen")}
         style={({ pressed }) => [
           styles.linkButton,
-          { opacity: pressed ? 0.8 : 1 },
+          { opacity: pressed ? 0.85 : 1 },
         ]}
-        onPress={() => navigation.navigate("ToSScreen")}
       >
         <Text style={styles.linkText}>{t("termsOfService")}</Text>
       </Pressable>
@@ -29,19 +29,22 @@ const createStyles = (theme) =>
   StyleSheet.create({
     section: {
       marginBottom: 30,
+      alignItems: "center",
     },
     linkButton: {
-      padding: 14,
-      borderWidth: 2,
-      borderRadius: 10,
+      paddingVertical: 14,
+      paddingHorizontal: 38,
+      borderRadius: 11,
       alignItems: "center",
-      marginTop: 80,
       backgroundColor: theme.accentColor,
+      borderWidth: 2,
+      borderColor: theme.textColor + "33",
+      marginTop: 48, // weniger wuchtig als 80, besser für Settings-Listen
     },
     linkText: {
       fontSize: 16,
       fontWeight: "700",
       color: theme.textColor,
-      letterSpacing: 0.1,
+      letterSpacing: 0.2,
     },
   });

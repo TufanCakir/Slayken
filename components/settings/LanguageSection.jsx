@@ -16,55 +16,35 @@ export default function LanguageSection() {
       <Text style={styles.current}>{language.toUpperCase()}</Text>
       <View style={styles.row}>
         {LANGUAGES.map((code) => (
-          <ControlButton
+          <Pressable
             key={code}
-            label={t(`languageLabels.${code}`)}
-            selected={language === code}
             onPress={() => setLanguage(code)}
-            theme={theme}
-          />
+            disabled={language === code}
+            accessibilityRole="button"
+            accessibilityState={{ selected: language === code }}
+            style={({ pressed }) => [
+              styles.langButton,
+              language === code && styles.langButtonActive,
+              pressed && styles.langButtonPressed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.langButtonText,
+                language === code && styles.langButtonTextActive,
+              ]}
+            >
+              {t(`languageLabels.${code}`)}
+            </Text>
+          </Pressable>
         ))}
       </View>
     </View>
   );
 }
 
-function ControlButton({ label, selected, onPress, theme }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={selected}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      style={({ pressed }) => ({
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        marginRight: 8,
-        marginBottom: 5,
-        minWidth: 90,
-        alignItems: "center",
-        backgroundColor: selected ? theme.textColor : theme.accentColor,
-        opacity: pressed ? 0.8 : 1,
-      })}
-    >
-      <Text
-        style={{
-          fontSize: 15,
-          fontWeight: "bold",
-          letterSpacing: 0.5,
-          textAlign: "center",
-          color: selected ? theme.accentColor : theme.textColor,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-const createStyles = (theme) =>
-  StyleSheet.create({
+function createStyles(theme) {
+  return StyleSheet.create({
     section: {
       marginTop: 20,
       alignItems: "flex-start",
@@ -83,4 +63,32 @@ const createStyles = (theme) =>
       flexDirection: "row",
       gap: 12,
     },
+    langButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      minWidth: 90,
+      alignItems: "center",
+      backgroundColor: theme.accentColor,
+      marginRight: 8,
+      marginBottom: 5,
+      opacity: 1,
+    },
+    langButtonActive: {
+      backgroundColor: theme.textColor,
+    },
+    langButtonPressed: {
+      opacity: 0.7,
+    },
+    langButtonText: {
+      fontSize: 15,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+      textAlign: "center",
+      color: theme.textColor,
+    },
+    langButtonTextActive: {
+      color: theme.accentColor,
+    },
   });
+}

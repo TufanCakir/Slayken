@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCoins } from "../context/CoinContext";
@@ -9,6 +9,11 @@ import { t } from "../i18n";
 import { Image } from "expo-image";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 
+const currencyList = [
+  { key: "coins", image: getItemImageUrl("coin") },
+  { key: "crystals", image: getItemImageUrl("crystal") },
+];
+
 export default function Header() {
   const { coins } = useCoins();
   const { crystals } = useCrystals();
@@ -17,26 +22,35 @@ export default function Header() {
 
   const [username, setUsername] = useState("Spieler");
 
-  const progress = xp / xpToNextLevel;
-  const [animatedXpBar] = useState(new Animated.Value(progress));
+  // Robust: Division durch 0 vermeiden
+  const progress = xpToNextLevel > 0 ? xp / xpToNextLevel : 0;
+  const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUsername = async () => {
-      const storedUser = await AsyncStorage.getItem("user");
-      if (storedUser) setUsername(storedUser);
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        if (storedUser && isMounted) setUsername(storedUser);
+      } catch (e) {}
     };
     fetchUsername();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
     Animated.timing(animatedXpBar, {
       toValue: progress,
-      duration: 500,
+      duration: 600,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+  }, [progress, animatedXpBar]);
 
   const styles = createStyles(theme);
+
+  const currencyValues = { coins, crystals };
 
   return (
     <View style={styles.headerContainer}>
@@ -58,6 +72,12 @@ export default function Header() {
                 inputRange: [0, 1],
                 outputRange: ["0%", "100%"],
               }),
+              backgroundColor: theme.glowColor || "#14b8a6",
+              shadowColor: theme.borderGlowColor,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.45,
+              shadowRadius: 10,
+              elevation: 6,
             },
           ]}
         />
@@ -68,22 +88,25 @@ export default function Header() {
 
       {/* CURRENCY */}
       <View style={styles.rightBlock}>
-        <View style={styles.currencyItem}>
-          <Image
-            source={{ uri: getItemImageUrl("coin") }}
-            style={styles.icon}
-            contentFit="contain"
-          />
-          <Text style={styles.currencyText}>{coins}</Text>
-        </View>
-        <View style={styles.currencyItem}>
-          <Image
-            source={{ uri: getItemImageUrl("crystal") }}
-            style={styles.icon}
-            contentFit="contain"
-          />
-          <Text style={styles.currencyText}>{crystals}</Text>
-        </View>
+        {currencyList.map((c) => (
+          <View
+            style={[
+              styles.currencyItem,
+              {
+                borderColor: theme.borderGlowColor,
+                shadowColor: theme.glowColor,
+                shadowOpacity: 0.21,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
+                elevation: 6,
+              },
+            ]}
+            key={c.key}
+          >
+            <Image source={c.image} style={styles.icon} contentFit="contain" />
+            <Text style={styles.currencyText}>{currencyValues[c.key]}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -99,6 +122,13 @@ function createStyles(theme) {
       paddingVertical: 12,
       height: 88,
       backgroundColor: theme.accentColor,
+      borderBottomWidth: 1.5,
+      borderBottomColor: theme.borderGlowColor || "#333",
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 5,
     },
     leftBlock: {
       justifyContent: "center",
@@ -110,29 +140,39 @@ function createStyles(theme) {
       color: theme.textColor,
       letterSpacing: 0.2,
       marginBottom: 2,
+      textShadowColor: theme.shadowColor + "55",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
     },
     level: {
       fontSize: 13,
       color: theme.textColor,
-      opacity: 0.7,
+      opacity: 0.74,
       fontWeight: "700",
+      letterSpacing: 0.2,
     },
     centerBlock: {
       flex: 1,
-      height: 20,
-      backgroundColor: "blue",
+      height: 22,
+      backgroundColor: theme.accentColor,
       marginHorizontal: 20,
       borderRadius: 12,
       overflow: "hidden",
       justifyContent: "center",
       position: "relative",
+      borderWidth: 1.8,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+      elevation: 2,
     },
     xpBarFill: {
       position: "absolute",
       left: 0,
       top: 0,
       height: "100%",
-      backgroundColor: "green",
       borderRadius: 12,
     },
     xpText: {
@@ -141,30 +181,43 @@ function createStyles(theme) {
       fontWeight: "bold",
       color: theme.textColor,
       zIndex: 1,
+      textShadowColor: theme.shadowColor + "99",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
     },
     rightBlock: {
       flexDirection: "row",
       gap: 8,
+      alignItems: "center",
     },
     currencyItem: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: theme.accentColor,
-      paddingHorizontal: 8,
-      paddingVertical: 5,
-      borderRadius: 10,
+      paddingHorizontal: 9,
+      paddingVertical: 6,
+      borderRadius: 12,
       marginLeft: 7,
+      borderWidth: 1.2,
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.18,
+      shadowRadius: 7,
+      elevation: 6,
     },
     currencyText: {
       fontSize: 14,
       fontWeight: "bold",
-      marginLeft: 3,
+      marginLeft: 4,
       letterSpacing: 0.2,
       color: theme.textColor,
+      textShadowColor: theme.shadowColor + "88",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
     },
     icon: {
-      width: 20,
-      height: 20,
+      width: 21,
+      height: 21,
       marginRight: 2,
     },
   });

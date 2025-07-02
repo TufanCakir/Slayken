@@ -10,19 +10,62 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import {
-  Ionicons,
-  Feather,
-  FontAwesome,
-  FontAwesome5,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { t } from "../i18n";
 import { Image } from "expo-image";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
+import {
+  FontAwesome,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
+
+// Social Media Konfiguration (keine doppelten Icons mehr!)
+const SOCIALS = [
+  {
+    url: "https://youtube.com/@tufancakirofficial",
+    icon: <FontAwesome5 name="youtube" size={24} color="#e11d48" />,
+    key: "youtube",
+  },
+  {
+    url: "https://x.com/Tufan_Cakir_",
+    icon: (theme) => (
+      <FontAwesome name="twitter" size={24} color={theme.textColor} />
+    ),
+    key: "twitter",
+  },
+  {
+    url: "https://www.instagram.com/tufancakirorigins/",
+    icon: (theme) => (
+      <FontAwesome name="instagram" size={24} color={theme.textColor} />
+    ),
+    key: "instagram",
+  },
+  {
+    url: "https://github.com/TufanCakir",
+    icon: (theme) => (
+      <FontAwesome name="github" size={24} color={theme.textColor} />
+    ),
+    key: "github",
+  },
+  {
+    url: "https://tufan-cakir.itch.io/",
+    icon: (theme) => (
+      <FontAwesome5 name="itch-io" size={24} color={theme.textColor} />
+    ),
+    key: "itch",
+  },
+  {
+    url: "https://slayken.com/",
+    icon: (theme) => (
+      <MaterialCommunityIcons name="web" size={24} color={theme.textColor} />
+    ),
+    key: "web",
+  },
+];
 
 export default function StartScreen() {
   const navigation = useNavigation();
@@ -37,14 +80,12 @@ export default function StartScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.centerContent}>
         {activeCharacter ? (
-          <>
-            <Image
-              source={{ uri: activeCharacter.classUrl }}
-              style={styles.characterImage}
-              contentFit="contain"
-              transition={300}
-            />
-          </>
+          <Image
+            source={{ uri: activeCharacter.classUrl }}
+            style={styles.characterImage}
+            contentFit="contain"
+            transition={300}
+          />
         ) : (
           <Text style={styles.noCharText}>Kein Charakter aktiv</Text>
         )}
@@ -73,7 +114,6 @@ export default function StartScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t("settingsTitle")}</Text>
-
             <TouchableOpacity
               style={styles.modalItem}
               onPress={() => {
@@ -86,54 +126,18 @@ export default function StartScreen() {
             </TouchableOpacity>
 
             <View style={styles.socialIcons}>
-              <TouchableOpacity
-                onPress={() =>
-                  Linking.openURL("https://youtube.com/@tufancakirofficial")
-                }
-              >
-                <FontAwesome5 name="youtube" size={24} color="#e11d48" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => Linking.openURL("https://x.com/Tufan_Cakir_")}
-              >
-                <FontAwesome name="twitter" size={24} color={theme.textColor} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  Linking.openURL(
-                    "https://www.instagram.com/tufancakirorigins/"
-                  )
-                }
-              >
-                <FontAwesome
-                  name="instagram"
-                  size={24}
-                  color={theme.textColor}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => Linking.openURL("https://github.com/TufanCakir")}
-              >
-                <FontAwesome name="github" size={24} color={theme.textColor} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => Linking.openURL("https://tufan-cakir.itch.io/")}
-              >
-                <FontAwesome5
-                  name="itch-io"
-                  size={24}
-                  color={theme.textColor}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => Linking.openURL("https://slayken.com/")}
-              >
-                <MaterialCommunityIcons
-                  name="web"
-                  size={24}
-                  color={theme.textColor}
-                />
-              </TouchableOpacity>
+              {SOCIALS.map((social) => (
+                <TouchableOpacity
+                  key={social.key}
+                  onPress={() => Linking.openURL(social.url)}
+                  accessibilityLabel={social.key}
+                  style={styles.socialIcon}
+                >
+                  {typeof social.icon === "function"
+                    ? social.icon(theme)
+                    : social.icon}
+                </TouchableOpacity>
+              ))}
             </View>
 
             <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -148,9 +152,7 @@ export default function StartScreen() {
 
 function createStyles(theme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+    container: { flex: 1 },
     centerContent: {
       flex: 1,
       justifyContent: "center",
@@ -219,6 +221,8 @@ function createStyles(theme) {
       fontSize: 24,
       color: theme.textColor,
       marginBottom: 20,
+      fontWeight: "bold",
+      letterSpacing: 0.3,
     },
     modalItem: {
       flexDirection: "row",
@@ -235,12 +239,19 @@ function createStyles(theme) {
       flexDirection: "row",
       gap: 30,
       marginVertical: 28,
+      flexWrap: "wrap",
+      justifyContent: "center",
+    },
+    socialIcon: {
+      alignItems: "center",
+      justifyContent: "center",
     },
     closeText: {
       fontSize: 18,
       color: theme.textColor,
       marginTop: 10,
       letterSpacing: 0.8,
+      fontWeight: "bold",
     },
   });
 }

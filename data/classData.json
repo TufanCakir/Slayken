@@ -4,7 +4,19 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Krieger",
     "description": "Ein Mächtiger Krieger.",
     "unlockDate": "2025-08",
@@ -16,7 +28,19 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Krieger",
     "description": "Eine starker Nahkämpfer, das viel Schaden einstecken kann.",
     "unlockDate": "2025-08",
@@ -28,7 +52,20 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Magierin",
     "description": "Meistert Frostzauber mit hoher Durchschlagskraft.",
     "unlockDate": "2025-08",
@@ -40,7 +77,20 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Schwertkämpferin",
     "description": "Eine flinke Kämpferin mit tödlichen Klingen.",
     "unlockDate": "2025-08",
@@ -52,7 +102,20 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Assasine",
     "description": "Schneller Kämpfer.",
     "unlockDate": "2025-08",
@@ -64,7 +127,20 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Krieger",
     "description": "Mächtiger Kämpfer.",
     "unlockDate": "2025-08",
@@ -76,7 +152,20 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 10, "defense": 8, "agility": 5, "intelligence": 5 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 1000,
+
+      "base": {
+        "strength": 10,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Schwert Meister",
     "description": "Kämpft Konzentriert.",
     "unlockDate": "2025-08",
@@ -88,7 +177,19 @@
     "exp": 0,
     "level": 1,
     "expToNextLevel": 100,
-    "stats": { "strength": 13, "defense": 10, "agility": 6, "intelligence": 8 },
+    "stats": {
+      "strength": 10,
+      "defense": 8,
+      "agility": 5,
+      "intelligence": 5,
+      "attack": 5000,
+      "base": {
+        "strength": 30,
+        "defense": 8,
+        "agility": 5,
+        "intelligence": 5
+      }
+    },
     "label": "Reon Dragonheart",
     "description": "Ein legendärer Krieger, der Flammen und Drachenblut vereint.",
     "unlockDate": "2025-08",

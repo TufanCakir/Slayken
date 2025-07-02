@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,27 +16,26 @@ import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import BattleScene from "../components/BattleScene";
 import { useMissions } from "../context/MissionContext";
-import { useThemeContext } from "../context/ThemeContext"; // schon vorhanden!
-
+import { useThemeContext } from "../context/ThemeContext";
 import bossData from "../data/bossData.json";
 import chapterData from "../data/chapterData.json";
 import { Image } from "expo-image";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
+import { calculateSkillDamage } from "../utils/combatUtils";
+import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 
+// Rewards
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
-const PLAYER_MAX_HP_DEFAULT = 100;
 
+// Helpers
 function getEventBossKey(imageUrl, fallbackName) {
-  if (!imageUrl && !fallbackName) return null;
   let name = null;
-  if (typeof imageUrl === "string" && imageUrl.endsWith(".png")) {
+  if (typeof imageUrl === "string") {
     const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
     name = match ? match[1] : null;
   }
-  if (!name && fallbackName) {
-    name = fallbackName;
-  }
+  if (!name && fallbackName) name = fallbackName;
   return name ? "eventboss_" + name.toLowerCase() : null;
 }
 
@@ -53,20 +52,26 @@ export default function StoryScreen({ imageMap = {} }) {
   const { addCrystals } = useCrystals();
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
-  const { missions, markMissionCompleted } = useMissions();
+  const { missions } = useMissions();
   const completeMissionOnce = useCompleteMissionOnce();
 
   const activeCharacter = classList.find((c) => c.id === activeClassId);
-  const maxHp = activeCharacter?.maxHp || PLAYER_MAX_HP_DEFAULT;
 
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
-
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
+  const spawnNewBoss = useCallback(() => {
+    const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
+    setCurrentBoss(randomBoss);
+    setBossHp(randomBoss.hp || 100);
+  }, [bossData]);
+
+  // Kapitel-Auswahl setzt Boss + HP zurück
   useEffect(() => {
     if (!selectedChapter) return;
     const boss = bossData.find((b) => b.id === selectedChapter.bossId);
@@ -74,14 +79,26 @@ export default function StoryScreen({ imageMap = {} }) {
     setBossHp(boss?.hp || 100);
   }, [selectedChapter]);
 
+  // Kampf-Handler
+
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
 
-      const damage = typeof skill?.power === "number" ? skill.power : 20;
+      // Statt lokale Berechnung: zentrale Helper-Funktion
+      const { stats, percentBonuses } =
+        getCharacterStatsWithEquipment(activeCharacter);
 
-      setBossHp((prevBossHp) => {
-        const newHp = Math.max(prevBossHp - damage, 0);
+      const skillPower = skill?.power ?? 30;
+      const damage = calculateSkillDamage({
+        charStats: stats,
+        percentBonuses,
+        skill: { skillDmg: skillPower },
+        enemyDefense: currentBoss.defense || 0,
+      });
+
+      setBossHp((prevHp) => {
+        const newHp = Math.max(prevHp - damage, 0);
 
         if (newHp === 0) {
           setTimeout(() => {
@@ -93,11 +110,9 @@ export default function StoryScreen({ imageMap = {} }) {
             const updatedCharacter = gainExp(activeCharacter, 120);
             updateCharacter(updatedCharacter);
 
-            const oldSkillNames = (activeCharacter.skills || []).map(
-              (s) => s.name
-            );
+            const oldSkills = (activeCharacter.skills || []).map((s) => s.name);
             const newSkills = (updatedCharacter.skills || []).filter(
-              (s) => !oldSkillNames.includes(s.name)
+              (s) => !oldSkills.includes(s.name)
             );
 
             if (newSkills.length > 0) {
@@ -109,7 +124,6 @@ export default function StoryScreen({ imageMap = {} }) {
             }
           }, 300);
         }
-
         return newHp;
       });
     },
@@ -125,17 +139,21 @@ export default function StoryScreen({ imageMap = {} }) {
     ]
   );
 
+  // Neue Skills-Modal schließen
   const handleCloseSkillModal = useCallback(() => {
     setNewUnlockedSkills(null);
+    setSelectedChapter(null);
+    setCurrentBoss(null);
+    setBossHp(100);
   }, []);
 
-  // Prozent-HP für Balkenanzeige
+  // Prozent-HP für Boss-Balken
   const bossHpPercent =
     currentBoss && currentBoss.hp
       ? Math.round((bossHp / currentBoss.hp) * 100)
       : 0;
 
-  // Gemapptes Bossobjekt mit gecachtem Bild
+  // Bildquellen für Boss und Background aus Map (Caching)
   const mappedBoss = currentBoss
     ? {
         ...currentBoss,
@@ -154,11 +172,11 @@ export default function StoryScreen({ imageMap = {} }) {
       }
     : null;
 
-  // Boss-Hintergrund gecacht
   const bossBgKey = getBackgroundKey(currentBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
+  // Kapitel-Auswahl-Ansicht
   if (!selectedChapter) {
     return (
       <View style={styles.container}>
@@ -166,7 +184,7 @@ export default function StoryScreen({ imageMap = {} }) {
         <FlatList
           data={chapterData}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 12, gap: 12 }}
+          contentContainerStyle={styles.chapterList}
           renderItem={({ item }) => {
             const boss = bossData.find((b) => b.id === item.bossId);
             const bossImage =
@@ -194,10 +212,8 @@ export default function StoryScreen({ imageMap = {} }) {
       </View>
     );
   }
-  console.log("StoryScreen bossBgSrc:", bossBgSrc);
-  const bossBackgroundSource =
-    bossBgSrc && typeof bossBgSrc === "string" ? { uri: bossBgSrc } : bossBgSrc;
 
+  // Boss-Hintergrund als <Image> (wenn vorhanden)
   return (
     <View style={styles.container}>
       <Pressable
@@ -226,7 +242,8 @@ export default function StoryScreen({ imageMap = {} }) {
       {currentBoss && (
         <BattleScene
           boss={mappedBoss}
-          bossHp={bossHpPercent}
+          bossHp={bossHp}
+          bossMaxHp={currentBoss.hp}
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
           bossBackground={bossBgSrc}
@@ -264,7 +281,7 @@ export default function StoryScreen({ imageMap = {} }) {
   );
 }
 
-// Styles:
+// Styles
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
@@ -273,15 +290,18 @@ function createStyles(theme) {
   const cardBg = accent + "ee";
 
   return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+    container: { flex: 1 },
     header: {
       fontSize: 24,
       color: highlight,
       marginBottom: 12,
       textAlign: "center",
       letterSpacing: 0.4,
+      fontWeight: "bold",
+    },
+    chapterList: {
+      padding: 12,
+      gap: 12,
     },
     chapterCard: {
       backgroundColor: cardBg,
@@ -307,11 +327,14 @@ function createStyles(theme) {
     chapterTitle: {
       color: highlight,
       fontSize: 18,
+      fontWeight: "bold",
+      letterSpacing: 0.1,
     },
     chapterDesc: {
       color: text,
       fontSize: 14,
       marginTop: 3,
+      fontWeight: "500",
     },
     backButton: {
       marginVertical: 10,
@@ -320,6 +343,8 @@ function createStyles(theme) {
     },
     backText: {
       fontSize: 16,
+      color: highlight,
+      fontWeight: "bold",
     },
     chapterTitleFight: {
       color: highlight,
@@ -327,6 +352,7 @@ function createStyles(theme) {
       marginBottom: 12,
       textAlign: "center",
       letterSpacing: 0.5,
+      fontWeight: "bold",
     },
     modalOverlay: {
       flex: 1,
@@ -353,9 +379,10 @@ function createStyles(theme) {
     skillName: {
       fontSize: 16,
       color: highlight,
+      fontWeight: "bold",
     },
     skillDescription: { fontSize: 14, color: text },
-    skillPower: { fontSize: 12 },
+    skillPower: { fontSize: 12, color: text, fontStyle: "italic" },
     okButton: {
       backgroundColor: highlight,
       padding: 10,
@@ -363,6 +390,6 @@ function createStyles(theme) {
       alignSelf: "center",
       marginTop: 16,
     },
-    okText: { color: accent },
+    okText: { color: accent, fontWeight: "bold" },
   });
 }

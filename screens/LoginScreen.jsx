@@ -28,7 +28,8 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = () => {
-    if (!username.trim()) {
+    const trimmed = username.trim();
+    if (!trimmed) {
       Alert.alert(
         t("playerNameLabels.errorTitle"),
         t("playerNameLabels.errorEmptyName")
@@ -36,34 +37,33 @@ export default function LoginScreen() {
       return;
     }
 
-    Alert.alert(
-      t("confirmTitle"),
-      t("confirmLogin", { name: username.trim() }),
-      [
-        { text: t("cancel"), style: "cancel" },
-        {
-          text: t("yes"),
-          onPress: async () => {
-            try {
-              await AsyncStorage.setItem("user", username.trim());
-              navigation.replace("CreateCharacterScreen");
-            } catch (err) {
-              Alert.alert(t("errorTitle"), t("loginFailed"));
-            }
-          },
+    Alert.alert(t("confirmTitle"), t("confirmLogin", { name: trimmed }), [
+      { text: t("cancel"), style: "cancel" },
+      {
+        text: t("yes"),
+        onPress: async () => {
+          try {
+            await AsyncStorage.setItem("user", trimmed);
+            navigation.replace("CreateCharacterScreen");
+          } catch (err) {
+            Alert.alert(t("errorTitle"), t("loginFailed"));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const styles = createStyles(theme);
+  const isDisabled = !username.trim();
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{t("loginTitle")}</Text>
       <TextInput
         placeholder={t("playerNameLabels.newNamePlaceholder")}
-        placeholderTextColor={theme.placeholderTextColor || "#fff"}
+        placeholderTextColor={
+          theme.placeholderTextColor || theme.textColor + "77"
+        }
         style={styles.input}
         value={username}
         onChangeText={setUsername}
@@ -72,9 +72,9 @@ export default function LoginScreen() {
         maxLength={24}
       />
       <TouchableOpacity
-        style={[styles.button, !username.trim() && styles.buttonDisabled]}
+        style={[styles.button, isDisabled && styles.buttonDisabled]}
         onPress={handleLogin}
-        disabled={!username.trim()}
+        disabled={isDisabled}
         activeOpacity={0.85}
       >
         <Text style={styles.buttonText}>
@@ -118,9 +118,8 @@ function createStyles(theme) {
       alignItems: "center",
     },
     buttonDisabled: {
-      backgroundColor: theme.disabledColor || "#334155",
-      borderColor: theme.disabledBorderColor || "#64748b",
-      opacity: 0.7,
+      backgroundColor: theme.disabledColor || theme.accentColor,
+      opacity: 0.5,
     },
     buttonText: {
       color: theme.textColor,

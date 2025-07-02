@@ -1,93 +1,86 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Platform, StyleSheet } from "react-native";
-import { Image } from "expo-image"; // Wichtig: expo-image für Local/Remote
-// ↑ Achtung! KEIN import { Image } from "react-native" hier, sondern expo-image.
+import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
+import { useThemeContext } from "../context/ThemeContext";
 
-// Farbzuordnung je Element
+// Wenn du Elementfarben aus dem Theme holen willst, kannst du das hier tun:
 const ELEMENT_COLORS = {
-  fire: "#f87171",
-  ice: "#60a5fa",
-  thunder: "#facc15",
-  void: "#a78bfa",
-  default: "#cbd5e1",
+  fire: "#ff5500",
+  ice: "#3399ff",
+  void: "#aa00ff",
+  nature: "#00bb66",
+  default: "#38bdf8",
 };
 
 // Countdown-Hook
-const useCountdown = (targetDateString) => {
-  if (!targetDateString) return null;
-
-  const targetDate = new Date(targetDateString);
-  if (isNaN(targetDate.getTime())) return null;
-
-  const calculateTimeLeft = () => {
-    const now = new Date();
-    const difference = targetDate - now;
-
-    if (difference <= 0) return null;
-
-    return {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / (1000 * 60)) % 60),
-    };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+function useCountdown(targetDateString) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    if (!targetDateString) return null;
+    const t = new Date(targetDateString);
+    if (isNaN(t.getTime())) return null;
+    return calculateTimeLeft(t);
+  });
 
   useEffect(() => {
+    if (!targetDateString) return;
+    const targetDate = new Date(targetDateString);
+    if (isNaN(targetDate.getTime())) return;
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 60000); // 1 Minute
-
+      setTimeLeft(calculateTimeLeft(targetDate));
+    }, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [targetDateString]);
 
   return timeLeft;
-};
+}
 
-// imageMap als Prop!
+function calculateTimeLeft(targetDate) {
+  const now = new Date();
+  const diff = targetDate - now;
+  if (diff <= 0) return null;
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+  };
+}
+
+// ----------- TEASER CARD -----------
 export default function TeaserCard({ item, imageMap = {} }) {
+  const { theme } = useThemeContext();
   if (!item) return null;
 
   const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
   const countdown = useCountdown(item.unlockDate);
 
-  const renderCountdownText = () => {
-    if (!countdown) return "✅ Jetzt verfügbar";
-    const { days, hours, minutes } = countdown;
-    return `⏳ Noch ${days} Tag${
-      days !== 1 ? "e" : ""
-    }, ${hours} Std, ${minutes} Min`;
-  };
-
-  // Key für das Klassenbild (wie du es auch im imageMap verwendest)
-  const classKey = `class_${item.id}`; // z.B. class_voidwarrior
-  const imageSource = imageMap[classKey] || {
+  const imageSource = imageMap[`class_${item.id}`] || {
     uri: `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`,
   };
 
+  const countdownText = countdown
+    ? `⏳ Noch ${countdown.days} Tag${countdown.days !== 1 ? "e" : ""}, ${
+        countdown.hours
+      } Std, ${countdown.minutes} Min`
+    : "✅ Jetzt verfügbar";
+
+  const styles = createStyles(color, theme);
+
   return (
-    <View
-      style={[styles.card, { borderColor: color + "88", shadowColor: color }]}
-    >
+    <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color }]}>{item.label}</Text>
-        <Text
-          style={[styles.date, { color: countdown ? "#facc15" : "#10b981" }]}
-        >
-          {renderCountdownText()}
+        <Text style={styles.label}>{item.label}</Text>
+        <Text style={styles.date} numberOfLines={1}>
+          {countdownText}
         </Text>
       </View>
-
       <View style={styles.icon}>
         <Image
           source={imageSource}
           style={styles.image}
           contentFit="contain"
-          transition={300}
+          transition={250}
         />
       </View>
-
       <Text style={styles.name}>
         {item.id.replace(/-/g, " ").toUpperCase()}
       </Text>
@@ -96,43 +89,70 @@ export default function TeaserCard({ item, imageMap = {} }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#1e293b",
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  label: {
-    fontSize: 15,
-    letterSpacing: 0.5,
-  },
-  date: {
-    fontSize: 12,
-  },
-  name: {
-    fontSize: 18,
-    color: "#f8fafc",
-    textAlign: "center",
-    marginVertical: 10,
-  },
-  description: {
-    color: "#cbd5e1",
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  icon: {
-    alignItems: "center",
-  },
-  image: {
-    width: 300,
-    height: 300,
-    marginVertical: 8,
-  },
-});
+// ----------- STYLES -----------
+function createStyles(color, theme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.accentColor || "#1e293b",
+      borderRadius: 18,
+      padding: 18,
+      marginBottom: 20,
+      borderWidth: 2,
+      borderColor: color + "99",
+      shadowColor: color,
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 4,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 7,
+      alignItems: "center",
+    },
+    label: {
+      fontSize: 15,
+      letterSpacing: 0.5,
+      fontWeight: "bold",
+      color: color,
+    },
+    date: {
+      fontSize: 13,
+      fontWeight: "bold",
+      color: countdownColor(color),
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    icon: {
+      alignItems: "center",
+      marginVertical: 10,
+    },
+    image: {
+      width: 200,
+      height: 200,
+      borderRadius: 18,
+      maxWidth: "90%",
+    },
+    name: {
+      fontSize: 17,
+      color: theme.textColor || "#f8fafc",
+      textAlign: "center",
+      marginVertical: 7,
+      fontWeight: "700",
+      letterSpacing: 1.1,
+    },
+    description: {
+      color: theme.textColor ? theme.textColor + "cc" : "#cbd5e1",
+      fontSize: 14,
+      textAlign: "center",
+      lineHeight: 20,
+      marginTop: 2,
+    },
+  });
+}
+
+// Helper für Countdown-Farbe
+function countdownColor(color) {
+  return color === ELEMENT_COLORS.default ? "#facc15" : color;
+}

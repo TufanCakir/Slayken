@@ -18,16 +18,20 @@ export default function UIThemeSection() {
 const createStyles = (theme) =>
   StyleSheet.create({
     section: {
-      marginBottom: 30,
+      marginBottom: 32,
+      paddingHorizontal: 8,
+      paddingVertical: 10,
+      borderRadius: 14,
+      backgroundColor: theme.accentColor,
     },
     title: {
-      fontSize: 18,
-      fontWeight: "600",
-      marginBottom: 8,
+      fontSize: 17,
+      fontWeight: "700",
+      marginBottom: 10,
       color: theme.textColor,
       letterSpacing: 0.2,
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 3,
+      textShadowRadius: 2,
     },
   });

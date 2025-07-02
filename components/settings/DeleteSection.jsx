@@ -8,7 +8,6 @@ import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 
 export default function DeleteSection() {
-  const { language } = useLanguage();
   const { clearAllClasses } = useClass();
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
@@ -18,10 +17,7 @@ export default function DeleteSection() {
       t("settingsLabels.resetConfirmTitle"),
       t("settingsLabels.resetConfirmMessage"),
       [
-        {
-          text: t("settingsLabels.cancel"),
-          style: "cancel",
-        },
+        { text: t("settingsLabels.cancel"), style: "cancel" },
         {
           text: t("settingsLabels.resetApp"),
           style: "destructive",
@@ -31,15 +27,13 @@ export default function DeleteSection() {
               await clearAllClasses();
               await Updates.reloadAsync();
             } catch (e) {
-              console.error(e);
               Alert.alert(t("settingsLabels.resetError"));
             }
           },
         },
-      ],
-      { cancelable: true }
+      ]
     );
-  }, [language]);
+  }, [clearAllClasses]);
 
   return (
     <View style={styles.section}>
@@ -57,8 +51,8 @@ export default function DeleteSection() {
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+function createStyles(theme) {
+  return StyleSheet.create({
     section: {
       marginBottom: 36,
       alignItems: "center",
@@ -69,11 +63,10 @@ const createStyles = (theme) =>
       paddingVertical: 15,
       paddingHorizontal: 36,
       alignItems: "center",
+      opacity: 1,
     },
     resetButtonPressed: {
-      backgroundColor: theme.accentColor,
-      shadowColor: theme.textColor,
-      opacity: 0.8,
+      opacity: 0.7,
     },
     resetText: {
       color: theme.textColor,
@@ -82,3 +75,4 @@ const createStyles = (theme) =>
       letterSpacing: 0.12,
     },
   });
+}
