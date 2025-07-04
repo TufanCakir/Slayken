@@ -17,14 +17,15 @@ import { useLevelSystem } from "../hooks/useLevelSystem";
 import BattleScene from "../components/BattleScene";
 import { useMissions } from "../context/MissionContext";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 import bossData from "../data/bossData.json";
 import chapterData from "../data/chapterData.json";
 import { Image } from "expo-image";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { calculateSkillDamage } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
+import ScreenLayout from "../components/ScreenLayout";
 
-// Rewards
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
@@ -45,8 +46,9 @@ function getBackgroundKey(bgUrl) {
   return match ? "bg_" + match[1].toLowerCase() : null;
 }
 
-export default function StoryScreen({ imageMap = {} }) {
+export default function StoryScreen() {
   const navigation = useNavigation();
+  const { imageMap } = useAssets();
   const { addXp } = useAccountLevel();
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
@@ -54,6 +56,7 @@ export default function StoryScreen({ imageMap = {} }) {
   const { gainExp } = useLevelSystem();
   const { missions } = useMissions();
   const completeMissionOnce = useCompleteMissionOnce();
+  const { theme } = useThemeContext();
 
   const activeCharacter = classList.find((c) => c.id === activeClassId);
 
@@ -62,16 +65,8 @@ export default function StoryScreen({ imageMap = {} }) {
   const [bossHp, setBossHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  const spawnNewBoss = useCallback(() => {
-    const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
-    setCurrentBoss(randomBoss);
-    setBossHp(randomBoss.hp || 100);
-  }, [bossData]);
-
-  // Kapitel-Auswahl setzt Boss + HP zurück
   useEffect(() => {
     if (!selectedChapter) return;
     const boss = bossData.find((b) => b.id === selectedChapter.bossId);
@@ -79,17 +74,14 @@ export default function StoryScreen({ imageMap = {} }) {
     setBossHp(boss?.hp || 100);
   }, [selectedChapter]);
 
-  // Kampf-Handler
-
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
 
-      // Statt lokale Berechnung: zentrale Helper-Funktion
       const { stats, percentBonuses } =
         getCharacterStatsWithEquipment(activeCharacter);
-
       const skillPower = skill?.power ?? 30;
+
       const damage = calculateSkillDamage({
         charStats: stats,
         percentBonuses,
@@ -99,7 +91,6 @@ export default function StoryScreen({ imageMap = {} }) {
 
       setBossHp((prevHp) => {
         const newHp = Math.max(prevHp - damage, 0);
-
         if (newHp === 0) {
           setTimeout(() => {
             addCoins(COIN_REWARD);
@@ -139,7 +130,6 @@ export default function StoryScreen({ imageMap = {} }) {
     ]
   );
 
-  // Neue Skills-Modal schließen
   const handleCloseSkillModal = useCallback(() => {
     setNewUnlockedSkills(null);
     setSelectedChapter(null);
@@ -147,39 +137,23 @@ export default function StoryScreen({ imageMap = {} }) {
     setBossHp(100);
   }, []);
 
-  // Prozent-HP für Boss-Balken
-  const bossHpPercent =
-    currentBoss && currentBoss.hp
-      ? Math.round((bossHp / currentBoss.hp) * 100)
-      : 0;
-
-  // Bildquellen für Boss und Background aus Map (Caching)
-  const mappedBoss = currentBoss
-    ? {
-        ...currentBoss,
-        image:
-          (getEventBossKey(
-            currentBoss.image,
-            currentBoss.name || currentBoss.id
-          ) &&
-            imageMap[
-              getEventBossKey(
-                currentBoss.image,
-                currentBoss.name || currentBoss.id
-              )
-            ]) ||
-          currentBoss.image,
-      }
-    : null;
-
   const bossBgKey = getBackgroundKey(currentBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
-  // Kapitel-Auswahl-Ansicht
+  const mappedBoss = currentBoss
+    ? {
+        ...currentBoss,
+        image:
+          (getEventBossKey(currentBoss.image, currentBoss.name) &&
+            imageMap[getEventBossKey(currentBoss.image, currentBoss.name)]) ||
+          currentBoss.image,
+      }
+    : null;
+
   if (!selectedChapter) {
     return (
-      <View style={styles.container}>
+      <ScreenLayout style={styles.container}>
         <Text style={styles.header}>Wähle ein Kapitel</Text>
         <FlatList
           data={chapterData}
@@ -187,10 +161,10 @@ export default function StoryScreen({ imageMap = {} }) {
           contentContainerStyle={styles.chapterList}
           renderItem={({ item }) => {
             const boss = bossData.find((b) => b.id === item.bossId);
-            const bossImage =
-              (boss &&
-                imageMap[getEventBossKey(boss.image, boss.name || boss.id)]) ||
-              boss?.image;
+            const bossImage = boss
+              ? imageMap[getEventBossKey(boss.image, boss.name || boss.id)] ||
+                boss.image
+              : null;
             return (
               <TouchableOpacity
                 style={styles.chapterCard}
@@ -209,13 +183,22 @@ export default function StoryScreen({ imageMap = {} }) {
             );
           }}
         />
-      </View>
+      </ScreenLayout>
     );
   }
 
-  // Boss-Hintergrund als <Image> (wenn vorhanden)
   return (
     <View style={styles.container}>
+      {bossBgSrc && (
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={bossBgSrc}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={400}
+          />
+        </View>
+      )}
       <Pressable
         style={styles.backButton}
         onPress={() => setSelectedChapter(null)}
@@ -224,20 +207,6 @@ export default function StoryScreen({ imageMap = {} }) {
       </Pressable>
 
       <Text style={styles.chapterTitleFight}>{selectedChapter.label}</Text>
-
-      {bossBgSrc && (
-        <View style={StyleSheet.absoluteFill}>
-          <Image
-            source={
-              typeof bossBgSrc === "string" ? { uri: bossBgSrc } : bossBgSrc
-            }
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            transition={400}
-          />
-          <View style={StyleSheet.absoluteFillObject} />
-        </View>
-      )}
 
       {currentBoss && (
         <BattleScene
@@ -281,7 +250,6 @@ export default function StoryScreen({ imageMap = {} }) {
   );
 }
 
-// Styles
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
@@ -299,10 +267,7 @@ function createStyles(theme) {
       letterSpacing: 0.4,
       fontWeight: "bold",
     },
-    chapterList: {
-      padding: 12,
-      gap: 12,
-    },
+    chapterList: { padding: 12, gap: 12 },
     chapterCard: {
       backgroundColor: cardBg,
       borderRadius: 18,
@@ -310,11 +275,7 @@ function createStyles(theme) {
       marginVertical: 6,
       overflow: "hidden",
     },
-    chapterImage: {
-      flex: 1,
-      borderRadius: 18,
-      width: "100%",
-    },
+    chapterImage: { flex: 1, borderRadius: 18, width: "100%" },
     chapterOverlay: {
       position: "absolute",
       bottom: 0,

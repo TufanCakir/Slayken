@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
@@ -12,8 +12,11 @@ import { useClass } from "../context/ClassContext";
 import { skillPool } from "../data/skillPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
+import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
+import skinData from "../data/skinData.json"; // WICHTIG: Skin-Daten importieren!
 
-// Effekt Mapping (direkt aus Komponentenname)
+// Effekt Mapping
 const EFFECT_MAP = {
   FireEffect,
   FrostEffect,
@@ -22,29 +25,27 @@ const EFFECT_MAP = {
   StormStrikeEffect,
 };
 
-// Generiert einen sicheren ImageMap-Key
-function imageKey(prefix, url) {
-  if (typeof url !== "string") return null;
-  const match = /\/([\w-]+)\.png$/i.exec(url);
-  return match ? `${prefix}_${match[1].toLowerCase()}` : null;
-}
-
 export default function BattleScene({
   boss,
   bossHp,
   bossDefeated,
   onSkillPress,
   handleFight,
-  imageMap = {},
   skillDmg = 30,
 }) {
   const { classList, activeClassId } = useClass();
   const [activeEffect, setActiveEffect] = useState(null);
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
   // Aktiver Charakter
   const activeCharacter = classList.find((c) => c.id === activeClassId);
+  const { stats: charStats = {} } = useMemo(() => {
+    if (!activeCharacter) return { stats: {} };
+    return getCharacterStatsWithEquipment(activeCharacter);
+  }, [activeCharacter]);
+
   if (!activeCharacter) {
     return (
       <View style={styles.wrapper}>
@@ -53,51 +54,67 @@ export default function BattleScene({
     );
   }
 
-  // Boss Image Key Lookup
-  const bossImgKey = imageKey("eventboss", boss?.image);
+  // ------- Boss-Bild -------
+  const bossKey = boss?.image
+    ? `eventboss_${extractNameFromUrl(boss.image)}`
+    : null;
   const bossImgSrc =
-    (bossImgKey && imageMap[bossImgKey]) ||
-    boss?.image ||
-    getBossImageUrl(boss?.id);
+    imageMap[bossKey] || boss?.image || getBossImageUrl(boss?.id);
 
-  // Charakter Image Key Lookup
-  const classImgKey = imageKey("class", activeCharacter.classUrl);
-  const classImgSrc =
-    (classImgKey && imageMap[classImgKey]) || activeCharacter.classUrl;
+  // ------- Charakter-Bild (Skin Support!) -------
+  const charId = activeCharacter.baseId || activeCharacter.id;
+  let avatarSrc = activeCharacter.classUrl;
 
-  // Fortschritt
+  // Skin-Support: Aktives Skin suchen
+  if (activeCharacter.activeSkin) {
+    // Skin für diesen Charakter finden (sowohl baseId als auch id abdecken!)
+    const skin =
+      skinData.find(
+        (s) =>
+          (s.characterId === charId || s.characterId === activeCharacter.id) &&
+          s.id === activeCharacter.activeSkin
+      ) || null;
+    if (skin?.image) avatarSrc = skin.image;
+  }
+
+  // ImageMap checken (optional)
+  const classKey =
+    avatarSrc && typeof avatarSrc === "string"
+      ? `class_${extractNameFromUrl(avatarSrc)}`
+      : null;
+  const classImgSrc = imageMap[classKey] || avatarSrc;
+
+  // Stats & Balken
   const { name, level, exp, expToNextLevel } = activeCharacter;
   const maxHp = boss?.hp || 100;
   const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
   const bossName = boss?.name || boss?.eventName || "Unbekannter Boss";
   const expPercent = Math.min((exp / expToNextLevel) * 100, 100);
 
-  // Skills aus Charakter oder globalem Pool
+  // Skills
   const characterSkills =
     activeCharacter.skills?.length > 0 ? activeCharacter.skills : skillPool;
 
-  // Skill Handling
+  // Skill-Handler
   const handleSkill = (skill) => {
     if (!skill) return;
     onSkillPress?.(skill);
 
+    // Skill mit Effektnamen → Effekt zeigen, Angriff erst nach Effekt-Ende!
     if (EFFECT_MAP[skill.effect]) {
       setActiveEffect(skill.effect);
     } else {
-      // Stats aus aktivem Charakter holen
-      const charStats = activeCharacter.stats || {};
-      const damage = calculateSkillDamage({
-        charStats,
-        skill,
-        enemyDefense: boss?.bossDefense || 0,
+      // Falls kein Power am Skill → Fallback auf stat oder skillDmg
+      handleFight?.({
+        effect: skill.effect,
+        power:
+          typeof skill.power === "number"
+            ? skill.power
+            : charStats.attack ?? skillDmg,
       });
-
-      // Weitergeben an handleFight mit berechnetem Damage
-      handleFight?.({ effect: skill.effect, power: damage });
     }
   };
 
-  // Effekt-Komponente bei aktiver Animation
   let EffectComponent = null;
   if (activeEffect && EFFECT_MAP[activeEffect]) {
     const Component = EFFECT_MAP[activeEffect];
@@ -105,7 +122,10 @@ export default function BattleScene({
       <Component
         onEnd={() => {
           setActiveEffect(null);
-          handleFight?.({ effect: activeEffect, power: skillDmg });
+          handleFight?.({
+            effect: activeEffect,
+            power: charStats.attack ?? skillDmg,
+          });
         }}
       />
     );
@@ -138,7 +158,14 @@ export default function BattleScene({
       {/* Spieler-Anzeige */}
       <Pressable
         style={styles.playerArea}
-        onPress={() => !bossDefeated && handleFight?.()}
+        onPress={() => {
+          if (!bossDefeated) {
+            handleFight?.({
+              effect: "basic",
+              power: charStats.attack ?? skillDmg,
+            });
+          }
+        }}
       >
         <View style={styles.avatarWrapper}>
           <BlurView intensity={50} tint="dark" style={styles.characterInfo}>
@@ -151,6 +178,7 @@ export default function BattleScene({
               <View style={[styles.xpBar, { width: `${expPercent}%` }]} />
             </View>
           </BlurView>
+          {/* --- Das aktuell ausgerüstete Skin wird IMMER angezeigt! --- */}
           <Image
             source={classImgSrc}
             style={styles.avatar}
@@ -162,7 +190,7 @@ export default function BattleScene({
       {/* Effekte */}
       {EffectComponent}
 
-      {/* Skills */}
+      {/* ActionBar */}
       <ActionBar
         skills={characterSkills}
         activeCharacter={activeCharacter}
@@ -173,6 +201,14 @@ export default function BattleScene({
   );
 }
 
+// -------- Helper --------
+function extractNameFromUrl(url) {
+  if (typeof url !== "string") return "";
+  const match = /\/([\w-]+)\.png$/i.exec(url);
+  return match ? match[1].toLowerCase() : "";
+}
+
+// -------- Styles --------
 function createStyles(theme) {
   const text = theme.textColor || "#fff";
   const border = theme.borderColor || "#ff8800";

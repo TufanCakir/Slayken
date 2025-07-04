@@ -3,22 +3,34 @@ import { Image as ExpoImage } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { resetToHome } from "../utils/navigationUtils";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
+import skinData from "../data/skinData.json"; // <--- Importiere deine Skin-Daten!
 
 export default function VictoryScreen({ route }) {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
 
   const {
     coinReward = 0,
     crystalReward = 0,
     character = null,
     isEvent = false,
-    newEquipment = null,
     newCharacter = null,
+    skinId = null, // <--- neu!
   } = route.params || {};
 
+  // Hole das Skin-Objekt aus skinData (wenn skinId da ist)
+  const unlockedSkin = skinId
+    ? skinData.find((skin) => skin.id === skinId)
+    : null;
+
   const styles = createStyles(theme);
+
+  // Bildquellen vorbereiten
+  const characterImage = character && imageMap[`class_${character.id}`];
+  const newCharImage = newCharacter && imageMap[`class_${newCharacter.id}`];
 
   return (
     <View style={styles.container}>
@@ -34,42 +46,29 @@ export default function VictoryScreen({ route }) {
 
       <Text style={styles.title}>Sieg!</Text>
 
-      {/* Freigeschaltete Ausrüstung oder Charakter */}
-      {(newEquipment || newCharacter) && (
+      {newCharacter && (
         <View style={styles.rewardBox}>
-          {newEquipment && (
-            <>
-              <Text style={styles.rewardTitle}>
-                Neue Ausrüstung freigeschaltet!
-              </Text>
-              <Text style={styles.rewardLabel}>{newEquipment.label}</Text>
-              <Text style={styles.rewardDesc}>{newEquipment.description}</Text>
-            </>
+          <Text style={styles.rewardTitle}>🎉 Neuer Held freigeschaltet!</Text>
+          {newCharImage && (
+            <ExpoImage
+              source={newCharImage}
+              style={styles.avatar}
+              contentFit="contain"
+            />
           )}
-          {newCharacter && (
-            <>
-              <Text style={styles.rewardTitle}>
-                🎉 Neuer Held freigeschaltet!
-              </Text>
-              <ExpoImage
-                source={{ uri: newCharacter.classUrl }}
-                style={styles.avatar}
-                contentFit="contain"
-              />
-              <Text style={styles.rewardLabel}>{newCharacter.label}</Text>
-            </>
-          )}
+          <Text style={styles.rewardLabel}>{newCharacter.label}</Text>
         </View>
       )}
 
-      {/* Charakter-Info, falls vorhanden */}
       {character && (
         <View style={styles.characterBox}>
-          <ExpoImage
-            source={{ uri: character.classUrl }}
-            style={styles.avatar}
-            contentFit="contain"
-          />
+          {characterImage && (
+            <ExpoImage
+              source={characterImage}
+              style={styles.avatar}
+              contentFit="contain"
+            />
+          )}
           <View style={{ flex: 1 }}>
             <Text style={styles.charName}>{character.name}</Text>
             <Text style={styles.charLevel}>Level {character.level}</Text>
@@ -80,7 +79,18 @@ export default function VictoryScreen({ route }) {
         </View>
       )}
 
-      {/* Währungs-Belohnungen */}
+      {unlockedSkin && (
+        <View style={styles.skinBox}>
+          <Text style={styles.skinTitle}>✨ Skin freigeschaltet!</Text>
+          <ExpoImage
+            source={unlockedSkin.image}
+            style={styles.skinImage}
+            contentFit="contain"
+          />
+          <Text style={styles.skinLabel}>{unlockedSkin.label}</Text>
+        </View>
+      )}
+
       <View style={styles.rewards}>
         <RewardRow
           icon={getItemImageUrl("coin")}
@@ -105,7 +115,6 @@ export default function VictoryScreen({ route }) {
   );
 }
 
-// Kleine Subkomponente für Rewards
 function RewardRow({ icon, label, theme }) {
   return (
     <View
@@ -123,7 +132,6 @@ function RewardRow({ icon, label, theme }) {
           height: 30,
           borderRadius: 8,
           backgroundColor: theme.accentColor,
-          marginRight: 8,
         }}
         contentFit="contain"
       />
@@ -178,13 +186,6 @@ function createStyles(theme) {
       textAlign: "center",
       color: theme.textColor,
     },
-    rewardDesc: {
-      fontSize: 14,
-      textAlign: "center",
-      color: theme.textColor,
-      marginBottom: 2,
-      opacity: 0.8,
-    },
     characterBox: {
       flexDirection: "row",
       alignItems: "center",
@@ -200,7 +201,7 @@ function createStyles(theme) {
       width: 92,
       height: 92,
       borderRadius: 16,
-      marginRight: 13,
+      marginBottom: 10,
       backgroundColor: theme.shadowColor,
     },
     charName: {
@@ -250,6 +251,38 @@ function createStyles(theme) {
       color: theme.accentColor,
       fontWeight: "bold",
       textAlign: "center",
+    },
+    skinBox: {
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 18,
+      alignItems: "center",
+      backgroundColor: theme.accentColor,
+      zIndex: 2,
+      minWidth: 220,
+      maxWidth: 330,
+    },
+    skinTitle: {
+      fontSize: 17,
+      marginBottom: 6,
+      color: theme.borderGlowColor,
+      fontWeight: "bold",
+      textAlign: "center",
+      letterSpacing: 0.2,
+    },
+    skinImage: {
+      width: 66,
+      height: 66,
+      borderRadius: 14,
+      marginBottom: 7,
+      backgroundColor: theme.shadowColor,
+    },
+    skinLabel: {
+      fontSize: 15,
+      color: theme.textColor,
+      textAlign: "center",
+      fontWeight: "bold",
+      marginBottom: 1,
     },
   });
 }

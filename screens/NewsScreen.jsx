@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
@@ -16,15 +15,17 @@ import { useCrystals } from "../context/CrystalContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useThemeContext } from "../context/ThemeContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
+import { useAssets } from "../context/AssetsContext";
 
-// Helper: Extrahiert eventboss-Key aus einer Bild-URL
+// Helper
 function getEventBossKey(imageUrl) {
   const match = /\/([\w-]+)\.png$/.exec(imageUrl);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
 }
 
-export default function NewsScreen({ imageMap = {} }) {
+export default function NewsScreen() {
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
   const { addCoins } = useCoins();
@@ -65,31 +66,31 @@ export default function NewsScreen({ imageMap = {} }) {
         onLongPress={() => handleLongPress(item)}
         activeOpacity={0.9}
       >
-        <View style={styles.item}>
+        <View style={[styles.item, claimed && styles.itemClaimed]}>
           <Image
             source={imageSource}
             style={styles.image}
             contentFit="contain"
-            transition={250}
+            transition={300}
           />
           <Text style={styles.itemText}>{item.title}</Text>
           {claimed ? (
             <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
           ) : (
             <View style={styles.tooltip}>
-              <Text style={styles.tooltipText}>Halten für Belohnung: </Text>
+              <Text style={styles.tooltipText}>Halten für Belohnung:</Text>
               <Image
                 source={getItemImageUrl("coin")}
                 style={styles.rewardIcon}
                 contentFit="contain"
               />
-              <Text style={styles.tooltipText}> +100 </Text>
+              <Text style={styles.tooltipText}>+100</Text>
               <Image
                 source={getItemImageUrl("crystal")}
                 style={styles.rewardIcon}
                 contentFit="contain"
               />
-              <Text style={styles.tooltipText}> +10</Text>
+              <Text style={styles.tooltipText}>+10</Text>
             </View>
           )}
           {item.description && (
@@ -126,6 +127,13 @@ function createStyles(theme) {
       fontSize: 25,
       color: theme.textColor,
       backgroundColor: theme.accentColor,
+      borderWidth: 2,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
     },
     listContainer: {
       paddingHorizontal: 18,
@@ -136,23 +144,32 @@ function createStyles(theme) {
       borderRadius: 18,
       marginBottom: 18,
       padding: 10,
+      borderWidth: 1,
+      borderColor: theme.borderGlowColor,
+    },
+    itemClaimed: {
+      opacity: 0.5,
     },
     itemText: {
       fontSize: 17,
       color: theme.textColor,
       marginTop: 12,
       letterSpacing: 0.12,
+      textAlign: "center",
+      fontWeight: "bold",
     },
     image: {
       width: "100%",
       height: 165,
+      borderRadius: 12,
     },
     tooltip: {
-      marginTop: 6,
+      marginTop: 8,
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       flexWrap: "wrap",
+      gap: 4,
     },
     tooltipText: {
       fontSize: 13,
@@ -165,10 +182,12 @@ function createStyles(theme) {
       marginBottom: -1,
     },
     claimed: {
-      marginTop: 6,
+      marginTop: 8,
       color: theme.textColor,
       fontSize: 13,
       textAlign: "center",
+      fontStyle: "italic",
+      fontWeight: "500",
     },
     description: {
       color: theme.textColor,

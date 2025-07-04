@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,9 +7,12 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import elementData from "../data/elementData.json";
+import skinData from "../data/skinData.json";
 import ScreenLayout from "../components/ScreenLayout";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
@@ -17,14 +21,48 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const CARD_WIDTH = Dimensions.get("window").width / 2 - 24;
 
 export default function CharacterOverviewScreen() {
+  const {
+    classList,
+    activeClassId,
+    setActiveClassId,
+    deleteClass,
+    updateCharacter,
+  } = useClass();
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
-  const { classList, activeClassId, setActiveClassId, deleteClass } =
-    useClass();
+
+  const [ownedSkins, setOwnedSkins] = useState({});
+  useEffect(() => {
+    (async () => {
+      const all = await AsyncStorage.getAllKeys();
+      const mySkins = all
+        .filter((k) => k.startsWith("unlock_skin_"))
+        .map((k) => k.replace("unlock_skin_", ""));
+      const dict = {};
+      mySkins.forEach((id) => (dict[id] = true));
+      setOwnedSkins(dict);
+    })();
+  }, []);
+
+  const handleEquipSkin = async (char, skinId) => {
+    await updateCharacter({ ...char, activeSkin: skinId });
+  };
 
   const renderCharacter = ({ item }) => {
     const isActive = item.id === activeClassId;
     const element = elementData[item.element] || {};
+
+    const availableSkins = skinData
+      .filter(
+        (skin) =>
+          skin.characterId === (item.baseId || item.id) ||
+          skin.characterId === item.id ||
+          skin.characterId === item.name
+      )
+      .filter((skin) => ownedSkins[skin.id]);
+
+    const currentSkin = availableSkins.find((s) => s.id === item.activeSkin);
+    const avatarSrc = currentSkin?.image || item.classUrl;
 
     return (
       <View style={[styles.card, isActive && styles.cardActive]}>
@@ -41,7 +79,7 @@ export default function CharacterOverviewScreen() {
         )}
 
         <Image
-          source={{ uri: item.classUrl }}
+          source={{ uri: avatarSrc }}
           style={styles.avatar}
           contentFit="contain"
         />
@@ -51,6 +89,68 @@ export default function CharacterOverviewScreen() {
           {element.icon} {element.label}
         </Text>
         <Text style={styles.classText}>{item.type}</Text>
+
+        {availableSkins.length > 0 && (
+          <View style={styles.skinsWrapper}>
+            <Text style={styles.skinsTitle}>Skins:</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.skinsScrollView}
+              style={styles.skinsScrollStyle}
+            >
+              <TouchableOpacity
+                onPress={() => handleEquipSkin(item, undefined)}
+                style={[
+                  styles.skinBtn,
+                  !item.activeSkin && styles.skinBtnActive,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="account"
+                  size={24}
+                  color={
+                    !item.activeSkin
+                      ? theme.borderGlowColor || "gold"
+                      : theme.textColor
+                  }
+                />
+                <Text
+                  style={[
+                    styles.skinLabel,
+                    !item.activeSkin && styles.skinLabelActive,
+                  ]}
+                >
+                  Standard
+                </Text>
+              </TouchableOpacity>
+              {availableSkins.map((skin) => (
+                <TouchableOpacity
+                  key={skin.id}
+                  onPress={() => handleEquipSkin(item, skin.id)}
+                  style={[
+                    styles.skinBtn,
+                    skin.id === item.activeSkin && styles.skinBtnActive,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: skin.image }}
+                    style={styles.skinImg}
+                    contentFit="contain"
+                  />
+                  <Text
+                    style={[
+                      styles.skinLabel,
+                      skin.id === item.activeSkin && styles.skinLabelActive,
+                    ]}
+                  >
+                    {skin.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         <Text style={styles.skillTitle}>Skills:</Text>
         {item.skills.map((skill, i) => (
@@ -118,6 +218,7 @@ function createStyles(theme) {
     },
     card: {
       width: CARD_WIDTH,
+      minHeight: 320,
       backgroundColor: theme.accentColor,
       borderRadius: 18,
       padding: 14,
@@ -125,6 +226,7 @@ function createStyles(theme) {
       alignItems: "center",
       borderWidth: 2,
       borderColor: "transparent",
+      justifyContent: "flex-start",
     },
     cardActive: {
       borderColor: theme.textColor,
@@ -171,6 +273,62 @@ function createStyles(theme) {
       marginBottom: 6,
       fontWeight: "bold",
       letterSpacing: 0.12,
+    },
+    skinsWrapper: {
+      marginBottom: 8,
+      marginTop: 2,
+      alignSelf: "stretch",
+    },
+    skinsTitle: {
+      color: theme.textColor,
+      marginBottom: 3,
+      fontWeight: "bold",
+      fontSize: 13,
+      marginLeft: 2,
+    },
+    skinsScrollView: {
+      alignItems: "center",
+      paddingRight: 16,
+      minHeight: 52,
+      paddingVertical: 2,
+    },
+    skinsScrollStyle: {
+      maxWidth: "100%",
+      marginTop: 3,
+      marginBottom: 9,
+    },
+    skinBtn: {
+      borderWidth: 1,
+      borderColor: "#555",
+      borderRadius: 10,
+      margin: 4,
+      padding: 2,
+      backgroundColor: "#333",
+      justifyContent: "center",
+      alignItems: "center",
+      width: 48,
+      minHeight: 48,
+    },
+    skinBtnActive: {
+      borderWidth: 2,
+      borderColor: theme.borderGlowColor || "gold",
+      backgroundColor: theme.shadowColor,
+    },
+    skinImg: {
+      width: 36,
+      height: 36,
+      borderRadius: 7,
+      marginBottom: 1,
+    },
+    skinLabel: {
+      fontSize: 10,
+      textAlign: "center",
+      color: theme.textColor,
+      marginTop: -2,
+    },
+    skinLabelActive: {
+      color: theme.borderGlowColor || "gold",
+      fontWeight: "bold",
     },
     skillTitle: {
       fontSize: 15,

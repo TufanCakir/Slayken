@@ -10,24 +10,25 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons, Feather } from "@expo/vector-icons";
-import { t } from "../i18n";
-import { Image } from "expo-image";
-import { useClass } from "../context/ClassContext";
-import { useThemeContext } from "../context/ThemeContext";
 import {
+  Ionicons,
+  Feather,
   FontAwesome,
   FontAwesome5,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import { t } from "../i18n";
+import { Image } from "expo-image";
+import { useClass } from "../context/ClassContext";
+import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 
 const { width } = Dimensions.get("window");
 
-// Social Media Konfiguration (keine doppelten Icons mehr!)
 const SOCIALS = [
   {
     url: "https://youtube.com/@tufancakirofficial",
-    icon: <FontAwesome5 name="youtube" size={24} color="#e11d48" />,
+    icon: (theme) => <FontAwesome5 name="youtube" size={24} color="#e11d48" />,
     key: "youtube",
   },
   {
@@ -70,10 +71,11 @@ const SOCIALS = [
 export default function StartScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const [modalVisible, setModalVisible] = useState(false);
+  const { imageMap } = useAssets();
   const { classList, activeClassId } = useClass();
-  const activeCharacter = classList.find((char) => char.id === activeClassId);
+  const [modalVisible, setModalVisible] = useState(false);
 
+  const activeCharacter = classList.find((char) => char.id === activeClassId);
   const styles = createStyles(theme);
 
   return (
@@ -114,6 +116,7 @@ export default function StartScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t("settingsTitle")}</Text>
+
             <TouchableOpacity
               style={styles.modalItem}
               onPress={() => {
@@ -130,12 +133,9 @@ export default function StartScreen() {
                 <TouchableOpacity
                   key={social.key}
                   onPress={() => Linking.openURL(social.url)}
-                  accessibilityLabel={social.key}
                   style={styles.socialIcon}
                 >
-                  {typeof social.icon === "function"
-                    ? social.icon(theme)
-                    : social.icon}
+                  {social.icon(theme)}
                 </TouchableOpacity>
               ))}
             </View>
@@ -157,7 +157,6 @@ function createStyles(theme) {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      gap: 30,
     },
     characterImage: {
       width: 500,
@@ -183,6 +182,7 @@ function createStyles(theme) {
       letterSpacing: 1.3,
       textAlign: "center",
       color: theme.textColor,
+      fontWeight: "700",
     },
     copyright: {
       width: "100%",

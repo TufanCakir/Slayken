@@ -11,11 +11,13 @@ import { useNavigation } from "@react-navigation/native";
 import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext"; // ✅ NEU: Assets importieren
 
 export default function CharacterSelectScreen() {
   const navigation = useNavigation();
   const { classList, activeClassId, setActiveClassId } = useClass();
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets(); // ✅ Assets holen
   const styles = createStyles(theme);
 
   const [selectedId, setSelectedId] = useState(activeClassId);
@@ -49,10 +51,14 @@ export default function CharacterSelectScreen() {
               ]}
               onPress={() => setSelectedId(item.id)}
             >
+              {/** ✅ Bild über imageMap mit Fallback */}
               <Image
-                source={{ uri: item.classUrl }}
+                source={
+                  imageMap[`class_${item.baseId}`] || { uri: item.classUrl }
+                }
                 style={styles.avatar}
                 contentFit="contain"
+                transition={300}
               />
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.level}>Level {item.level}</Text>

@@ -5,8 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Modal,
-  Pressable,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,25 +14,30 @@ import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
-import eventData from "../data/eventData.json";
 import { useLevelSystem } from "../hooks/useLevelSystem";
+import { useAssets } from "../context/AssetsContext";
+
+import eventData from "../data/eventData.json";
 import classData from "../data/classData.json";
+
 import EventList from "../components/EventList";
 import BattleView from "../components/BattleView";
 import { Image } from "expo-image";
+
 import { getClassImageUrl } from "../utils/classUtils";
 import { calculateSkillDamage } from "../utils/combatUtils";
-import { equipmentPool } from "../data/equipmentPool";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 
-const getEventBossKey = (imageUrl) => {
-  if (!imageUrl) return null;
-  const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+// Helper
+const getEventBossKey = (url) => {
+  if (!url) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
 };
-const getBackgroundKey = (bgUrl) => {
-  if (!bgUrl) return null;
-  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
+
+const getBackgroundKey = (url) => {
+  if (!url) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
@@ -45,9 +48,10 @@ const tabOptions = [
   { key: "skill", label: "Fähigkeit" },
 ];
 
-export default function EventScreen({ imageMap = {} }) {
+export default function EventScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const { addXp } = useAccountLevel();
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
@@ -62,19 +66,17 @@ export default function EventScreen({ imageMap = {} }) {
   const [bossHp, setBossHp] = useState(null);
   const [bossDefeated, setBossDefeated] = useState(false);
 
-  // Modal State
+  // Modal states
   const [reward, setReward] = useState(null);
   const [modalStep, setModalStep] = useState(null);
 
-  // Freigeschaltete Items laden
+  // Unlocked Items
   const loadUnlocked = useCallback(async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const itemKeys = keys.filter((k) => k.startsWith("unlocked_item_"));
       setUnlockedItemIds(itemKeys.map((k) => k.replace("unlocked_item_", "")));
-    } catch (e) {
-      // silent fail
-    }
+    } catch {}
   }, []);
 
   useFocusEffect(
@@ -83,12 +85,9 @@ export default function EventScreen({ imageMap = {} }) {
     }, [loadUnlocked])
   );
 
-  // Events filtern & Bild-Mapping anwenden
+  // Events filtern
   const availableEvents = eventData
-    .filter(
-      (e) =>
-        unlockedItemIds.includes(String(e.unlockItemId)) && e.tag === activeTab
-    )
+    .filter((e) => e.tag === activeTab)
     .map((e) => {
       const bossKey = getEventBossKey(e.image);
       const bgKey = getBackgroundKey(e.background);
@@ -99,8 +98,6 @@ export default function EventScreen({ imageMap = {} }) {
       };
     });
 
-  // Event-Auswahl
-
   useEffect(() => {
     if (selectedEvent) {
       setBossHp(selectedEvent.maxHp ?? 200);
@@ -110,11 +107,10 @@ export default function EventScreen({ imageMap = {} }) {
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
-    // setBossHp() und setBossDefeated() werden jetzt durch useEffect erledigt!
   };
 
-  // Kampf/Skill ausführen
   function handleFight(skill) {
+    console.log("handleFight called with skill:", skill);
     if (!activeCharacter || bossDefeated || !selectedEvent) return;
     const { stats: charStats, percentBonuses } =
       getCharacterStatsWithEquipment(activeCharacter);
@@ -125,17 +121,16 @@ export default function EventScreen({ imageMap = {} }) {
       skill: { skillDmg: skillPower },
       enemyDefense: selectedEvent.bossDefense || 0,
     });
-    setBossHp((prevBossHp) => {
-      const newHp = Math.max(prevBossHp - damage, 0);
+
+    setBossHp((prev) => {
+      const newHp = Math.max(prev - damage, 0);
       if (newHp === 0) setBossDefeated(true);
       return newHp;
     });
   }
 
-  // Rewards/Modals
   useEffect(() => {
     if (bossDefeated && selectedEvent && activeCharacter) {
-      // Rewards
       const expReward = selectedEvent.expReward ?? 120;
       const accountExpReward = selectedEvent.accountExpReward ?? 100;
       const coinReward = selectedEvent.coinReward ?? 100;
@@ -147,22 +142,16 @@ export default function EventScreen({ imageMap = {} }) {
       const updatedChar = gainExp(activeCharacter, expReward);
       updateCharacter(updatedChar);
 
-      (async () => {
-        let newEquipment = null;
-        let newCharacter = null;
+      // --------- Skin als Event-Reward freischalten ---------
+      if (selectedEvent.rewardSkinId || selectedEvent.unlockItemId) {
+        const skinId = selectedEvent.rewardSkinId || selectedEvent.unlockItemId;
+        AsyncStorage.setItem(`unlock_skin_${skinId}`, "true").then(() => {
+          setReward({ type: "skin", skinId }); // Hier kannst du Modal/Toast nutzen
+        });
+      }
 
-        if (selectedEvent.rewardEquipmentId) {
-          const unlockKey = "unlocked_item_" + selectedEvent.rewardEquipmentId;
-          const alreadyUnlocked = await AsyncStorage.getItem(unlockKey);
-          if (!alreadyUnlocked) {
-            await AsyncStorage.setItem(unlockKey, "1");
-            const equip = equipmentPool.find(
-              (eq) => eq.id === selectedEvent.rewardEquipmentId
-            );
-            if (equip) newEquipment = equip;
-          }
-          loadUnlocked();
-        }
+      (async () => {
+        let newCharacter = null;
         if (
           selectedEvent.rewardCharacterId &&
           !classList.some((c) =>
@@ -187,39 +176,24 @@ export default function EventScreen({ imageMap = {} }) {
             await addCharacter(newCharacter);
           }
         }
-        // Navigation nur wenn Reward
+
         navigation.navigate("VictoryScreen", {
           coinReward,
           crystalReward,
           character: updatedChar,
           isEvent: true,
-          newEquipment,
           newCharacter,
+          skinId:
+            selectedEvent.rewardSkinId || selectedEvent.unlockItemId || null,
         });
       })();
     }
-    // eslint-disable-next-line
   }, [bossDefeated]);
-
-  // Modal schließen & ggf. nächsten Schritt anzeigen
-  const closeModal = () => {
-    setReward(null);
-    setModalStep(null);
-    if (activeCharacter)
-      navigation.navigate("VictoryScreen", {
-        coinReward: selectedEvent?.coinReward ?? 100,
-        crystalReward: selectedEvent?.crystalReward ?? 30,
-        character: activeCharacter,
-        isEvent: true,
-      });
-  };
 
   const styles = createStyles(theme);
 
-  // --- Render ---
   return (
     <View style={styles.container}>
-      {/* Background-Bild */}
       {selectedEvent?.background && (
         <View style={StyleSheet.absoluteFill}>
           <Image
@@ -232,7 +206,6 @@ export default function EventScreen({ imageMap = {} }) {
         </View>
       )}
 
-      {/* Tabs */}
       {!selectedEvent && (
         <View style={styles.stickyHeader}>
           <ScrollView
@@ -266,7 +239,6 @@ export default function EventScreen({ imageMap = {} }) {
         </View>
       )}
 
-      {/* BattleView/EventList */}
       {selectedEvent ? (
         <BattleView
           selectedEvent={selectedEvent}
@@ -284,83 +256,6 @@ export default function EventScreen({ imageMap = {} }) {
           onSelectEvent={handleSelectEvent}
           imageMap={imageMap}
         />
-      )}
-
-      {/* Modals */}
-      {modalStep && (
-        <Modal transparent animationType="fade" visible>
-          <View style={styles.modalOverlay}>
-            <View style={styles.skillModal}>
-              {modalStep === "skills" && reward?.skills && (
-                <>
-                  <Text style={styles.skillModalTitle}>
-                    🎉 Neue Skills freigeschaltet!
-                  </Text>
-                  {reward.skills.map((skill, idx) => (
-                    <View key={idx} style={styles.skillItem}>
-                      <Text style={styles.skillName}>{skill.name}</Text>
-                      <Text style={styles.skillDescription}>
-                        {skill.description}
-                      </Text>
-                      <Text style={styles.skillPower}>
-                        Power: {skill.power}
-                      </Text>
-                    </View>
-                  ))}
-                </>
-              )}
-              {modalStep === "equipment" && reward?.equipment && (
-                <>
-                  <Text style={styles.skillModalTitle}>
-                    🗡️ Neue Ausrüstung freigeschaltet!
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: theme.borderGlowColor,
-                      textAlign: "center",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {reward.equipment.label}
-                  </Text>
-                  <Text style={styles.skillDescription}>
-                    {reward.equipment.description}
-                  </Text>
-                </>
-              )}
-              {modalStep === "character" && reward?.character && (
-                <>
-                  <Text style={styles.skillModalTitle}>
-                    🎉 Neuer Held freigeschaltet!
-                  </Text>
-                  <Image
-                    source={{ uri: reward.character.classUrl }}
-                    style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: 40,
-                      alignSelf: "center",
-                      marginVertical: 12,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: theme.borderGlowColor,
-                      textAlign: "center",
-                    }}
-                  >
-                    {reward.character.label}
-                  </Text>
-                </>
-              )}
-              <Pressable style={styles.okButton} onPress={closeModal}>
-                <Text style={styles.okText}>OK</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
       )}
     </View>
   );
@@ -392,52 +287,6 @@ function createStyles(theme) {
     tabText: {
       color: theme.textColor,
       fontSize: 16,
-    },
-    skillModal: {
-      backgroundColor: theme.accentColor,
-      margin: 32,
-      borderRadius: 16,
-      padding: 20,
-      alignItems: "center",
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.14,
-      shadowOffset: { width: 0, height: 4 },
-      shadowRadius: 15,
-      elevation: 4,
-    },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.74)",
-    },
-    skillModalTitle: {
-      fontSize: 18,
-      color: theme.textColor,
-      marginBottom: 12,
-      textAlign: "center",
-      fontWeight: "bold",
-      letterSpacing: 0.1,
-    },
-    skillItem: { marginBottom: 12 },
-    skillName: { fontSize: 16, color: theme.borderGlowColor },
-    skillDescription: { fontSize: 14, color: theme.textColor },
-    skillPower: { fontSize: 12, color: theme.glowColor },
-    okButton: {
-      marginTop: 16,
-      backgroundColor: theme.borderGlowColor,
-      padding: 10,
-      borderRadius: 10,
-      alignSelf: "center",
-      minWidth: 90,
-    },
-    okText: {
-      color: theme.accentColor,
-      textAlign: "center",
-      fontWeight: "bold",
-      fontSize: 15,
     },
   });
 }

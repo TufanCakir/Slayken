@@ -1,82 +1,12 @@
 [
   {
-    "id": "1",
-    "name": "Symbol der Götter",
-    "price": 100,
-    "category": "divine_emblem",
+    "id": "sylas_classic",
+    "name": "Skin: Fire Warrior (Classic)",
+    "price": 750,
+    "category": "skin",
     "currency": ["coin", "crystal"],
-    "linkedEventId": "1"
-  },
-  {
-    "id": "2",
-    "name": "Siegel der Leere",
-    "price": 200,
-    "category": "nightmare_token",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "2"
-  },
-  {
-    "id": "3",
-    "name": "Segen des Himmelsbrands",
-    "price": 300,
-    "category": "divine_emblem",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "3"
-  },
-  {
-    "id": "4",
-    "name": "Siegel der Ordnung",
-    "price": 400,
-    "category": "divine_emblem",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "4"
-  },
-  {
-    "id": "5",
-    "name": "Siegel des Erdherzens",
-    "price": 500,
-    "category": "nightmare_token",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "5"
-  },
-  {
-    "id": "6",
-    "name": "Fragment des Abgrunds",
-    "price": 600,
-    "category": "nightmare_token",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "6"
-  },
-  {
-    "id": "7",
-    "name": "Glut der Verdammnis",
-    "price": 700,
-    "category": "divine_emblem",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "7"
-  },
-  {
-    "id": "8",
-    "name": "Gefallene Feder",
-    "price": 800,
-    "category": "divine_emblem",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "8"
-  },
-  {
-    "id": "9",
-    "name": "Flammenrune",
-    "price": 900,
-    "category": "ritual_item",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "9"
-  },
-  {
-    "id": "10",
-    "name": "Reon Dragonheart",
-    "price": 1300,
-    "category": "character_bundle",
-    "currency": ["coin", "crystal"],
-    "linkedEventId": "10"
+    "characterId": "sylas",
+    "baseId": "sylas",
+    "skinImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/skins/sylas-skin1.png"
   }
 ]

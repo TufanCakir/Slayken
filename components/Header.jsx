@@ -7,22 +7,19 @@ import { useAccountLevel } from "../context/AccountLevelContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
 import { Image } from "expo-image";
+import { useAssets } from "../context/AssetsContext"; // ✅ NEU: useAssets importieren
 import { getItemImageUrl } from "../utils/item/itemUtils";
-
-const currencyList = [
-  { key: "coins", image: getItemImageUrl("coin") },
-  { key: "crystals", image: getItemImageUrl("crystal") },
-];
 
 export default function Header() {
   const { coins } = useCoins();
   const { crystals } = useCrystals();
   const { level, xp, xpToNextLevel } = useAccountLevel();
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets(); // ✅ Assets holen
 
   const [username, setUsername] = useState("Spieler");
 
-  // Robust: Division durch 0 vermeiden
+  // Fortschritt robust berechnen
   const progress = xpToNextLevel > 0 ? xp / xpToNextLevel : 0;
   const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
@@ -49,6 +46,17 @@ export default function Header() {
   }, [progress, animatedXpBar]);
 
   const styles = createStyles(theme);
+
+  const currencyList = [
+    {
+      key: "coins",
+      image: imageMap.coinIcon || getItemImageUrl("coin"),
+    },
+    {
+      key: "crystals",
+      image: imageMap.crystalIcon || getItemImageUrl("crystal"),
+    },
+  ];
 
   const currencyValues = { coins, crystals };
 
@@ -95,15 +103,16 @@ export default function Header() {
               {
                 borderColor: theme.borderGlowColor,
                 shadowColor: theme.glowColor,
-                shadowOpacity: 0.21,
-                shadowOffset: { width: 0, height: 2 },
-                shadowRadius: 6,
-                elevation: 6,
               },
             ]}
             key={c.key}
           >
-            <Image source={c.image} style={styles.icon} contentFit="contain" />
+            <Image
+              source={c.image}
+              style={styles.icon}
+              contentFit="contain"
+              transition={250}
+            />
             <Text style={styles.currencyText}>{currencyValues[c.key]}</Text>
           </View>
         ))}
@@ -199,7 +208,6 @@ function createStyles(theme) {
       borderRadius: 12,
       marginLeft: 7,
       borderWidth: 1.2,
-      shadowColor: theme.glowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.18,
       shadowRadius: 7,

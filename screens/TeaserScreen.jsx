@@ -19,7 +19,6 @@ export default function TeaserScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a",
   },
   list: {
     padding: 20,

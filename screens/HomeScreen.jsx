@@ -1,17 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import ScreenLayout from "../components/ScreenLayout";
-import BattleButton from "../components/BattleButton";
+import { useEffect, useMemo } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ActionBar from "../components/ActionBar";
-import { useThemeContext } from "../context/ThemeContext";
-import { useGifts } from "../context/GiftContext";
+import BattleButton from "../components/BattleButton";
+import ScreenLayout from "../components/ScreenLayout";
 import { useClass } from "../context/ClassContext";
-import { useMissions } from "../context/MissionContext";
+import { useGifts } from "../context/GiftContext";
+import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
 import styles from "../styles/HomeScreenStyles";
-import { navigateTo } from "../utils/navigationUtils";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
+import { navigateTo } from "../utils/navigationUtils";
 
 const tutorialSteps = [
   {
@@ -33,7 +32,7 @@ const battleButtonsConfig = [
   { screen: "EventScreen", labelKey: "eventLabel" },
   { screen: "StoryScreen", labelKey: "storyLabel" },
   { screen: "TeaserScreen", labelKey: "teaserLabel" },
-  { screen: "CharacterEquipmentScreen", labelKey: "equipmentLabel" },
+  { screen: "InventoryScreen", labelKey: "equipmentLabel" },
 ];
 
 export default function HomeScreen() {

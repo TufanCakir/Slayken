@@ -13,12 +13,14 @@ import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { getClassImageUrl } from "../utils/classUtils";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext"; // ✅ Assets-Context importieren
 
 export default function CreateCharacterScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const { theme } = useThemeContext();
   const { setActiveClassId, updateCharacter } = useClass();
+  const { imageMap } = useAssets(); // ✅ Assets holen
   const styles = createStyles(theme);
 
   const goToNext = () => setStep(2);
@@ -69,30 +71,39 @@ export default function CreateCharacterScreen({ navigation }) {
             data={classes.filter((cls) => !cls.eventReward)}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.classList}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => finishCreation(item)}
-                style={styles.classCard}
-              >
-                <View style={styles.classRow}>
-                  <Image
-                    source={{ uri: getClassImageUrl(item.id) }}
-                    style={styles.avatar}
-                    contentFit="contain"
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.optionTitle}>{item.label}</Text>
-                    <Text style={styles.optionDescription}>
-                      {item.description}
-                    </Text>
-                    <Text style={styles.elementLabel}>
-                      {elementData[item.element]?.icon}{" "}
-                      {elementData[item.element]?.label}
-                    </Text>
+            renderItem={({ item }) => {
+              // ✅ Bild über imageMap holen, falls vorhanden
+              const classKey = `class_${item.id}`;
+              const imageSource = imageMap[classKey] || {
+                uri: getClassImageUrl(item.id),
+              };
+
+              return (
+                <TouchableOpacity
+                  onPress={() => finishCreation(item)}
+                  style={styles.classCard}
+                >
+                  <View style={styles.classRow}>
+                    <Image
+                      source={imageSource}
+                      style={styles.avatar}
+                      contentFit="contain"
+                      transition={300}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.optionTitle}>{item.label}</Text>
+                      <Text style={styles.optionDescription}>
+                        {item.description}
+                      </Text>
+                      <Text style={styles.elementLabel}>
+                        {elementData[item.element]?.icon}{" "}
+                        {elementData[item.element]?.label}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            )}
+                </TouchableOpacity>
+              );
+            }}
           />
         </>
       )}

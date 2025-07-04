@@ -1,0 +1,12 @@
+[
+  {
+    "id": "sylas_classic",
+    "characterId": "sylas",
+    "baseId": "sylas",
+    "name": "Skin: Fire Warrior (Classic)",
+    "label": "Classic",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/skins/sylas-skin1.png",
+    "eventUntil": "2025-04-07T23:59:59Z",
+    "description": "Der klassische Look von Sylas, der mächtige Krieger."
+  }
+]

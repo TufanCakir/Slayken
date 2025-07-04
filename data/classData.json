@@ -21,30 +21,10 @@
     "description": "Ein Mächtiger Krieger.",
     "unlockDate": "2025-08",
     "element": "fire",
-    "skills": []
-  },
-  {
-    "id": "ice-warrior",
-    "exp": 0,
-    "level": 1,
-    "expToNextLevel": 100,
-    "stats": {
-      "strength": 10,
-      "defense": 8,
-      "agility": 5,
-      "intelligence": 5,
-      "attack": 1000,
-      "base": {
-        "strength": 10,
-        "defense": 8,
-        "agility": 5,
-        "intelligence": 5
-      }
-    },
-    "label": "Krieger",
-    "description": "Eine starker Nahkämpfer, das viel Schaden einstecken kann.",
-    "unlockDate": "2025-08",
-    "element": "ice",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -70,6 +50,10 @@
     "description": "Meistert Frostzauber mit hoher Durchschlagskraft.",
     "unlockDate": "2025-08",
     "element": "ice",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -95,6 +79,10 @@
     "description": "Eine flinke Kämpferin mit tödlichen Klingen.",
     "unlockDate": "2025-08",
     "element": "ice",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -120,6 +108,10 @@
     "description": "Schneller Kämpfer.",
     "unlockDate": "2025-08",
     "element": "fire",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -145,6 +137,10 @@
     "description": "Mächtiger Kämpfer.",
     "unlockDate": "2025-08",
     "element": "fire",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -170,6 +166,10 @@
     "description": "Kämpft Konzentriert.",
     "unlockDate": "2025-08",
     "element": "fire",
+    "inventory": [],
+
+    "equipment": {},
+
     "skills": []
   },
   {
@@ -195,6 +195,9 @@
     "unlockDate": "2025-08",
     "eventReward": true,
     "element": "fire",
+    "inventory": [],
+    "equipment": {},
+
     "skills": []
   }
 ]

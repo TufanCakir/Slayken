@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,9 +17,11 @@ import giftData from "../data/giftData.json";
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
+import { useAssets } from "../context/AssetsContext";
 
 export default function GiftScreen() {
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
   const { addCoins } = useCoins();
@@ -27,19 +29,21 @@ export default function GiftScreen() {
   const { addXp } = useAccountLevel();
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
-  const gifts = useMemo(
-    () =>
-      giftData.map((gift) => {
-        let imageType = gift.type;
-        if (imageType === "coins") imageType = "coin";
-        if (imageType === "crystals") imageType = "crystal";
-        return {
-          ...gift,
-          imageUrl: gift.type === "box" ? null : getItemImageUrl(imageType),
-        };
-      }),
-    []
-  );
+  // Vorbereitete Gifts mit Bild-URLs
+  const gifts = useMemo(() => {
+    return giftData.map((gift) => {
+      const typeImage =
+        gift.type === "coins"
+          ? "coin"
+          : gift.type === "crystals"
+          ? "crystal"
+          : gift.type;
+      return {
+        ...gift,
+        imageUrl: gift.type === "box" ? null : getItemImageUrl(typeImage),
+      };
+    });
+  }, []);
 
   const remainingGifts = useMemo(
     () => gifts.filter((gift) => !collectedGifts[gift.id]),
@@ -49,30 +53,32 @@ export default function GiftScreen() {
   const allCollected = remainingGifts.length === 0;
 
   const handleCollect = useCallback(
-    async (item) => {
-      if (collectedGifts[item.id]) return;
-      await collectGift(item.id);
-      if (item.type === "coins" && item.amount) addCoins(item.amount);
-      if (item.type === "crystals" && item.amount) addCrystals(item.amount);
-      if (item.type === "exp" && item.amount) addXp(item.amount);
+    async (gift) => {
+      if (collectedGifts[gift.id]) return;
+      await collectGift(gift.id);
+      if (gift.type === "coins") addCoins(gift.amount || 0);
+      if (gift.type === "crystals") addCrystals(gift.amount || 0);
+      if (gift.type === "exp") addXp(gift.amount || 0);
     },
     [collectedGifts, collectGift, addCoins, addCrystals, addXp]
   );
 
   const collectAll = useCallback(async () => {
-    const idsToCollect = remainingGifts.map((gift) => gift.id);
-    if (idsToCollect.length === 0) return;
-    await collectMultipleGifts(idsToCollect);
+    const ids = remainingGifts.map((g) => g.id);
+    if (ids.length === 0) return;
+
+    await collectMultipleGifts(ids);
     for (const gift of remainingGifts) {
-      if (gift.type === "coins" && gift.amount) addCoins(gift.amount);
-      if (gift.type === "crystals" && gift.amount) addCrystals(gift.amount);
-      if (gift.type === "exp" && gift.amount) addXp(gift.amount);
+      if (gift.type === "coins") addCoins(gift.amount || 0);
+      if (gift.type === "crystals") addCrystals(gift.amount || 0);
+      if (gift.type === "exp") addXp(gift.amount || 0);
     }
   }, [remainingGifts, collectMultipleGifts, addCoins, addCrystals, addXp]);
 
   const renderItem = useCallback(
     ({ item }) => {
       const isCollected = collectedGifts[item.id];
+
       return (
         <TouchableOpacity
           style={[
@@ -83,7 +89,7 @@ export default function GiftScreen() {
               shadowColor: theme.glowColor,
             },
           ]}
-          activeOpacity={isCollected ? 1 : 0.82}
+          activeOpacity={isCollected ? 1 : 0.85}
           onPress={() => !isCollected && handleCollect(item)}
           disabled={isCollected}
         >
@@ -112,15 +118,14 @@ export default function GiftScreen() {
         </TouchableOpacity>
       );
     },
-    [styles, collectedGifts, handleCollect, theme]
+    [collectedGifts, handleCollect, styles, theme]
   );
 
-  // Hintergrundbild (bgImage im Theme, falls vorhanden)
   const bgImage =
     typeof theme.bgImage === "string" ? { uri: theme.bgImage } : theme.bgImage;
 
   return (
-    <ScreenLayout style={[styles.flex]}>
+    <ScreenLayout style={styles.flex}>
       {bgImage && (
         <Image
           source={bgImage}
@@ -131,6 +136,7 @@ export default function GiftScreen() {
         />
       )}
       <Text style={styles.header}>{t("giftsTitle")}</Text>
+
       <FlatList
         data={remainingGifts}
         keyExtractor={(item) => item.id}
@@ -138,6 +144,7 @@ export default function GiftScreen() {
         ListEmptyComponent={<Text style={styles.empty}>{t("noGifts")}</Text>}
         contentContainerStyle={styles.listContainer}
       />
+
       {!allCollected && (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
@@ -189,12 +196,10 @@ function createStyles(theme) {
       marginBottom: 12,
       borderWidth: 2,
       backgroundColor: theme.accentColor,
-      shadowColor: theme.glowColor,
       shadowOpacity: 0.13,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 2 },
       elevation: 2,
-      opacity: 1,
     },
     giftItemCollected: {
       opacity: 0.4,
@@ -219,7 +224,6 @@ function createStyles(theme) {
       fontSize: 18,
       flex: 1,
       letterSpacing: 0.28,
-      opacity: 1,
       fontWeight: "600",
     },
     giftNameCollected: {
@@ -228,7 +232,6 @@ function createStyles(theme) {
     buttonGroup: {
       marginVertical: 18,
       paddingHorizontal: 16,
-      gap: 10,
       position: "absolute",
       bottom: 88,
       width: "100%",

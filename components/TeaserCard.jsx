@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 
-// Wenn du Elementfarben aus dem Theme holen willst, kannst du das hier tun:
+// Elementfarben
 const ELEMENT_COLORS = {
   fire: "#ff5500",
   ice: "#3399ff",
@@ -45,17 +46,18 @@ function calculateTimeLeft(targetDate) {
   };
 }
 
-// ----------- TEASER CARD -----------
-export default function TeaserCard({ item, imageMap = {} }) {
+export default function TeaserCard({ item }) {
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   if (!item) return null;
 
   const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
   const countdown = useCountdown(item.unlockDate);
 
-  const imageSource = imageMap[`class_${item.id}`] || {
-    uri: `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`,
-  };
+  // Bildquelle
+  const fallbackUri = `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`;
+  const assetKey = `class_${item.id}`;
+  const imageSource = imageMap[assetKey] || { uri: fallbackUri };
 
   const countdownText = countdown
     ? `⏳ Noch ${countdown.days} Tag${countdown.days !== 1 ? "e" : ""}, ${
@@ -78,7 +80,7 @@ export default function TeaserCard({ item, imageMap = {} }) {
           source={imageSource}
           style={styles.image}
           contentFit="contain"
-          transition={250}
+          transition={300}
         />
       </View>
       <Text style={styles.name}>
@@ -89,7 +91,6 @@ export default function TeaserCard({ item, imageMap = {} }) {
   );
 }
 
-// ----------- STYLES -----------
 function createStyles(color, theme) {
   return StyleSheet.create({
     card: {
@@ -152,7 +153,6 @@ function createStyles(color, theme) {
   });
 }
 
-// Helper für Countdown-Farbe
 function countdownColor(color) {
   return color === ELEMENT_COLORS.default ? "#facc15" : color;
 }

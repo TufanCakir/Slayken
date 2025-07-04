@@ -4,6 +4,7 @@ import { useCrystals } from "../context/CrystalContext";
 import { useCoins } from "../context/CoinContext";
 import { useMissions } from "../context/MissionContext";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 import MissionItem from "../components/MissionItem";
 
 export default function MissionScreen() {
@@ -11,12 +12,17 @@ export default function MissionScreen() {
   const { addCoins } = useCoins();
   const { missions, collectReward } = useMissions();
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets(); // ⬅️ für spätere Mission-Buttons
+
   const styles = createStyles(theme);
 
   const handleCollect = (mission) => {
     if (mission.completed && !mission.collected) {
-      if (mission.reward.type === "crystal") addCrystals(mission.reward.amount);
-      else if (mission.reward.type === "coin") addCoins(mission.reward.amount);
+      if (mission.reward.type === "crystal") {
+        addCrystals(mission.reward.amount);
+      } else if (mission.reward.type === "coin") {
+        addCoins(mission.reward.amount);
+      }
       collectReward(mission.id);
     }
   };
@@ -28,7 +34,11 @@ export default function MissionScreen() {
         data={missions}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <MissionItem item={item} onCollect={handleCollect} />
+          <MissionItem
+            item={item}
+            onCollect={handleCollect}
+            imageMap={imageMap} // ⬅️ Button-Hintergrund später übergeben
+          />
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>Keine Missionen verfügbar</Text>

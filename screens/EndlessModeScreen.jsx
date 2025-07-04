@@ -1,39 +1,42 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Image } from "expo-image";
+import { useThemeContext } from "../context/ThemeContext";
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
-import BattleScene from "../components/BattleScene";
-import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 import bossData from "../data/bossData.json";
-import { Image } from "expo-image";
+import BattleScene from "../components/BattleScene";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { calculateSkillDamage } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
+import { equipmentPool } from "../data/equipmentPool";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-// Helper-Funktionen zum Image-Mapping
-const getEventBossKey = (imageUrl, fallbackName) => {
-  if (typeof imageUrl === "string" && imageUrl.endsWith(".png")) {
-    const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
-    if (match) return "eventboss_" + match[1].toLowerCase();
+// Helpers
+const getEventBossKey = (url, fallback) => {
+  if (typeof url === "string" && url.endsWith(".png")) {
+    const match = /\/([\w-]+)\.png$/i.exec(url);
+    return match ? "eventboss_" + match[1].toLowerCase() : null;
   }
-  if (fallbackName) return "eventboss_" + fallbackName.toLowerCase();
-  return null;
+  return fallback ? "eventboss_" + fallback.toLowerCase() : null;
 };
-const getBackgroundKey = (bgUrl) => {
-  if (!bgUrl) return null;
-  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
+
+const getBackgroundKey = (url) => {
+  if (!url) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-export default function EndlessModeScreen({ imageMap = {} }) {
+export default function EndlessModeScreen() {
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const navigation = useNavigation();
   const { addXp } = useAccountLevel();
   const { addCoins } = useCoins();
@@ -41,71 +44,97 @@ export default function EndlessModeScreen({ imageMap = {} }) {
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
   const completeMissionOnce = useCompleteMissionOnce();
+  const [newDrop, setNewDrop] = useState(null);
 
-  // Aktueller Charakter (Memo für stabile Referenz)
-  const activeCharacter = useMemo(
+  const [currentBoss, setCurrentBoss] = useState(null);
+  const [bossHp, setBossHp] = useState(100);
+  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+
+  // Aktiver Charakter (Basisdaten)
+  const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
 
-  // States: bossData[0].hp als Initialwert, um null zu vermeiden
-  const firstBossHp = bossData[0]?.hp ?? 100;
-  const [currentBoss, setCurrentBoss] = useState(bossData[0] || null);
-  const [bossHp, setBossHp] = useState(firstBossHp);
-  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+  // Charakter mit Equipment-Boni
+  const { stats: charStats, percentBonuses } = useMemo(() => {
+    if (!baseCharacter) return { stats: {}, percentBonuses: {} };
+    return getCharacterStatsWithEquipment(baseCharacter);
+  }, [baseCharacter]);
 
-  // Boss spawnen: wähle zufällig und setze HP
+  // Boss neu spawnen
   const spawnNewBoss = useCallback(() => {
     const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
     setCurrentBoss(randomBoss);
     setBossHp(randomBoss.hp || 100);
   }, []);
 
-  // Beim Mount und nach jedem Boss-Reset
   useEffect(() => {
     spawnNewBoss();
   }, [spawnNewBoss]);
 
-  // Kampf-Handler
+  // Angriff / Skill-Handler
   const handleFight = useCallback(
-    (skill) => {
-      if (!activeCharacter || !currentBoss) return;
+    (skill = {}) => {
+      console.log("handleFight called with skill:", skill);
 
-      const { stats: charStats, percentBonuses } =
-        getCharacterStatsWithEquipment(activeCharacter);
-      const skillPower = skill?.power ?? 30;
+      if (!baseCharacter || !currentBoss) return;
+      const skillPower = skill?.power ?? charStats.attack ?? 30;
       const damage = calculateSkillDamage({
         charStats,
         percentBonuses,
         skill: { skillDmg: skillPower },
         enemyDefense: currentBoss.defense || 0,
       });
+      console.log(
+        "Angriff! Power:",
+        skillPower,
+        "Damage:",
+        damage,
+        "Attack:",
+        charStats.attack
+      );
 
       setBossHp((prev) => {
         const nextHp = Math.max(prev - damage, 0);
-        // Boss besiegt?
         if (nextHp === 0) {
           setTimeout(() => {
-            // Rewards und XP
+            // ...Belohnungen wie vorher...
             addCoins(COIN_REWARD);
             addCrystals(CRYSTAL_REWARD);
             addXp(100);
             completeMissionOnce("1");
 
-            // Charakter-Level-Up
-            const leveled = gainExp(activeCharacter, 120);
+            const leveled = gainExp(baseCharacter, 120);
             updateCharacter(leveled);
 
-            // Neue Skills freischalten?
-            const oldNames = activeCharacter.skills?.map((s) => s.name) || [];
+            // SKILL UNLOCKS wie vorher
+            const oldNames = baseCharacter.skills?.map((s) => s.name) || [];
             const newSkills = leveled.skills?.filter(
               (s) => !oldNames.includes(s.name)
             );
+
             if (newSkills?.length) {
               setNewUnlockedSkills(newSkills);
             } else {
-              // Sonst gleich neuen Boss starten
-              setTimeout(spawnNewBoss, 500);
+              const dropChance = 0.5; // 50% Drop-Chance
+              if (Math.random() < dropChance) {
+                const drop =
+                  equipmentPool[
+                    Math.floor(Math.random() * equipmentPool.length)
+                  ];
+                const nextInventory = Array.isArray(baseCharacter.inventory)
+                  ? [...baseCharacter.inventory]
+                  : [];
+                nextInventory.push(drop.id);
+                updateCharacter({
+                  ...baseCharacter,
+                  inventory: nextInventory,
+                });
+                setNewDrop(drop);
+              } else {
+                setTimeout(spawnNewBoss, 500);
+              }
             }
           }, 300);
         }
@@ -113,8 +142,10 @@ export default function EndlessModeScreen({ imageMap = {} }) {
       });
     },
     [
-      activeCharacter,
+      baseCharacter,
       currentBoss,
+      charStats,
+      percentBonuses,
       addCoins,
       addCrystals,
       addXp,
@@ -125,13 +156,11 @@ export default function EndlessModeScreen({ imageMap = {} }) {
     ]
   );
 
-  // Modal schließen → neuen Boss generieren
   const handleCloseSkillModal = useCallback(() => {
     setNewUnlockedSkills(null);
     setTimeout(spawnNewBoss, 400);
   }, [spawnNewBoss]);
 
-  // Bild-Keys aus imageMap oder Fallback-URLs
   const bossBgKey = getBackgroundKey(currentBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
@@ -158,7 +187,6 @@ export default function EndlessModeScreen({ imageMap = {} }) {
             contentFit="cover"
             transition={400}
           />
-          <View style={StyleSheet.absoluteFillObject} />
         </View>
       )}
 
@@ -167,15 +195,67 @@ export default function EndlessModeScreen({ imageMap = {} }) {
       </Pressable>
 
       {mappedBoss && (
-        <BattleScene
-          boss={mappedBoss}
-          bossHp={bossHp} // aktueller HP-Wert, z.B. 300
-          bossMaxHp={currentBoss.hp} // Max-HP, z.B. 300
-          bossDefeated={bossHp === 0}
-          handleFight={handleFight}
-          bossBackground={bossBgSrc}
-          imageMap={imageMap}
-        />
+        <>
+          <BattleScene
+            boss={mappedBoss}
+            bossHp={bossHp}
+            bossMaxHp={currentBoss.hp}
+            bossDefeated={bossHp === 0}
+            handleFight={handleFight}
+            bossBackground={bossBgSrc}
+            imageMap={imageMap}
+          />
+
+          {/* Aktueller Angriffswert */}
+          <Text style={{ color: "#fff", textAlign: "center", marginTop: 4 }}>
+            ⚔️ Attack: {Math.round(charStats.attack ?? 0)}
+          </Text>
+        </>
+      )}
+
+      {newDrop && (
+        <Modal transparent visible={!!newDrop} animationType="fade">
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#000a",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: theme.accentColor,
+                padding: 24,
+                borderRadius: 16,
+              }}
+            >
+              <Text style={{ color: theme.textColor, fontSize: 20 }}>
+                🎉 Du hast gefunden:
+              </Text>
+              <Image
+                source={imageMap["equipment_" + newDrop.id]}
+                style={{ width: 60, height: 60, margin: 12 }}
+              />
+              <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+                {newDrop.label}
+              </Text>
+              <Text style={{ color: theme.textColor, fontSize: 14 }}>
+                {newDrop.description}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setNewDrop(null);
+                  setTimeout(spawnNewBoss, 500);
+                }}
+              >
+                <Text style={{ color: theme.textColor, textAlign: "center" }}>
+                  OK
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       )}
 
       {newUnlockedSkills && (

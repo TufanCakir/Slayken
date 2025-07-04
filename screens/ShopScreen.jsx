@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,98 +6,59 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
+  DeviceEventEmitter,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
+import { Image } from "expo-image";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useThemeContext } from "../context/ThemeContext";
-import SHOP_ITEMS from "../data/shopData.json";
-import EVENT_DATA from "../data/eventData.json";
+import { useAssets } from "../context/AssetsContext";
 import ScreenLayout from "../components/ScreenLayout";
-import { isActive, formatCountdown } from "../utils/helper";
-import { Image } from "expo-image";
+import SHOP_ITEMS from "../data/shopData.json";
 
-const ShopItemCard = React.memo(function ShopItemCard({
-  item,
-  onBuy,
-  theme,
-  eventData,
-}) {
-  const { price, currency, linkedEventId } = item;
-  const priceLabel =
-    currency.length === 2
-      ? `${price} Coins oder ${price} Kristalle`
-      : currency[0] === "coin"
-      ? `${price} Coins`
-      : `${price} Kristalle`;
+const { width: screenWidth } = Dimensions.get("window");
 
-  const styles = createStyles(theme);
-
-  // Event-Image, falls vorhanden
-  const event = EVENT_DATA.find((e) => e.id === linkedEventId);
-  const iconImage = event?.image;
-
-  // Countdown-Logik für Events
-  const [countdown, setCountdown] = useState(null);
-  useEffect(() => {
-    if (!linkedEventId) return;
-    const foundEvent = eventData.find(
-      (e) => e.id === linkedEventId && e.activeTo
-    );
-    if (!foundEvent) return;
-    function updateCountdown() {
-      setCountdown(formatCountdown(new Date(foundEvent.activeTo) - Date.now()));
-    }
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [linkedEventId, eventData]);
-
-  return (
-    <View style={styles.cardRow}>
-      <View style={styles.iconWrapper}>
-        {iconImage && (
-          <Image
-            source={iconImage}
-            style={styles.iconImage}
-            contentFit="contain"
-          />
-        )}
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>{priceLabel}</Text>
-        {!!countdown && countdown !== "Vorbei!" && (
-          <Text style={styles.countdownActive}>Noch {countdown}</Text>
-        )}
-        {countdown === "Vorbei!" && (
-          <Text style={styles.countdownEnded}>Angebot beendet</Text>
-        )}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => onBuy(item)}
-          accessibilityRole="button"
-        >
-          <Text style={styles.buttonText}>Kaufen</Text>
-        </TouchableOpacity>
-      </View>
+const ShopItemCard = ({ item, onBuy, theme, imageMap, styles }) => (
+  <View style={styles.cardRow}>
+    <Image
+      source={
+        item.skinImage ||
+        item.charImage ||
+        imageMap?.[`class_${item.characterId}`]
+      }
+      style={styles.iconImage}
+      contentFit="contain"
+    />
+    <View style={styles.cardContent}>
+      <Text style={styles.name}>{item.name}</Text>
+      {item.category === "skin" && (
+        <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
+      )}
+      <Text style={styles.price}>
+        {item.price} {item.currency.includes("coin") ? "Coins" : "Kristalle"}
+      </Text>
+      <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
+        <Text style={styles.buttonText}>Kaufen</Text>
+      </TouchableOpacity>
     </View>
-  );
-});
+  </View>
+);
 
 export default function ShopScreen() {
-  const layout = Dimensions.get("window");
   const { coins, spendCoins } = useCoins();
   const { crystals, spendCrystals } = useCrystals();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
+  const { imageMap } = useAssets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Kategorien automatisch generieren
+  // Filtere nur die Kategorien die du anzeigen willst
   const categories = useMemo(
-    () => Array.from(new Set(SHOP_ITEMS.map((i) => i.category))),
+    () => Array.from(new Set(SHOP_ITEMS.map((item) => item.category))),
     []
   );
+
   const routes = useMemo(
     () =>
       categories.map((key) => ({
@@ -109,30 +70,23 @@ export default function ShopScreen() {
 
   const [index, setIndex] = useState(0);
 
-  const linkedEvents = useMemo(
-    () => EVENT_DATA.filter(isActive).map((e) => e.id),
-    []
-  );
-
+  // Hier wird nach Kategorie gefiltert
   const getVisibleShopItems = useCallback(
-    (category) =>
-      SHOP_ITEMS.filter(
-        (item) =>
-          item.category === category &&
-          isActive(item) &&
-          (!item.linkedEventId || linkedEvents.includes(item.linkedEventId))
-      ),
-    [linkedEvents]
-  );
-
-  const executePurchase = useCallback(
-    async ({ id, name, price }, payWith, deductFunc) => {
-      deductFunc(price);
-      await AsyncStorage.setItem(`unlocked_item_${id}`, "true");
-      alert(`Du hast ${name} für ${price} ${payWith} gekauft.`);
-    },
+    (category) => SHOP_ITEMS.filter((item) => item.category === category),
     []
   );
+
+  const executePurchase = useCallback(async (item, payWith, deductFunc) => {
+    deductFunc(item.price);
+    await AsyncStorage.setItem(
+      item.category === "skin"
+        ? `unlock_skin_${item.id}`
+        : `unlock_character_${item.characterId}`,
+      "true"
+    );
+    DeviceEventEmitter.emit("skin:updated"); // <<< EVENT TRIGGERN
+    alert(`Du hast ${item.name} für ${item.price} ${payWith} gekauft.`);
+  }, []);
 
   const handleBuy = useCallback(
     (item) => {
@@ -140,62 +94,63 @@ export default function ShopScreen() {
       const canPayCoins = currency.includes("coin");
       const canPayCrystals = currency.includes("crystal");
 
-      if (canPayCrystals && !canPayCoins) {
-        if (crystals < price) return alert("Unzureichende Kristalle.");
-        return executePurchase(item, "Kristalle", spendCrystals);
-      }
-
-      if (canPayCoins && !canPayCrystals) {
-        if (coins < price) return alert("Unzureichende Coins.");
+      if (canPayCoins && coins >= price) {
         return executePurchase(item, "Coins", spendCoins);
       }
-
+      if (canPayCrystals && crystals >= price) {
+        return executePurchase(item, "Kristalle", spendCrystals);
+      }
       if (canPayCoins && canPayCrystals) {
         if (coins >= price) return executePurchase(item, "Coins", spendCoins);
         if (crystals >= price)
           return executePurchase(item, "Kristalle", spendCrystals);
         return alert("Weder genügend Coins noch Kristalle vorhanden.");
       }
-      return alert("Ungültige Zahlungsoption.");
+      return alert("Ungültige Zahlungsoption oder nicht genug Währung.");
     },
     [coins, crystals, executePurchase, spendCoins, spendCrystals]
   );
 
-  // Szenen dynamisch erzeugen
-  const renderScene = SceneMap(
-    routes.reduce((scenes, route) => {
-      scenes[route.key] = () => {
-        const data = getVisibleShopItems(route.key);
-        return (
-          <FlatList
-            data={data}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <ShopItemCard
-                item={item}
-                onBuy={handleBuy}
-                theme={theme}
-                eventData={EVENT_DATA}
+  const renderScene = useMemo(
+    () =>
+      SceneMap(
+        routes.reduce((scenes, route) => {
+          scenes[route.key] = () => {
+            const visibleItems = getVisibleShopItems(route.key);
+            return (
+              <FlatList
+                data={visibleItems}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.list}
+                renderItem={({ item }) => (
+                  <ShopItemCard
+                    item={item}
+                    onBuy={handleBuy}
+                    theme={theme}
+                    imageMap={imageMap}
+                    styles={styles}
+                  />
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>
+                    Noch keine Angebote in dieser Kategorie.
+                  </Text>
+                }
               />
-            )}
-            ListEmptyComponent={
-              <Text
-                style={{
-                  textAlign: "center",
-                  marginTop: 50,
-                  color: theme.textColor,
-                  opacity: 0.7,
-                }}
-              >
-                Noch keine Angebote in dieser Kategorie.
-              </Text>
-            }
-          />
-        );
-      };
-      return scenes;
-    }, {})
+            );
+          };
+          return scenes;
+        }, {})
+      ),
+    [
+      routes,
+      getVisibleShopItems,
+      handleBuy,
+      theme,
+      imageMap,
+      styles.list,
+      styles.emptyText,
+    ]
   );
 
   return (
@@ -204,7 +159,7 @@ export default function ShopScreen() {
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
+        initialLayout={{ width: screenWidth }}
         renderTabBar={(props) => (
           <TabBar
             {...props}
@@ -262,36 +217,20 @@ function createStyles(theme) {
     },
     cardContent: {
       flex: 1,
-      flexDirection: "column",
       justifyContent: "center",
     },
     name: {
       fontSize: 17,
       fontWeight: "bold",
       color: theme.textColor,
-      letterSpacing: 0.05,
       textAlign: "center",
       marginBottom: 4,
     },
     price: {
       fontSize: 14,
       color: theme.textColor,
-      letterSpacing: 0.03,
       textAlign: "center",
       marginBottom: 12,
-    },
-    countdownActive: {
-      color: theme.textColor,
-      fontWeight: "bold",
-      marginBottom: 7,
-      textAlign: "center",
-    },
-    countdownEnded: {
-      color: theme.textColor,
-      fontWeight: "bold",
-      marginBottom: 7,
-      opacity: 0.7,
-      textAlign: "center",
     },
     button: {
       borderColor: theme.textColor,
@@ -311,6 +250,18 @@ function createStyles(theme) {
       fontWeight: "bold",
       fontSize: 15,
       letterSpacing: 0.12,
+    },
+    emptyText: {
+      textAlign: "center",
+      marginTop: 50,
+      color: theme.textColor,
+      opacity: 0.7,
+    },
+    skinFor: {
+      fontSize: 13,
+      color: theme.borderGlowColor,
+      marginBottom: 2,
+      textAlign: "center",
     },
   });
 }

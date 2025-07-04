@@ -11,12 +11,12 @@ import { Image } from "expo-image";
 import CircularCooldown from "../effects/CircularCooldown";
 import useCooldownTimer from "../../hooks/useCooldownTimer";
 import { useThemeContext } from "../../context/ThemeContext";
+import { useAssets } from "../../context/AssetsContext";
 
 export default function ActionBar({
   skills = [],
   activeCharacter,
   onSkillPress,
-  imageMap = {},
 }) {
   const [tooltipSkill, setTooltipSkill] = useState(null);
   const [cooldowns, setCooldowns] = useState({});
@@ -24,10 +24,11 @@ export default function ActionBar({
   const [unlockedSkill, setUnlockedSkill] = useState(null);
   const unlockedSkillIds = useRef(new Set());
   const prevLevel = useRef(activeCharacter?.level);
+
   const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // --- Freischalt-Logik ---
   const isUnlocked = (skill) => {
     if (!skill || !activeCharacter) return false;
     if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
@@ -46,7 +47,6 @@ export default function ActionBar({
     return true;
   };
 
-  // Unlock-Feedback bei LevelUp
   useEffect(() => {
     if (!activeCharacter) return;
     if (activeCharacter.level > prevLevel.current) {
@@ -61,11 +61,11 @@ export default function ActionBar({
     prevLevel.current = activeCharacter.level;
   }, [activeCharacter.level, activeCharacter.element, skills]);
 
-  // Skill-Bild holen
-  const getSkillImage = (skill) =>
-    imageMap[`skill_${skill.id}`] || require("../../assets/icon.png");
+  const getSkillImage = (skill) => {
+    const key = `skill_${skill.id}`;
+    return imageMap[key] || require("../../assets/icon.png");
+  };
 
-  // Skill Cooldown starten
   const handlePress = (skill) => {
     if (!isUnlocked(skill)) return;
     if ((cooldowns[skill.id] || 0) > Date.now()) return;
@@ -78,7 +78,6 @@ export default function ActionBar({
     }
   };
 
-  // Tooltip und Langdruck
   const handleLongPress = (skill, idx) => {
     Vibration.vibrate(12);
     setTooltipSkill(skill);
@@ -103,7 +102,6 @@ export default function ActionBar({
         {skills.map((skill, index) => {
           const unlocked = isUnlocked(skill);
           const cooldownEnd = cooldowns[skill.id] || 0;
-          // INDIVIDUELLER HOOK pro Button (sauber & performant)
           const seconds = useCooldownTimer(cooldownEnd, 100, () =>
             setCooldowns((prev) => ({ ...prev, [skill.id]: 0 }))
           );
@@ -204,7 +202,7 @@ export default function ActionBar({
   );
 }
 
-// Styles bleiben wie gehabt (konsolidiert!)
+// Styles bleiben gleich
 function createStyles(theme) {
   const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
   const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";

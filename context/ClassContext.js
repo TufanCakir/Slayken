@@ -116,6 +116,17 @@ export const ClassProvider = ({ children }) => {
     });
   }, []);
 
+  // Skin für Charakter ausrüsten
+  const equipSkin = useCallback(async (charId, skinId) => {
+    setClassList((prevList) => {
+      const updatedList = prevList.map((char) =>
+        char.id === charId ? { ...char, activeSkin: skinId } : char
+      );
+      saveClassList(updatedList);
+      return updatedList;
+    });
+  }, []);
+
   // Item ausrüsten
   const equipItem = useCallback(async (charId, slot, equipmentId) => {
     setClassList((prevList) => {
@@ -182,6 +193,7 @@ export const ClassProvider = ({ children }) => {
     classList,
     addCharacter,
     updateCharacter,
+    equipSkin,
     equipItem,
     resetCharacterList,
     deleteClass,
