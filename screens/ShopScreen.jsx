@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Dimensions,
   DeviceEventEmitter,
 } from "react-native";
+import * as RNIap from "react-native-iap";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { Image } from "expo-image";
@@ -20,31 +21,58 @@ import SHOP_ITEMS from "../data/shopData.json";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const ShopItemCard = ({ item, onBuy, theme, imageMap, styles }) => (
-  <View style={styles.cardRow}>
-    <Image
-      source={
-        item.skinImage ||
-        item.charImage ||
-        imageMap?.[`class_${item.characterId}`]
-      }
-      style={styles.iconImage}
-      contentFit="contain"
-    />
-    <View style={styles.cardContent}>
-      <Text style={styles.name}>{item.name}</Text>
-      {item.category === "skin" && (
-        <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
-      )}
-      <Text style={styles.price}>
-        {item.price} {item.currency.includes("coin") ? "Coins" : "Kristalle"}
-      </Text>
-      <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
-        <Text style={styles.buttonText}>Kaufen</Text>
-      </TouchableOpacity>
+const ShopItemCard = ({
+  item,
+  onBuy,
+  theme,
+  imageMap,
+  styles,
+  iapProducts,
+}) => {
+  let priceLabel = "";
+  if (item.currency.includes("coin") && item.currency.includes("crystal")) {
+    priceLabel = `${item.price} Coins/Kristalle`;
+  } else if (item.currency.includes("coin")) {
+    priceLabel = `${item.price} Coins`;
+  } else if (item.currency.includes("crystal")) {
+    priceLabel = `${item.price} Kristalle`;
+  } else if (item.currency.includes("iap") && item.iapId) {
+    const iap = iapProducts.find((p) => p.productId === item.iapId);
+    priceLabel = iap?.localizedPrice || "Echtgeld";
+  }
+
+  const iapButtonLabel =
+    item.currency.includes("iap") && iapProducts
+      ? `Für ${
+          iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ??
+          "Echtgeld"
+        } kaufen`
+      : "Kaufen";
+
+  return (
+    <View style={styles.cardRow}>
+      <Image
+        source={
+          item.skinImage ||
+          item.charImage ||
+          imageMap?.[`class_${item.characterId}`]
+        }
+        style={styles.iconImage}
+        contentFit="contain"
+      />
+      <View style={styles.cardContent}>
+        <Text style={styles.name}>{item.name}</Text>
+        {item.category === "skin" && (
+          <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
+        )}
+        <Text style={styles.price}>{priceLabel}</Text>
+        <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
+          <Text style={styles.buttonText}>{iapButtonLabel}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default function ShopScreen() {
   const { coins, spendCoins } = useCoins();
@@ -52,12 +80,39 @@ export default function ShopScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const [index, setIndex] = useState(0);
+
+  // ---- IAP ----
+  // IDs aller IAP-Items (aus deiner JSON herausfiltern)
+  const iapItemIds = useMemo(
+    () => SHOP_ITEMS.filter((item) => item.iapId).map((item) => item.iapId),
+    []
+  );
+  const [iapProducts, setIapProducts] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    RNIap.initConnection().then(async () => {
+      if (iapItemIds.length > 0) {
+        const products = await RNIap.getProducts(iapItemIds);
+        if (isMounted) setIapProducts(products);
+      }
+    });
+    return () => {
+      isMounted = false;
+      RNIap.endConnection();
+    };
+  }, [iapItemIds]);
+  // ---- IAP END ----
 
   // Filtere nur die Kategorien die du anzeigen willst
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((item) => item.category))),
     []
   );
+  useEffect(() => {
+    console.log("IAP-Produkte:", iapProducts);
+  }, [iapProducts]);
 
   const routes = useMemo(
     () =>
@@ -67,8 +122,6 @@ export default function ShopScreen() {
       })),
     [categories]
   );
-
-  const [index, setIndex] = useState(0);
 
   // Hier wird nach Kategorie gefiltert
   const getVisibleShopItems = useCallback(
@@ -84,27 +137,46 @@ export default function ShopScreen() {
         : `unlock_character_${item.characterId}`,
       "true"
     );
-    DeviceEventEmitter.emit("skin:updated"); // <<< EVENT TRIGGERN
+    DeviceEventEmitter.emit("skin:updated");
     alert(`Du hast ${item.name} für ${item.price} ${payWith} gekauft.`);
   }, []);
 
   const handleBuy = useCallback(
-    (item) => {
-      const { price, currency } = item;
+    async (item) => {
+      const { price, currency, iapId } = item;
       const canPayCoins = currency.includes("coin");
       const canPayCrystals = currency.includes("crystal");
+      const canBuyIAP = currency.includes("iap") && iapId;
 
+      // 1. Coins
       if (canPayCoins && coins >= price) {
         return executePurchase(item, "Coins", spendCoins);
       }
+      // 2. Kristalle
       if (canPayCrystals && crystals >= price) {
         return executePurchase(item, "Kristalle", spendCrystals);
       }
-      if (canPayCoins && canPayCrystals) {
-        if (coins >= price) return executePurchase(item, "Coins", spendCoins);
-        if (crystals >= price)
-          return executePurchase(item, "Kristalle", spendCrystals);
-        return alert("Weder genügend Coins noch Kristalle vorhanden.");
+      // 3. Echtgeld IAP
+      if (canBuyIAP) {
+        try {
+          await RNIap.requestPurchase({ sku: iapId });
+          // Kauf-Quittung prüfen, dann Item freischalten!
+          await executePurchase(item, "IAP", () => {});
+        } catch (err) {
+          alert("Kauf fehlgeschlagen: " + err.message);
+        }
+        return;
+      }
+
+      // 4. Beides geht, aber zu wenig Guthaben
+      if (
+        (canPayCoins || canPayCrystals || canBuyIAP) &&
+        coins < price &&
+        crystals < price
+      ) {
+        return alert(
+          "Nicht genug Coins/Kristalle oder kein Echtgeldkauf möglich."
+        );
       }
       return alert("Ungültige Zahlungsoption oder nicht genug Währung.");
     },
@@ -129,6 +201,7 @@ export default function ShopScreen() {
                     theme={theme}
                     imageMap={imageMap}
                     styles={styles}
+                    iapProducts={iapProducts} // <-- WICHTIG!
                   />
                 )}
                 ListEmptyComponent={
@@ -150,6 +223,7 @@ export default function ShopScreen() {
       imageMap,
       styles.list,
       styles.emptyText,
+      iapProducts, // neu!
     ]
   );
 

@@ -1,6 +1,6 @@
 {
   "name": "slayken",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
@@ -17,6 +17,7 @@
     "expo": "53.0.17",
     "expo-av": "~15.1.7",
     "expo-blur": "~14.1.5",
+    "expo-file-system": "~18.1.10",
     "expo-image": "~2.3.2",
     "expo-localization": "~16.1.6",
     "expo-status-bar": "~2.2.3",
@@ -25,6 +26,7 @@
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-iap": "^12.16.4",
     "react-native-pager-view": "6.7.1",
     "react-native-picker-select": "^9.3.1",
     "react-native-reanimated": "~3.17.4",
@@ -32,7 +34,10 @@
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-tab-view": "^4.1.0",
-    "expo-file-system": "~18.1.10"
+    "expo-dev-client": "~5.2.4",
+    "expo-store-review": "~8.1.5",
+    "@shopify/react-native-skia": "v2.0.0-next.4",
+    "expo-linear-gradient": "~14.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

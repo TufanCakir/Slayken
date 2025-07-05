@@ -77,7 +77,6 @@ function createStyles(theme) {
     },
     inner: {
       alignItems: "center",
-      // Hier könnte man noch einen Glow für das Icon machen (TextShadow siehe unten)
     },
     label: {
       fontSize: 14,

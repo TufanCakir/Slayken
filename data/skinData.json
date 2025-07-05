@@ -8,5 +8,15 @@
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/skins/sylas-skin1.png",
     "eventUntil": "2025-04-07T23:59:59Z",
     "description": "Der klassische Look von Sylas, der mächtige Krieger."
+  },
+  {
+    "id": "sylas_exclusive",
+    "characterId": "sylas",
+    "baseId": "sylas",
+    "name": "Skin: Reon Dragonheart (Exclusive)",
+    "label": "Exclusive",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/reon-dragonheart.png",
+    "eventUntil": "2025-04-07T23:59:59Z",
+    "description": "Reon Dragonheart Skin Exclusive."
   }
 ]

@@ -63,7 +63,7 @@ export default function ActionBar({
 
   const getSkillImage = (skill) => {
     const key = `skill_${skill.id}`;
-    return imageMap[key] || require("../../assets/icon.png");
+    return imageMap[key] || require("../../assets/logo.png");
   };
 
   const handlePress = (skill) => {
