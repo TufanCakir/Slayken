@@ -17,37 +17,45 @@ export function buildImageMap(localUris, newsImages) {
   const map = {};
   let idx = 0;
 
+  // Skills
   skillKeys.forEach((key) => {
     map[`skill_${key}`] = localUris[idx++];
   });
 
+  // Klassen
   classKeys.forEach((key) => {
     map[`class_${key.replace(/-/g, "")}`] = localUris[idx++];
   });
 
+  // Bosse
   bossKeys.forEach((key) => {
     map[`boss_${key.toLowerCase()}`] = localUris[idx++];
   });
 
+  // Hintergründe
   bgKeys.forEach((key, i) => {
     map[`bg_${i + 1}`] = localUris[idx++];
     if (key.startsWith("bg_")) map[key] = localUris[idx - 1];
   });
 
+  // Ausrüstung
   equipmentKeys.forEach((key) => {
     map[`equipment_${key}`] = localUris[idx++];
   });
 
+  // Items
   itemKeys.forEach((key) => {
     map[key] = localUris[idx++];
   });
 
+  // Main-Background
   map["bg_main"] = localUris[idx++];
 
+  // News/EventBosse
   newsImages.forEach((img, i) => {
     const key = getEventBossKey(img);
-    if (key && localUris[idx + i]) {
-      map[key] = localUris[idx + i];
+    if (key && localUris[idx]) {
+      map[key] = localUris[idx++];
     }
   });
 

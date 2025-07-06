@@ -12,14 +12,14 @@ import { useAssets } from "../context/AssetsContext";
 import bossData from "../data/bossData.json";
 import BattleScene from "../components/BattleScene";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
-import { calculateSkillDamage } from "../utils/combatUtils";
+import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import { equipmentPool } from "../data/equipmentPool";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-// Helpers
+// Helper
 const getEventBossKey = (url, fallback) => {
   if (typeof url === "string" && url.endsWith(".png")) {
     const match = /\/([\w-]+)\.png$/i.exec(url);
@@ -27,7 +27,6 @@ const getEventBossKey = (url, fallback) => {
   }
   return fallback ? "eventboss_" + fallback.toLowerCase() : null;
 };
-
 const getBackgroundKey = (url) => {
   if (!url) return null;
   const match = /\/([\w-]+)\.png$/i.exec(url);
@@ -44,62 +43,69 @@ export default function EndlessModeScreen() {
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
   const completeMissionOnce = useCompleteMissionOnce();
-  const [newDrop, setNewDrop] = useState(null);
 
+  const [newDrop, setNewDrop] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
+  const [bossMaxHp, setBossMaxHp] = useState(100); // NEU
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  // Aktiver Charakter (Basisdaten)
+  // Aktiver Charakter
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
 
-  // Charakter mit Equipment-Boni
+  // Charakter-Stats
   const { stats: charStats, percentBonuses } = useMemo(() => {
     if (!baseCharacter) return { stats: {}, percentBonuses: {} };
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
-  // Boss neu spawnen
+  // GESCALETE Bossdaten (Level)
+  const scaledBoss = useMemo(() => {
+    if (!currentBoss || !baseCharacter) return null;
+    const level = baseCharacter.level || 1;
+    return scaleBossStats(currentBoss, level);
+  }, [currentBoss, baseCharacter]);
+
+  // Spawn/Refresh Boss + MaxHP
   const spawnNewBoss = useCallback(() => {
     const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
     setCurrentBoss(randomBoss);
     setBossHp(randomBoss.hp || 100);
+    setBossMaxHp(randomBoss.hp || 100);
   }, []);
 
   useEffect(() => {
     spawnNewBoss();
   }, [spawnNewBoss]);
 
-  // Angriff / Skill-Handler
+  // Sobald Boss oder Char wechseln → MaxHP nachziehen
+  useEffect(() => {
+    if (scaledBoss) {
+      setBossHp(scaledBoss.hp ?? 100);
+      setBossMaxHp(scaledBoss.hp ?? 100);
+    }
+  }, [scaledBoss]);
+
+  // Angriff/Skill-Handler
   const handleFight = useCallback(
     (skill = {}) => {
-      console.log("handleFight called with skill:", skill);
-
-      if (!baseCharacter || !currentBoss) return;
+      if (!baseCharacter || !scaledBoss) return;
       const skillPower = skill?.power ?? charStats.attack ?? 30;
       const damage = calculateSkillDamage({
         charStats,
         percentBonuses,
         skill: { skillDmg: skillPower },
-        enemyDefense: currentBoss.defense || 0,
+        enemyDefense: scaledBoss.defense || 0,
       });
-      console.log(
-        "Angriff! Power:",
-        skillPower,
-        "Damage:",
-        damage,
-        "Attack:",
-        charStats.attack
-      );
 
       setBossHp((prev) => {
         const nextHp = Math.max(prev - damage, 0);
         if (nextHp === 0) {
           setTimeout(() => {
-            // ...Belohnungen wie vorher...
+            // Belohnungen
             addCoins(COIN_REWARD);
             addCrystals(CRYSTAL_REWARD);
             addXp(100);
@@ -108,7 +114,7 @@ export default function EndlessModeScreen() {
             const leveled = gainExp(baseCharacter, 120);
             updateCharacter(leveled);
 
-            // SKILL UNLOCKS wie vorher
+            // SKILL UNLOCKS
             const oldNames = baseCharacter.skills?.map((s) => s.name) || [];
             const newSkills = leveled.skills?.filter(
               (s) => !oldNames.includes(s.name)
@@ -143,7 +149,7 @@ export default function EndlessModeScreen() {
     },
     [
       baseCharacter,
-      currentBoss,
+      scaledBoss,
       charStats,
       percentBonuses,
       addCoins,
@@ -161,17 +167,18 @@ export default function EndlessModeScreen() {
     setTimeout(spawnNewBoss, 400);
   }, [spawnNewBoss]);
 
-  const bossBgKey = getBackgroundKey(currentBoss?.background);
+  // Bildquellen gemappt
+  const bossBgKey = getBackgroundKey(scaledBoss?.background);
   const bossBgSrc =
-    (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
+    (bossBgKey && imageMap[bossBgKey]) || scaledBoss?.background;
 
-  const mappedBoss = currentBoss
+  const mappedBoss = scaledBoss
     ? {
-        ...currentBoss,
+        ...scaledBoss,
         image:
-          (getEventBossKey(currentBoss.image, currentBoss.name) &&
-            imageMap[getEventBossKey(currentBoss.image, currentBoss.name)]) ||
-          currentBoss.image,
+          (getEventBossKey(scaledBoss.image, scaledBoss.name) &&
+            imageMap[getEventBossKey(scaledBoss.image, scaledBoss.name)]) ||
+          scaledBoss.image,
       }
     : null;
 
@@ -199,40 +206,20 @@ export default function EndlessModeScreen() {
           <BattleScene
             boss={mappedBoss}
             bossHp={bossHp}
-            bossMaxHp={currentBoss.hp}
+            bossMaxHp={bossMaxHp} // <- Explizit!
             bossDefeated={bossHp === 0}
             handleFight={handleFight}
             bossBackground={bossBgSrc}
             imageMap={imageMap}
           />
-
-          {/* Aktueller Angriffswert */}
-          <Text style={{ color: "#fff", textAlign: "center", marginTop: 4 }}>
-            ⚔️ Attack: {Math.round(charStats.attack ?? 0)}
-          </Text>
         </>
       )}
 
       {newDrop && (
         <Modal transparent visible={!!newDrop} animationType="fade">
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#000a",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: theme.accentColor,
-                padding: 24,
-                borderRadius: 16,
-              }}
-            >
-              <Text style={{ color: theme.textColor, fontSize: 20 }}>
-                🎉 Du hast gefunden:
-              </Text>
+          <View style={styles.modalOverlay}>
+            <View style={styles.skillModal}>
+              <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
               <Image
                 source={imageMap["equipment_" + newDrop.id]}
                 style={{ width: 60, height: 60, margin: 12 }}
@@ -249,9 +236,7 @@ export default function EndlessModeScreen() {
                   setTimeout(spawnNewBoss, 500);
                 }}
               >
-                <Text style={{ color: theme.textColor, textAlign: "center" }}>
-                  OK
-                </Text>
+                <Text style={styles.okText}>OK</Text>
               </Pressable>
             </View>
           </View>

@@ -14,7 +14,8 @@ import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
-import skinData from "../data/skinData.json"; // WICHTIG: Skin-Daten importieren!
+import skinData from "../data/skinData.json";
+import { scaleBossStats } from "../utils/combatUtils";
 
 // Effekt Mapping
 const EFFECT_MAP = {
@@ -28,6 +29,7 @@ const EFFECT_MAP = {
 export default function BattleScene({
   boss,
   bossHp,
+  bossMaxHp,
   bossDefeated,
   onSkillPress,
   handleFight,
@@ -54,20 +56,24 @@ export default function BattleScene({
     );
   }
 
+  // Boss-Stats mit Scaling!
+  const scaledBoss = useMemo(() => {
+    if (!boss || !activeCharacter) return boss;
+    const level = activeCharacter.level || 1;
+    return scaleBossStats(boss, level);
+  }, [boss, activeCharacter]);
+
   // ------- Boss-Bild -------
-  const bossKey = boss?.image
-    ? `eventboss_${extractNameFromUrl(boss.image)}`
+  const bossKey = scaledBoss?.image
+    ? `eventboss_${extractNameFromUrl(scaledBoss.image)}`
     : null;
   const bossImgSrc =
-    imageMap[bossKey] || boss?.image || getBossImageUrl(boss?.id);
+    imageMap[bossKey] || scaledBoss?.image || getBossImageUrl(scaledBoss?.id);
 
   // ------- Charakter-Bild (Skin Support!) -------
   const charId = activeCharacter.baseId || activeCharacter.id;
   let avatarSrc = activeCharacter.classUrl;
-
-  // Skin-Support: Aktives Skin suchen
   if (activeCharacter.activeSkin) {
-    // Skin für diesen Charakter finden (sowohl baseId als auch id abdecken!)
     const skin =
       skinData.find(
         (s) =>
@@ -76,8 +82,6 @@ export default function BattleScene({
       ) || null;
     if (skin?.image) avatarSrc = skin.image;
   }
-
-  // ImageMap checken (optional)
   const classKey =
     avatarSrc && typeof avatarSrc === "string"
       ? `class_${extractNameFromUrl(avatarSrc)}`
@@ -86,9 +90,10 @@ export default function BattleScene({
 
   // Stats & Balken
   const { name, level, exp, expToNextLevel } = activeCharacter;
-  const maxHp = boss?.hp || 100;
+  const maxHp = bossMaxHp ?? scaledBoss?.hp ?? 100;
   const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
-  const bossName = boss?.name || boss?.eventName || "Unbekannter Boss";
+  const bossName =
+    scaledBoss?.name || scaledBoss?.eventName || "Unbekannter Boss";
   const expPercent = Math.min((exp / expToNextLevel) * 100, 100);
 
   // Skills
@@ -99,12 +104,9 @@ export default function BattleScene({
   const handleSkill = (skill) => {
     if (!skill) return;
     onSkillPress?.(skill);
-
-    // Skill mit Effektnamen → Effekt zeigen, Angriff erst nach Effekt-Ende!
     if (EFFECT_MAP[skill.effect]) {
       setActiveEffect(skill.effect);
     } else {
-      // Falls kein Power am Skill → Fallback auf stat oder skillDmg
       handleFight?.({
         effect: skill.effect,
         power:
@@ -136,12 +138,20 @@ export default function BattleScene({
       {/* Boss-Anzeige */}
       <View style={styles.bossContainer}>
         <BlurView intensity={55} tint="dark" style={styles.bossInfo}>
-          <Text style={styles.title}>{bossName}</Text>
+          <Text style={styles.title}>
+            {bossName} (Lvl {activeCharacter.level || 1})
+          </Text>
           <Text style={styles.hpLabel}>
             HP: <Text style={styles.hpValue}>{bossHp}</Text> / {maxHp}
           </Text>
           <View style={styles.barContainer}>
-            <View style={[styles.hpBar, { width: `${bossHpPercent}%` }]} />
+            <View
+              style={[
+                styles.hpBar,
+                { width: `${bossHpPercent}%` },
+                bossHpPercent < 10 && { minWidth: 8 }, // nie ganz weg!
+              ]}
+            />
           </View>
           {bossDefeated && (
             <Text style={styles.victory}>✅ Du hast {bossName} besiegt!</Text>
@@ -174,11 +184,16 @@ export default function BattleScene({
             <Text style={styles.charXp}>
               XP {exp} / {expToNextLevel}
             </Text>
-            <View style={styles.barContainer}>
-              <View style={[styles.xpBar, { width: `${expPercent}%` }]} />
+            <View style={styles.xpBarContainer}>
+              <View
+                style={[
+                  styles.xpBar,
+                  { width: `${expPercent}%` },
+                  expPercent < 10 && { minWidth: 8 },
+                ]}
+              />
             </View>
           </BlurView>
-          {/* --- Das aktuell ausgerüstete Skin wird IMMER angezeigt! --- */}
           <Image
             source={classImgSrc}
             style={styles.avatar}
@@ -229,7 +244,8 @@ function createStyles(theme) {
       borderRadius: 14,
       padding: 16,
       backgroundColor: theme.accentColor,
-      minWidth: 160,
+      minWidth: 180,
+      maxWidth: 300,
     },
     title: {
       fontSize: 18,
@@ -249,20 +265,34 @@ function createStyles(theme) {
     barContainer: {
       width: "100%",
       height: 20,
-      borderRadius: 7,
       backgroundColor: hpBg,
-      marginBottom: 6,
+      borderRadius: 8,
       overflow: "hidden",
+      marginBottom: 6,
+      alignSelf: "flex-start",
+      borderWidth: 1,
+      borderColor: "#1118",
+      shadowColor: "#000",
+      shadowOpacity: 0.13,
+      shadowRadius: 6,
     },
     hpBar: {
       height: "100%",
-      borderRadius: 7,
-      backgroundColor: "red",
+      backgroundColor: "#ef2222",
+      borderRadius: 8,
+    },
+    xpBarContainer: {
+      width: 180,
+      height: 12,
+      backgroundColor: "#191970cc",
+      borderRadius: 6,
+      overflow: "hidden",
+      marginTop: 5,
     },
     xpBar: {
       height: "100%",
-      borderRadius: 5,
-      backgroundColor: "blue",
+      backgroundColor: "#2175ff",
+      borderRadius: 6,
     },
     bossImage: {
       width: 90,

@@ -5,6 +5,7 @@ import BattleScene from "./BattleScene";
 export default function BattleView({
   selectedEvent,
   bossHp,
+  bossMaxHp, // <--- NEU!
   bossDefeated,
   handleFight,
   character,
@@ -17,6 +18,7 @@ export default function BattleView({
       <BattleScene
         boss={selectedEvent}
         bossHp={bossHp}
+        bossMaxHp={bossMaxHp} // <--- WEITERGEBEN!
         bossDefeated={bossDefeated}
         handleFight={handleFight}
         character={character}

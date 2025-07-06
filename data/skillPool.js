@@ -32,7 +32,7 @@ export const skillPool = [
     power: 5,
     effect: "VoidEffect",
     image: getSkillImageUrl("voidrift"),
-    cooldown: 3000,
+    cooldown: 6000,
   },
   {
     id: "naturball",
@@ -44,7 +44,7 @@ export const skillPool = [
     power: 5,
     effect: "NaturEffect",
     image: getSkillImageUrl("naturball"),
-    cooldown: 3000,
+    cooldown: 9000,
   },
   {
     id: "stormstrike",
@@ -56,7 +56,7 @@ export const skillPool = [
     power: 5,
     effect: "StormStrikeEffect",
     image: getSkillImageUrl("stormstrike"),
-    cooldown: 3000,
+    cooldown: 13000,
   },
   {
     id: "windblade",
@@ -68,6 +68,6 @@ export const skillPool = [
     power: 5,
     effect: "WindBladeEffect",
     image: getSkillImageUrl("windblade"),
-    cooldown: 3000,
+    cooldown: 16000,
   },
 ];

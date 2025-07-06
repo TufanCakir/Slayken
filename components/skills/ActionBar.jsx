@@ -202,11 +202,13 @@ export default function ActionBar({
   );
 }
 
-// Styles bleiben gleich
 function createStyles(theme) {
   const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
   const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";
+  const accent = theme.accentColor || "#191919";
+  const text = theme.textColor || "#fff";
   return StyleSheet.create({
+    // Die gesamte ActionBar-Leiste
     barContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -218,8 +220,9 @@ function createStyles(theme) {
       margin: 12,
       maxWidth: 512,
       alignSelf: "center",
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
     },
+    // Einzelner Skill-Button
     skillButton: {
       alignItems: "center",
       justifyContent: "center",
@@ -230,7 +233,7 @@ function createStyles(theme) {
       margin: 4,
       borderWidth: 2.5,
       borderColor: borderGlow,
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
     },
     skillIcon: {
       width: 44,
@@ -240,6 +243,7 @@ function createStyles(theme) {
     skillButtonPressed: {
       borderColor: "#ffe66d",
     },
+    // Cooldown-Overlay (grau über SkillIcon)
     cooldownOverlay: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: "#222c",
@@ -254,13 +258,14 @@ function createStyles(theme) {
       marginTop: 4,
       letterSpacing: 0.2,
     },
+    // Tooltip Modal
     modalOverlay: {
       flex: 1,
       justifyContent: "flex-end",
       backgroundColor: "rgba(15,23,42,0.87)",
     },
     tooltipBottomBox: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       padding: 22,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
@@ -268,12 +273,12 @@ function createStyles(theme) {
       borderColor: borderGlow,
     },
     tooltipTitle: {
-      color: theme.textColor,
+      color: text,
       fontSize: 20,
       marginBottom: 6,
     },
     tooltipDescription: {
-      color: theme.textColor,
+      color: text,
       fontSize: 15,
       marginBottom: 8,
       lineHeight: 18,
@@ -283,6 +288,7 @@ function createStyles(theme) {
       fontSize: 14,
       marginTop: 2,
     },
+    // Unlock Modal
     unlockOverlay: {
       flex: 1,
       justifyContent: "center",
@@ -290,17 +296,19 @@ function createStyles(theme) {
       backgroundColor: "rgba(15,23,42,0.88)",
     },
     unlockBox: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       padding: 28,
       borderRadius: 20,
       alignItems: "center",
       borderWidth: 3,
+      borderColor: borderGlow,
       width: 270,
     },
     unlockTitle: {
-      color: theme.textColor,
+      color: text,
       fontSize: 18,
       marginBottom: 12,
+      fontWeight: "bold",
     },
     unlockImage: {
       width: 86,
@@ -312,17 +320,22 @@ function createStyles(theme) {
       color: glow,
       fontSize: 18,
       marginBottom: 12,
+      fontWeight: "bold",
+      textAlign: "center",
     },
     unlockButton: {
       borderColor: borderGlow,
       paddingHorizontal: 16,
       paddingVertical: 7,
       borderRadius: 10,
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
+      borderWidth: 1.3,
+      marginTop: 10,
     },
     unlockButtonText: {
-      color: theme.textColor,
+      color: text,
       fontSize: 15,
+      fontWeight: "bold",
     },
   });
 }

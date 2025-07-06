@@ -3,7 +3,6 @@
     "id": "sylas_classic",
     "name": "Skin: Fire Warrior (Classic)",
     "price": 750,
-    "iapId": "skin_firewarrior_classic",
     "category": "skin",
     "currency": ["coin", "crystal"],
     "characterId": "sylas",

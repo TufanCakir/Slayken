@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,8 +17,8 @@ import {
 } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { AssetsProvider } from "./context/AssetsContext";
 
+import { AssetsProvider } from "./context/AssetsContext";
 import { buildImageMap } from "./utils/imageMapBuilder";
 import { getImportantImages } from "./utils/imageHelper";
 
@@ -42,7 +42,11 @@ function AppContent() {
 
   useUpdateChecker(setUpdateVisible, setUpdateDone);
 
-  const baseNavTheme = uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme;
+  // Navigation Theme dynamisch
+  const baseNavTheme = useMemo(
+    () => (uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme),
+    [uiThemeType]
+  );
   const navigationTheme = useMemo(
     () => ({
       ...baseNavTheme,
@@ -51,24 +55,39 @@ function AppContent() {
     [baseNavTheme]
   );
 
+  // Alle wichtigen Bilder zum Preloaden
   const { images: importantImages, newsImages } = useMemo(
     () => getImportantImages(theme.bgImage),
     [theme.bgImage]
   );
 
+  // Lade alle Images, Chunkweise (5er Gruppen)
   const { loaded, progress, localUris } = useImagePreloader(importantImages, 5);
 
+  // Erzeuge ein ImageMap-Objekt aus geladenen URIs
   const imageMap = useMemo(
     () => buildImageMap(localUris, newsImages),
     [localUris, newsImages]
   );
 
-  const localBgImage = imageMap[theme.bgImage] || theme.bgImage;
+  // Theme-spezifisches Hintergrundbild, immer lokal wenn geladen
+  const localBgImage = useMemo(
+    () => imageMap[theme.bgImage] || theme.bgImage,
+    [imageMap, theme.bgImage]
+  );
 
+  // Progressbar für Ladeanzeige
+  const progressPercent = Math.min(Math.round(progress * 100), 100);
+
+  // Ladeanzeige solange nicht alles da
   if (!loaded) {
-    const progressPercent = Math.min(Math.round(progress * 100), 100);
     return (
       <View style={styles.loadingContainer}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
+          barStyle={uiThemeType === "dark" ? "light-content" : "dark-content"}
+        />
         <ActivityIndicator size="large" color="#fff" />
         <Text style={styles.loadingText}>Lädt Assets… {progressPercent}%</Text>
         <View style={styles.progressBarBackground}>
@@ -80,6 +99,7 @@ function AppContent() {
     );
   }
 
+  // Fehleranzeige
   if (error) {
     return (
       <RNSafeAreaView style={styles.errorContainer}>
@@ -98,9 +118,11 @@ function AppContent() {
     );
   }
 
+  // Main-App
   return (
     <OnlineGuard>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        {/* Hintergrundbild für gesamte App */}
         <Image
           source={localBgImage}
           style={StyleSheet.absoluteFill}
@@ -138,9 +160,11 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   errorContainer: {
     flex: 1,
+    backgroundColor: "#1e293b",
   },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,

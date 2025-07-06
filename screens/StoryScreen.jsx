@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -22,14 +22,14 @@ import bossData from "../data/bossData.json";
 import chapterData from "../data/chapterData.json";
 import { Image } from "expo-image";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
-import { calculateSkillDamage } from "../utils/combatUtils";
+import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import ScreenLayout from "../components/ScreenLayout";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-// Helpers
+// Helper functions
 function getEventBossKey(imageUrl, fallbackName) {
   let name = null;
   if (typeof imageUrl === "string") {
@@ -63,17 +63,30 @@ export default function StoryScreen() {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
+  const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
   const styles = createStyles(theme);
 
+  // Boss laden, wenn Kapitel gewählt
   useEffect(() => {
-    if (!selectedChapter) return;
+    if (!selectedChapter || !activeCharacter) return;
     const boss = bossData.find((b) => b.id === selectedChapter.bossId);
-    setCurrentBoss(boss);
-    setBossHp(boss?.hp || 100);
-  }, [selectedChapter]);
+    const scaled = scaleBossStats(boss, activeCharacter.level || 1);
+    setCurrentBoss(scaled);
+    setBossHp(scaled.hp || 100);
+    setBossMaxHp(scaled.hp || 100);
+  }, [selectedChapter, activeCharacter]);
 
+  // Bei Boss-/Char-Wechsel MaxHP immer korrekt setzen!
+  useEffect(() => {
+    if (currentBoss) {
+      setBossHp(currentBoss.hp ?? 100);
+      setBossMaxHp(currentBoss.hp ?? 100);
+    }
+  }, [currentBoss]);
+
+  // --- Kampflogik & XP ---
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
@@ -109,9 +122,11 @@ export default function StoryScreen() {
             if (newSkills.length > 0) {
               setNewUnlockedSkills(newSkills);
             } else {
+              // Reset auf Kapitel-Auswahl
               setSelectedChapter(null);
               setCurrentBoss(null);
               setBossHp(100);
+              setBossMaxHp(100);
             }
           }, 300);
         }
@@ -135,8 +150,10 @@ export default function StoryScreen() {
     setSelectedChapter(null);
     setCurrentBoss(null);
     setBossHp(100);
+    setBossMaxHp(100);
   }, []);
 
+  // Hintergrund & Bildzuordnung
   const bossBgKey = getBackgroundKey(currentBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
@@ -151,6 +168,7 @@ export default function StoryScreen() {
       }
     : null;
 
+  // Kapitel-Auswahl
   if (!selectedChapter) {
     return (
       <ScreenLayout style={styles.container}>
@@ -187,6 +205,7 @@ export default function StoryScreen() {
     );
   }
 
+  // Kampf-Ansicht
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -212,7 +231,7 @@ export default function StoryScreen() {
         <BattleScene
           boss={mappedBoss}
           bossHp={bossHp}
-          bossMaxHp={currentBoss.hp}
+          bossMaxHp={bossMaxHp}
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
           bossBackground={bossBgSrc}
@@ -250,6 +269,7 @@ export default function StoryScreen() {
   );
 }
 
+// ---------- STYLES ----------
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";

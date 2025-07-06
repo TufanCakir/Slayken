@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ import BattleView from "../components/BattleView";
 import { Image } from "expo-image";
 
 import { getClassImageUrl } from "../utils/classUtils";
-import { calculateSkillDamage } from "../utils/combatUtils";
+import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 
 // Helper
@@ -60,13 +60,15 @@ export default function EventScreen() {
   const { gainExp } = useLevelSystem();
 
   const activeCharacter = classList.find((c) => c.id === activeClassId);
+
   const [activeTab, setActiveTab] = useState("special");
   const [unlockedItemIds, setUnlockedItemIds] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [bossHp, setBossHp] = useState(null);
+  const [bossMaxHp, setBossMaxHp] = useState(null); // WICHTIG!
   const [bossDefeated, setBossDefeated] = useState(false);
 
-  // Modal states
+  // Modal states (kannst du später für Rewards weiterverwenden)
   const [reward, setReward] = useState(null);
   const [modalStep, setModalStep] = useState(null);
 
@@ -85,7 +87,7 @@ export default function EventScreen() {
     }, [loadUnlocked])
   );
 
-  // Events filtern
+  // Events filtern + Image-Map
   const availableEvents = eventData
     .filter((e) => e.tag === activeTab)
     .map((e) => {
@@ -98,30 +100,36 @@ export default function EventScreen() {
       };
     });
 
+  // Skalierter Event-Boss – und MaxHP holen!
+  const scaledEvent = useMemo(() => {
+    if (!selectedEvent || !activeCharacter) return null;
+    return scaleBossStats(selectedEvent, activeCharacter.level || 1);
+  }, [selectedEvent, activeCharacter]);
+
+  // Jedes Mal, wenn Event oder Char wechselt: MaxHP und Hp setzen
   useEffect(() => {
-    if (selectedEvent) {
-      setBossHp(selectedEvent.maxHp ?? 200);
+    if (scaledEvent) {
+      setBossMaxHp(scaledEvent.hp ?? 200);
+      setBossHp(scaledEvent.hp ?? 200);
       setBossDefeated(false);
     }
-  }, [selectedEvent]);
+  }, [scaledEvent]);
 
-  const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-  };
+  // Event-Auswahl-Handler
+  const handleSelectEvent = (event) => setSelectedEvent(event);
 
+  // Kampf-Handler: Damage-Berechnung und HP reduzieren
   function handleFight(skill) {
-    console.log("handleFight called with skill:", skill);
-    if (!activeCharacter || bossDefeated || !selectedEvent) return;
+    if (!activeCharacter || bossDefeated || !scaledEvent) return;
     const { stats: charStats, percentBonuses } =
       getCharacterStatsWithEquipment(activeCharacter);
-    const skillPower = skill?.power ?? selectedEvent.skillDmg ?? 30;
+    const skillPower = skill?.power ?? scaledEvent.skillDmg ?? 30;
     const damage = calculateSkillDamage({
       charStats,
       percentBonuses,
       skill: { skillDmg: skillPower },
-      enemyDefense: selectedEvent.bossDefense || 0,
+      enemyDefense: scaledEvent.defense || 0,
     });
-
     setBossHp((prev) => {
       const newHp = Math.max(prev - damage, 0);
       if (newHp === 0) setBossDefeated(true);
@@ -129,12 +137,13 @@ export default function EventScreen() {
     });
   }
 
+  // On Boss Defeated: Belohnungen, Rewards, VictoryScreen etc.
   useEffect(() => {
-    if (bossDefeated && selectedEvent && activeCharacter) {
-      const expReward = selectedEvent.expReward ?? 120;
-      const accountExpReward = selectedEvent.accountExpReward ?? 100;
-      const coinReward = selectedEvent.coinReward ?? 100;
-      const crystalReward = selectedEvent.crystalReward ?? 30;
+    if (bossDefeated && scaledEvent && activeCharacter) {
+      const expReward = scaledEvent.expReward ?? 120;
+      const accountExpReward = scaledEvent.accountExpReward ?? 100;
+      const coinReward = scaledEvent.coinReward ?? 100;
+      const crystalReward = scaledEvent.crystalReward ?? 30;
 
       addCoins(coinReward);
       addCrystals(crystalReward);
@@ -142,24 +151,24 @@ export default function EventScreen() {
       const updatedChar = gainExp(activeCharacter, expReward);
       updateCharacter(updatedChar);
 
-      // --------- Skin als Event-Reward freischalten ---------
-      if (selectedEvent.rewardSkinId || selectedEvent.unlockItemId) {
-        const skinId = selectedEvent.rewardSkinId || selectedEvent.unlockItemId;
+      // Skin- oder Item-Reward unlock
+      if (scaledEvent.rewardSkinId || scaledEvent.unlockItemId) {
+        const skinId = scaledEvent.rewardSkinId || scaledEvent.unlockItemId;
         AsyncStorage.setItem(`unlock_skin_${skinId}`, "true").then(() => {
-          setReward({ type: "skin", skinId }); // Hier kannst du Modal/Toast nutzen
+          setReward({ type: "skin", skinId });
         });
       }
 
       (async () => {
         let newCharacter = null;
         if (
-          selectedEvent.rewardCharacterId &&
+          scaledEvent.rewardCharacterId &&
           !classList.some((c) =>
-            [c.baseId, c.id].includes(selectedEvent.rewardCharacterId)
+            [c.baseId, c.id].includes(scaledEvent.rewardCharacterId)
           )
         ) {
           const baseChar = classData.find(
-            (c) => c.id === selectedEvent.rewardCharacterId
+            (c) => c.id === scaledEvent.rewardCharacterId
           );
           if (baseChar) {
             newCharacter = {
@@ -183,8 +192,7 @@ export default function EventScreen() {
           character: updatedChar,
           isEvent: true,
           newCharacter,
-          skinId:
-            selectedEvent.rewardSkinId || selectedEvent.unlockItemId || null,
+          skinId: scaledEvent.rewardSkinId || scaledEvent.unlockItemId || null,
         });
       })();
     }
@@ -241,8 +249,9 @@ export default function EventScreen() {
 
       {selectedEvent ? (
         <BattleView
-          selectedEvent={selectedEvent}
+          selectedEvent={scaledEvent}
           bossHp={bossHp}
+          bossMaxHp={bossMaxHp} // WICHTIG!
           bossDefeated={bossDefeated}
           handleFight={handleFight}
           onBack={() => setSelectedEvent(null)}
