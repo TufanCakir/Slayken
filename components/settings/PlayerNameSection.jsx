@@ -22,15 +22,15 @@ export default function PlayerNameSection() {
   }, []);
 
   const handleSave = async () => {
-    const name = username.trim();
-    if (!name) {
+    const trimmed = username.trim();
+    if (!trimmed) {
       Alert.alert(
         t("playerNameLabels.errorTitle"),
         t("playerNameLabels.errorEmptyName")
       );
       return;
     }
-    await AsyncStorage.setItem("user", name);
+    await AsyncStorage.setItem("user", trimmed);
     Alert.alert(
       t("playerNameLabels.savedTitle"),
       t("playerNameLabels.nameSaved")
@@ -46,13 +46,18 @@ export default function PlayerNameSection() {
       <TextInput
         style={styles.input}
         placeholder={t("playerNameLabels.newNamePlaceholder")}
-        placeholderTextColor={theme.placeholderTextColor || "#93c5fd"}
+        placeholderTextColor={
+          theme.placeholderTextColor || theme.textColor + "77"
+        }
         value={username}
         onChangeText={setUsername}
       />
       <Pressable
         onPress={handleSave}
-        style={({ pressed }) => [styles.button, { opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => ({
+          ...styles.button,
+          opacity: pressed ? 0.8 : 1,
+        })}
       >
         <Text style={styles.buttonText}>
           {t("playerNameLabels.saveButton")}
@@ -62,7 +67,6 @@ export default function PlayerNameSection() {
   );
 }
 
-// Dynamische Styles mit Theme
 const createStyles = (theme) =>
   StyleSheet.create({
     section: {
@@ -77,7 +81,7 @@ const createStyles = (theme) =>
       marginBottom: 8,
     },
     label: {
-      color: theme.placeholderTextColor || "#93c5fd",
+      color: theme.placeholderTextColor || theme.textColor + "88",
       marginBottom: 6,
       fontSize: 15,
       fontWeight: "500",
@@ -90,7 +94,7 @@ const createStyles = (theme) =>
       fontSize: 16,
       color: theme.textColor,
       backgroundColor: theme.accentColor,
-      borderColor: theme.textColor + "44", // dezente Border passend zum Theme
+      borderColor: theme.textColor + "44",
     },
     button: {
       padding: 14,

@@ -7,7 +7,6 @@ import {
   Animated,
 } from "react-native";
 
-// Optional: Theme-Prop als Argument für Farben
 export default function UpdateOverlay({
   done = false,
   text = "Update wird geladen…",
@@ -15,7 +14,8 @@ export default function UpdateOverlay({
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Progress läuft bis 90%, pausiert dann bis done
+    // Immer auf 0 zurücksetzen beim Mount
+    progressAnim.setValue(0);
     if (!done) {
       Animated.timing(progressAnim, {
         toValue: 0.9,
@@ -23,7 +23,7 @@ export default function UpdateOverlay({
         useNativeDriver: false,
       }).start();
     }
-  }, [done, progressAnim]);
+  }, []); // Nur beim Mount
 
   useEffect(() => {
     if (done) {
@@ -33,7 +33,7 @@ export default function UpdateOverlay({
         useNativeDriver: false,
       }).start();
     }
-  }, [done, progressAnim]);
+  }, [done]);
 
   const widthInterpolate = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -67,8 +67,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 17,
     color: "#fff",
-    letterSpacing: 0.2,
     fontWeight: "600",
+    letterSpacing: 0.2,
   },
   progressBar: {
     marginTop: 22,

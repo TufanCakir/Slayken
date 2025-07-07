@@ -1,4 +1,5 @@
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StageProvider } from "../context/StageContext";
 import { AssetsProvider } from "../context/AssetsContext";
 import { LoadingProvider } from "../context/LoadingContext";
 import { MusicProvider } from "../context/MusicContext";
@@ -15,27 +16,29 @@ import { MissionProvider } from "../context/MissionContext";
 export function AppProviders({ children }) {
   return (
     <SafeAreaProvider>
-      <GiftProvider>
-        <LoadingProvider>
-          <MusicProvider>
-            <ThemeProvider>
-              <LanguageProvider>
-                <AccountLevelProvider>
-                  <CrystalProvider>
-                    <CoinProvider>
-                      <MissionProvider>
-                        <CharacterProvider>
-                          <ClassProvider>{children}</ClassProvider>
-                        </CharacterProvider>
-                      </MissionProvider>
-                    </CoinProvider>
-                  </CrystalProvider>
-                </AccountLevelProvider>
-              </LanguageProvider>
-            </ThemeProvider>
-          </MusicProvider>
-        </LoadingProvider>
-      </GiftProvider>
+      <StageProvider>
+        <GiftProvider>
+          <LoadingProvider>
+            <MusicProvider>
+              <ThemeProvider>
+                <LanguageProvider>
+                  <AccountLevelProvider>
+                    <CrystalProvider>
+                      <CoinProvider>
+                        <MissionProvider>
+                          <CharacterProvider>
+                            <ClassProvider>{children}</ClassProvider>
+                          </CharacterProvider>
+                        </MissionProvider>
+                      </CoinProvider>
+                    </CrystalProvider>
+                  </AccountLevelProvider>
+                </LanguageProvider>
+              </ThemeProvider>
+            </MusicProvider>
+          </LoadingProvider>
+        </GiftProvider>
+      </StageProvider>
     </SafeAreaProvider>
   );
 }

@@ -15,14 +15,16 @@ import { equipmentPool } from "../data/equipmentPool";
 import { useClass } from "../context/ClassContext";
 import ScreenLayout from "../components/ScreenLayout";
 
+// Einmalig definierte Slot-Arrays
 const leftSlots = ["head", "shoulder", "chest", "hands", "legs"];
 const rightSlots = ["weapon", "ring", "neck", "feet"];
 
 export default function InventoryScreen() {
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
   const { imageMap } = useAssets();
   const { classList, equipItem } = useClass();
+  const styles = createStyles(theme);
+
   const [selectedCharacterId, setSelectedCharacterId] = useState(
     classList[0]?.id || null
   );
@@ -30,6 +32,13 @@ export default function InventoryScreen() {
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const selectedCharacter = classList.find((c) => c.id === selectedCharacterId);
+  const selectedInventory = selectedCharacter?.inventory || [];
+
+  // Inventory-Zählung (Map aus Item-ID -> Anzahl)
+  const inventoryCounts = selectedInventory.reduce((acc, id) => {
+    acc[id] = (acc[id] || 0) + 1;
+    return acc;
+  }, {});
 
   const handleEquip = (item) => {
     if (!selectedCharacterId || !selectedSlot) return;
@@ -42,7 +51,7 @@ export default function InventoryScreen() {
   };
 
   const renderSlot = (slot) => {
-    const equippedItemId = selectedCharacter.equipment?.[slot];
+    const equippedItemId = selectedCharacter?.equipment?.[slot];
     const equippedItem = equipmentPool.find((e) => e.id === equippedItemId);
     const icon = equippedItem ? imageMap[`equipment_${equippedItem.id}`] : null;
 
@@ -65,17 +74,11 @@ export default function InventoryScreen() {
       </TouchableOpacity>
     );
   };
-  // Oberhalb der return-Anweisung in der Komponente:
-  const selectedInventory = selectedCharacter?.inventory || [];
-  const inventoryCounts = {};
-  selectedInventory.forEach((id) => {
-    inventoryCounts[id] = (inventoryCounts[id] || 0) + 1;
-  });
 
   return (
     <ScreenLayout style={styles.container}>
+      {/* Charakter-Auswahl */}
       <Text style={styles.heading}>Charakter Auswahl</Text>
-
       <View style={styles.characterSelectRow}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {classList.map((char) => (
@@ -106,13 +109,12 @@ export default function InventoryScreen() {
         </ScrollView>
       </View>
 
+      {/* Ausrüstungsübersicht */}
       <View style={styles.characterRow}>
-        {/* Left slots */}
-        <View style={styles.slotColumn}>
-          {leftSlots.map((slot) => renderSlot(slot))}
-        </View>
+        {/* Linke Slots */}
+        <View style={styles.slotColumn}>{leftSlots.map(renderSlot)}</View>
 
-        {/* Character image */}
+        {/* Charakterbild */}
         <View style={styles.characterArea}>
           {selectedCharacter ? (
             <Image
@@ -125,17 +127,16 @@ export default function InventoryScreen() {
           )}
         </View>
 
-        {/* Right slots */}
-        <View style={styles.slotColumn}>
-          {rightSlots.map((slot) => renderSlot(slot))}
-        </View>
+        {/* Rechte Slots */}
+        <View style={styles.slotColumn}>{rightSlots.map(renderSlot)}</View>
       </View>
 
+      {/* Tipp */}
       <Text style={[styles.tipText, { backgroundColor: theme.accentColor }]}>
         Tippe auf einen Slot zum Anlegen, lange tippen zum Entfernen
       </Text>
 
-      {/* Modal */}
+      {/* Modal für Item-Auswahl */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <FlatList
@@ -143,11 +144,12 @@ export default function InventoryScreen() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => {
               const icon = imageMap[`equipment_${item.id}`];
+              const count = inventoryCounts[item.id] || 0;
               return (
                 <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => handleEquip(item)}
-                  disabled={!inventoryCounts[item.id]} // Optional: deaktivieren wenn keins da!
+                  disabled={!count}
                 >
                   {icon && (
                     <Image
@@ -158,9 +160,9 @@ export default function InventoryScreen() {
                   )}
                   <Text style={styles.modalText}>
                     {item.label}
-                    <Text style={{ color: theme.borderGlowColor }}>
-                      {"  x" + (inventoryCounts[item.id] || 0)}
-                    </Text>
+                    <Text
+                      style={{ color: theme.borderGlowColor }}
+                    >{`  x${count}`}</Text>
                   </Text>
                 </TouchableOpacity>
               );
@@ -180,9 +182,7 @@ export default function InventoryScreen() {
 
 function createStyles(theme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+    container: { flex: 1 },
     heading: {
       fontSize: 22,
       fontWeight: "bold",
@@ -190,93 +190,6 @@ function createStyles(theme) {
       marginLeft: 20,
       marginTop: 20,
       marginBottom: 10,
-    },
-    characterRow: {
-      flexDirection: "row",
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    slotColumn: {
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 10,
-    },
-    characterArea: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    characterImageLarge: {
-      width: "80%",
-      height: 350,
-      resizeMode: "contain",
-    },
-    slotButton: {
-      alignItems: "center",
-    },
-    slotIcon: {
-      width: 45,
-      height: 45,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: "#fff",
-    },
-    emptySlot: {
-      width: 45,
-      height: 45,
-      backgroundColor: "#475569",
-      opacity: 0.6,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: "#fff",
-    },
-    slotLabel: {
-      color: theme.textColor,
-      fontSize: 10,
-      marginTop: 2,
-    },
-    tipText: {
-      color: theme.textColor,
-      marginBottom: 15,
-      textAlign: "center",
-      fontSize: 12,
-      fontStyle: "italic",
-    },
-    noCharacter: {
-      color: theme.textColor,
-      fontSize: 16,
-      marginTop: 50,
-    },
-    modalContainer: {
-      backgroundColor: theme.accentColor,
-      marginTop: "30%",
-      marginHorizontal: 20,
-      borderRadius: 16,
-      padding: 20,
-      alignItems: "center",
-    },
-    modalItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    modalImage: {
-      width: 50,
-      height: 50,
-      marginRight: 10,
-    },
-    modalText: {
-      color: theme.textColor,
-      fontSize: 16,
-    },
-    modalClose: {
-      marginTop: 14,
-    },
-    buttonText: {
-      color: theme.textColor,
-      fontWeight: "bold",
-      fontSize: 15,
     },
     characterSelectRow: {
       flexDirection: "row",
@@ -311,6 +224,92 @@ function createStyles(theme) {
     charSelectLabelActive: {
       fontWeight: "bold",
       color: theme.borderGlowColor,
+    },
+    characterRow: {
+      flexDirection: "row",
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    slotColumn: {
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+    },
+    slotButton: { alignItems: "center" },
+    slotIcon: {
+      width: 45,
+      height: 45,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "#fff",
+    },
+    emptySlot: {
+      width: 45,
+      height: 45,
+      backgroundColor: "#475569",
+      opacity: 0.6,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "#fff",
+    },
+    slotLabel: {
+      color: theme.textColor,
+      fontSize: 10,
+      marginTop: 2,
+    },
+    characterArea: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    characterImageLarge: {
+      width: "80%",
+      height: 350,
+      resizeMode: "contain",
+    },
+    noCharacter: {
+      color: theme.textColor,
+      fontSize: 16,
+      marginTop: 50,
+    },
+    tipText: {
+      color: theme.textColor,
+      marginBottom: 15,
+      textAlign: "center",
+      fontSize: 12,
+      fontStyle: "italic",
+    },
+    modalContainer: {
+      backgroundColor: theme.accentColor,
+      marginTop: "30%",
+      marginHorizontal: 20,
+      borderRadius: 16,
+      padding: 20,
+      alignItems: "center",
+    },
+    modalItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 12,
+      opacity: 1,
+    },
+    modalImage: {
+      width: 50,
+      height: 50,
+      marginRight: 10,
+    },
+    modalText: {
+      color: theme.textColor,
+      fontSize: 16,
+    },
+    modalClose: {
+      marginTop: 14,
+    },
+    buttonText: {
+      color: theme.textColor,
+      fontWeight: "bold",
+      fontSize: 15,
     },
   });
 }

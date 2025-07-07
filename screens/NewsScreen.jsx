@@ -17,7 +17,7 @@ import { useThemeContext } from "../context/ThemeContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useAssets } from "../context/AssetsContext";
 
-// Helper
+// Bild-Key-Helfer
 function getEventBossKey(imageUrl) {
   const match = /\/([\w-]+)\.png$/.exec(imageUrl);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
@@ -26,35 +26,35 @@ function getEventBossKey(imageUrl) {
 export default function NewsScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const styles = createStyles(theme);
-
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
   const [claimedNews, setClaimedNews] = useState({});
+  const styles = createStyles(theme);
 
+  // Belohnung einlösen
   const handleLongPress = async (item) => {
     const key = `claimed_news_${item.id}`;
-    const alreadyClaimed = await AsyncStorage.getItem(key);
-    if (alreadyClaimed) return;
+    if (await AsyncStorage.getItem(key)) return;
     addCoins(100);
     addCrystals(10);
     await AsyncStorage.setItem(key, "true");
     setClaimedNews((prev) => ({ ...prev, [item.id]: true }));
   };
 
+  // Bereits eingelöste News laden
   useEffect(() => {
-    const loadClaimed = async () => {
+    (async () => {
       const claims = {};
       for (let item of newsData) {
-        const key = `claimed_news_${item.id}`;
-        const value = await AsyncStorage.getItem(key);
-        if (value) claims[item.id] = true;
+        if (await AsyncStorage.getItem(`claimed_news_${item.id}`)) {
+          claims[item.id] = true;
+        }
       }
       setClaimedNews(claims);
-    };
-    loadClaimed();
+    })();
   }, []);
 
+  // News-Eintrag-Render
   const renderItem = ({ item }) => {
     const claimed = claimedNews[item.id];
     const bossKey = getEventBossKey(item.image);
@@ -65,6 +65,7 @@ export default function NewsScreen() {
       <TouchableOpacity
         onLongPress={() => handleLongPress(item)}
         activeOpacity={0.9}
+        style={claimed ? styles.itemClaimedWrap : undefined}
       >
         <View style={[styles.item, claimed && styles.itemClaimed]}>
           <Image
@@ -78,19 +79,7 @@ export default function NewsScreen() {
             <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
           ) : (
             <View style={styles.tooltip}>
-              <Text style={styles.tooltipText}>Halten für Belohnung:</Text>
-              <Image
-                source={getItemImageUrl("coin")}
-                style={styles.rewardIcon}
-                contentFit="contain"
-              />
-              <Text style={styles.tooltipText}>+100</Text>
-              <Image
-                source={getItemImageUrl("crystal")}
-                style={styles.rewardIcon}
-                contentFit="contain"
-              />
-              <Text style={styles.tooltipText}>+10</Text>
+              <RewardDisplay />
             </View>
           )}
           {item.description && (
@@ -114,11 +103,37 @@ export default function NewsScreen() {
   );
 }
 
+// Hilfs-Komponente für die Belohnungsanzeige (verhindert Duplikate)
+function RewardDisplay() {
+  return (
+    <>
+      <Text style={{ fontSize: 13 }}>Halten für Belohnung:</Text>
+      <Image
+        source={getItemImageUrl("coin")}
+        style={rewardIconStyle}
+        contentFit="contain"
+      />
+      <Text style={{ fontSize: 13, color: "white" }}>+100</Text>
+      <Image
+        source={getItemImageUrl("crystal")}
+        style={rewardIconStyle}
+        contentFit="contain"
+      />
+      <Text style={{ fontSize: 13, color: "white" }}>+10</Text>
+    </>
+  );
+}
+
+const rewardIconStyle = {
+  width: 18,
+  height: 18,
+  marginHorizontal: 2,
+  marginBottom: -1,
+};
+
 function createStyles(theme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
+    container: { flex: 1 },
     header: {
       textAlign: "center",
       padding: 16,
@@ -147,9 +162,7 @@ function createStyles(theme) {
       borderWidth: 1,
       borderColor: theme.borderGlowColor,
     },
-    itemClaimed: {
-      opacity: 0.5,
-    },
+    itemClaimed: { opacity: 0.5 },
     itemText: {
       fontSize: 17,
       color: theme.textColor,
@@ -171,16 +184,6 @@ function createStyles(theme) {
       flexWrap: "wrap",
       gap: 4,
     },
-    tooltipText: {
-      fontSize: 13,
-      color: theme.textColor,
-    },
-    rewardIcon: {
-      width: 18,
-      height: 18,
-      marginHorizontal: 2,
-      marginBottom: -1,
-    },
     claimed: {
       marginTop: 8,
       color: theme.textColor,
@@ -194,6 +197,9 @@ function createStyles(theme) {
       fontSize: 13,
       textAlign: "center",
       marginTop: 6,
+    },
+    itemClaimedWrap: {
+      // Falls du einen zusätzlichen Stil für geklickte News brauchst
     },
   });
 }

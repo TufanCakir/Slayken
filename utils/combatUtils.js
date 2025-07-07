@@ -1,14 +1,16 @@
-// Skaliert die Boss-Stats abhängig vom Spielerlevel (balancierbar)
+/**
+ * Skaliert die Boss-Stats abhängig vom Spielerlevel.
+ * Passe die Faktoren für dein Balancing an.
+ */
 export function scaleBossStats(boss, playerLevel = 1) {
   if (!boss) return boss;
-
-  // Fallbacks und Basiswerte auslesen
+  // Basiswerte, jeweils fallback-sicher
   const baseHp = boss.baseHp ?? boss.hp ?? 100;
   const baseDefense = boss.baseDefense ?? boss.defense ?? 10;
 
-  // Skalierung: Passe die Faktoren hier an dein gewünschtes Game-Balancing an!
-  const hpScale = 1 + (playerLevel - 1) * 0.25; // +25% HP je Level über 1
-  const defScale = 1 + (playerLevel - 1) * 0.15; // +15% DEF je Level über 1
+  // Skalierungsfaktoren
+  const hpScale = 1 + 0.25 * Math.max(0, playerLevel - 1); // +25% HP je Level über 1
+  const defScale = 1 + 0.15 * Math.max(0, playerLevel - 1); // +15% DEF je Level über 1
 
   return {
     ...boss,
@@ -17,61 +19,68 @@ export function scaleBossStats(boss, playerLevel = 1) {
   };
 }
 
-// Berechnet den Schaden einer Attacke (mit ausführlichem Debug)
+/**
+ * Berechnet den Schaden einer Attacke.
+ * Optional: debug=true für Konsolenausgabe.
+ */
 export function calculateSkillDamage({
   charStats = {},
   percentBonuses = {},
   skill = {},
   enemyDefense = 0,
+  debug = false,
+  minDamage = 10, // Mindestschaden (anpassbar)
 }) {
   // Grundangriff
   const baseAttack = charStats.attack ?? charStats.strength ?? 1;
-
-  // Prozentualer Bonus auf Angriff
+  // Prozentuale Boni
   const attackBonusPercent = percentBonuses.attack ?? 0;
   let attackWithBonus = baseAttack * (1 + attackBonusPercent / 100);
 
-  // Stärke als Multiplikator (optional für RPG-Stat-Builds)
+  // Stärke-Multiplikator
   const strength = charStats.strength ?? 0;
   attackWithBonus *= 1 + strength * 0.01;
 
-  // Levelbonus (leichter Progress je Level)
+  // Level-Bonus
   const level = charStats.level ?? 1;
-  if (level > 1) {
-    attackWithBonus *= 1 + (level - 1) * 0.01;
-  }
+  attackWithBonus *= 1 + 0.01 * Math.max(0, level - 1);
 
-  // Skill-Multiplier: Specials haben mind. 0.2, basic mind. 0.5
+  // Skill-Multiplikator (power für basics, skillDmg für specials; Fallback auf 1)
+  const skillValue =
+    typeof skill.power === "number"
+      ? skill.power
+      : typeof skill.skillDmg === "number"
+      ? skill.skillDmg
+      : 100;
   const skillMultiplier =
     skill.effect === "basic"
-      ? Math.max((skill.power ?? 100) / 100, 0.5)
-      : Math.max((skill.skillDmg ?? 100) / 100, 0.2);
+      ? Math.max(skillValue / 100, 0.5)
+      : Math.max(skillValue / 100, 0.2);
 
-  // Flacher Bonus, falls gesetzt
+  // Flacher Bonus
   const flatBonus = skill.basePower ?? 0;
 
-  // Berechnung
+  // Schaden berechnen
   let totalDamage =
     attackWithBonus * skillMultiplier + flatBonus - enemyDefense;
+  const uncapped = totalDamage;
 
-  // Debug: Zeige vor dem Min-Schaden-Kappen den Wert
-  const _debugUncapped = totalDamage;
-
-  // Minimal-Schaden (hier: 1, kann auf 0 geändert werden für "Immunität")
-  const minDamage = skill.effect === "basic" ? 10 : 10; // Beispiel für unterschiedlich starke Skills
+  // Mindestschaden sicherstellen
   totalDamage = Math.max(minDamage, totalDamage);
 
-  // Optional: Auch abgerundete Werte loggen (für klare Lesbarkeit)
-  console.log("SkillDamage DEBUG", {
-    baseAttack,
-    attackWithBonus: Math.round(attackWithBonus * 100) / 100,
-    skillMultiplier,
-    flatBonus,
-    enemyDefense,
-    uncappedDamage: Math.round(_debugUncapped * 100) / 100,
-    totalDamage: Math.round(totalDamage),
-  });
+  // Debug-Ausgabe (optional)
+  if (debug) {
+    console.log("SkillDamage DEBUG", {
+      baseAttack,
+      attackWithBonus: Math.round(attackWithBonus * 100) / 100,
+      skillMultiplier,
+      flatBonus,
+      enemyDefense,
+      uncappedDamage: Math.round(uncapped * 100) / 100,
+      totalDamage: Math.round(totalDamage),
+    });
+  }
 
-  // Immer auf volle Zahl runden (kein Nachkommerschaden)
+  // Immer ganze Zahlen
   return Math.round(totalDamage);
 }

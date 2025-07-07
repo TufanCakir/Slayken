@@ -5,7 +5,7 @@ import { resetToHome } from "../utils/navigationUtils";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
-import skinData from "../data/skinData.json"; // <--- Importiere deine Skin-Daten!
+import skinData from "../data/skinData.json";
 
 export default function VictoryScreen({ route }) {
   const navigation = useNavigation();
@@ -15,22 +15,17 @@ export default function VictoryScreen({ route }) {
   const {
     coinReward = 0,
     crystalReward = 0,
-    character = null,
-    isEvent = false,
-    newCharacter = null,
-    skinId = null, // <--- neu!
+    character,
+    isEvent,
+    newCharacter,
+    skinId,
   } = route.params || {};
 
-  // Hole das Skin-Objekt aus skinData (wenn skinId da ist)
-  const unlockedSkin = skinId
-    ? skinData.find((skin) => skin.id === skinId)
-    : null;
+  // Bildquellen
+  const getCharacterImage = (char) => char && imageMap[`class_${char.id}`];
+  const unlockedSkin = skinId && skinData.find((skin) => skin.id === skinId);
 
   const styles = createStyles(theme);
-
-  // Bildquellen vorbereiten
-  const characterImage = character && imageMap[`class_${character.id}`];
-  const newCharImage = newCharacter && imageMap[`class_${newCharacter.id}`];
 
   return (
     <View style={styles.container}>
@@ -47,24 +42,19 @@ export default function VictoryScreen({ route }) {
       <Text style={styles.title}>Sieg!</Text>
 
       {newCharacter && (
-        <View style={styles.rewardBox}>
-          <Text style={styles.rewardTitle}>🎉 Neuer Held freigeschaltet!</Text>
-          {newCharImage && (
-            <ExpoImage
-              source={newCharImage}
-              style={styles.avatar}
-              contentFit="contain"
-            />
-          )}
-          <Text style={styles.rewardLabel}>{newCharacter.label}</Text>
-        </View>
+        <RewardBox
+          label="🎉 Neuer Held freigeschaltet!"
+          image={getCharacterImage(newCharacter)}
+          text={newCharacter.label}
+          theme={theme}
+        />
       )}
 
       {character && (
         <View style={styles.characterBox}>
-          {characterImage && (
+          {getCharacterImage(character) && (
             <ExpoImage
-              source={characterImage}
+              source={getCharacterImage(character)}
               style={styles.avatar}
               contentFit="contain"
             />
@@ -80,15 +70,13 @@ export default function VictoryScreen({ route }) {
       )}
 
       {unlockedSkin && (
-        <View style={styles.skinBox}>
-          <Text style={styles.skinTitle}>✨ Skin freigeschaltet!</Text>
-          <ExpoImage
-            source={unlockedSkin.image}
-            style={styles.skinImage}
-            contentFit="contain"
-          />
-          <Text style={styles.skinLabel}>{unlockedSkin.label}</Text>
-        </View>
+        <RewardBox
+          label="✨ Skin freigeschaltet!"
+          image={unlockedSkin.image}
+          text={unlockedSkin.label}
+          theme={theme}
+          skin
+        />
       )}
 
       <View style={styles.rewards}>
@@ -111,6 +99,22 @@ export default function VictoryScreen({ route }) {
       >
         <Text style={styles.buttonText}>Zurück zum Hauptmenü</Text>
       </TouchableOpacity>
+    </View>
+  );
+}
+
+function RewardBox({ label, image, text, theme, skin }) {
+  const boxStyle = skin ? styles(theme).skinBox : styles(theme).rewardBox;
+  const imgStyle = skin ? styles(theme).skinImage : styles(theme).avatar;
+  const labelStyle = skin ? styles(theme).skinTitle : styles(theme).rewardTitle;
+  const textStyle = skin ? styles(theme).skinLabel : styles(theme).rewardLabel;
+  return (
+    <View style={boxStyle}>
+      <Text style={labelStyle}>{label}</Text>
+      {image && (
+        <ExpoImage source={image} style={imgStyle} contentFit="contain" />
+      )}
+      <Text style={textStyle}>{text}</Text>
     </View>
   );
 }
@@ -140,7 +144,8 @@ function RewardRow({ icon, label, theme }) {
   );
 }
 
-function createStyles(theme) {
+// styles() als Factory-Funktion für dynamische Wiederverwendung
+function styles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -285,4 +290,9 @@ function createStyles(theme) {
       marginBottom: 1,
     },
   });
+}
+
+function createStyles(theme) {
+  // Wrapper damit alter Aufruf im Export funktioniert:
+  return styles(theme);
 }

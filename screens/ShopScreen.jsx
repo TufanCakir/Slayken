@@ -21,58 +21,60 @@ import SHOP_ITEMS from "../data/shopData.json";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const ShopItemCard = ({
-  item,
-  onBuy,
-  theme,
-  imageMap,
-  styles,
-  iapProducts,
-}) => {
-  let priceLabel = "";
+const getPriceLabel = (item, iapProducts) => {
   if (item.currency.includes("coin") && item.currency.includes("crystal")) {
-    priceLabel = `${item.price} Coins/Kristalle`;
-  } else if (item.currency.includes("coin")) {
-    priceLabel = `${item.price} Coins`;
-  } else if (item.currency.includes("crystal")) {
-    priceLabel = `${item.price} Kristalle`;
-  } else if (item.currency.includes("iap") && item.iapId) {
-    const iap = iapProducts.find((p) => p.productId === item.iapId);
-    priceLabel = iap?.localizedPrice || "Echtgeld";
+    return `${item.price} Coins/Kristalle`;
   }
-
-  const iapButtonLabel =
-    item.currency.includes("iap") && iapProducts
-      ? `Für ${
-          iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ??
-          "Echtgeld"
-        } kaufen`
-      : "Kaufen";
-
-  return (
-    <View style={styles.cardRow}>
-      <Image
-        source={
-          item.skinImage ||
-          item.charImage ||
-          imageMap?.[`class_${item.characterId}`]
-        }
-        style={styles.iconImage}
-        contentFit="contain"
-      />
-      <View style={styles.cardContent}>
-        <Text style={styles.name}>{item.name}</Text>
-        {item.category === "skin" && (
-          <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
-        )}
-        <Text style={styles.price}>{priceLabel}</Text>
-        <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
-          <Text style={styles.buttonText}>{iapButtonLabel}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  if (item.currency.includes("coin")) return `${item.price} Coins`;
+  if (item.currency.includes("crystal")) return `${item.price} Kristalle`;
+  if (item.currency.includes("iap") && item.iapId) {
+    return (
+      iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ||
+      "Echtgeld"
+    );
+  }
+  return "";
 };
+
+const getButtonLabel = (item, iapProducts) => {
+  if (item.currency.includes("iap") && item.iapId) {
+    return (
+      "Für " +
+      (iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ??
+        "Echtgeld") +
+      " kaufen"
+    );
+  }
+  return "Kaufen";
+};
+
+const getImageSource = (item, imageMap) =>
+  item.skinImage ||
+  item.charImage ||
+  imageMap?.[`class_${item.characterId}`] ||
+  require("../assets/logo.png");
+
+const ShopItemCard = ({ item, onBuy, styles, iapProducts, imageMap }) => (
+  <View style={styles.cardRow}>
+    <Image
+      source={getImageSource(item, imageMap)}
+      style={styles.iconImage}
+      contentFit="contain"
+    />
+    <View style={styles.cardContent}>
+      <Text style={styles.name}>{item.name}</Text>
+      {item.category === "skin" && (
+        <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
+      )}
+      <Text style={styles.price}>{getPriceLabel(item, iapProducts)}</Text>
+      <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
+        <Text style={styles.buttonText}>
+          {getButtonLabel(item, iapProducts)}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
 
 export default function ShopScreen() {
   const { coins, spendCoins } = useCoins();
@@ -82,8 +84,7 @@ export default function ShopScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [index, setIndex] = useState(0);
 
-  // ---- IAP ----
-  // IDs aller IAP-Items (aus deiner JSON herausfiltern)
+  // IAP
   const iapItemIds = useMemo(
     () => SHOP_ITEMS.filter((item) => item.iapId).map((item) => item.iapId),
     []
@@ -103,17 +104,12 @@ export default function ShopScreen() {
       RNIap.endConnection();
     };
   }, [iapItemIds]);
-  // ---- IAP END ----
 
-  // Filtere nur die Kategorien die du anzeigen willst
+  // Kategorien
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((item) => item.category))),
     []
   );
-  useEffect(() => {
-    console.log("IAP-Produkte:", iapProducts);
-  }, [iapProducts]);
-
   const routes = useMemo(
     () =>
       categories.map((key) => ({
@@ -123,7 +119,7 @@ export default function ShopScreen() {
     [categories]
   );
 
-  // Hier wird nach Kategorie gefiltert
+  // Kategorie → Shop-Items
   const getVisibleShopItems = useCallback(
     (category) => SHOP_ITEMS.filter((item) => item.category === category),
     []
@@ -148,27 +144,21 @@ export default function ShopScreen() {
       const canPayCrystals = currency.includes("crystal");
       const canBuyIAP = currency.includes("iap") && iapId;
 
-      // 1. Coins
       if (canPayCoins && coins >= price) {
         return executePurchase(item, "Coins", spendCoins);
       }
-      // 2. Kristalle
       if (canPayCrystals && crystals >= price) {
         return executePurchase(item, "Kristalle", spendCrystals);
       }
-      // 3. Echtgeld IAP
       if (canBuyIAP) {
         try {
           await RNIap.requestPurchase({ sku: iapId });
-          // Kauf-Quittung prüfen, dann Item freischalten!
           await executePurchase(item, "IAP", () => {});
         } catch (err) {
           alert("Kauf fehlgeschlagen: " + err.message);
         }
         return;
       }
-
-      // 4. Beides geht, aber zu wenig Guthaben
       if (
         (canPayCoins || canPayCrystals || canBuyIAP) &&
         coins < price &&
@@ -187,44 +177,31 @@ export default function ShopScreen() {
     () =>
       SceneMap(
         routes.reduce((scenes, route) => {
-          scenes[route.key] = () => {
-            const visibleItems = getVisibleShopItems(route.key);
-            return (
-              <FlatList
-                data={visibleItems}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
-                  <ShopItemCard
-                    item={item}
-                    onBuy={handleBuy}
-                    theme={theme}
-                    imageMap={imageMap}
-                    styles={styles}
-                    iapProducts={iapProducts} // <-- WICHTIG!
-                  />
-                )}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>
-                    Noch keine Angebote in dieser Kategorie.
-                  </Text>
-                }
-              />
-            );
-          };
+          scenes[route.key] = () => (
+            <FlatList
+              data={getVisibleShopItems(route.key)}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+              renderItem={({ item }) => (
+                <ShopItemCard
+                  item={item}
+                  onBuy={handleBuy}
+                  styles={styles}
+                  iapProducts={iapProducts}
+                  imageMap={imageMap}
+                />
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>
+                  Noch keine Angebote in dieser Kategorie.
+                </Text>
+              }
+            />
+          );
           return scenes;
         }, {})
       ),
-    [
-      routes,
-      getVisibleShopItems,
-      handleBuy,
-      theme,
-      imageMap,
-      styles.list,
-      styles.emptyText,
-      iapProducts, // neu!
-    ]
+    [routes, getVisibleShopItems, handleBuy, styles, iapProducts, imageMap]
   );
 
   return (
@@ -275,19 +252,11 @@ function createStyles(theme) {
       paddingHorizontal: 20,
       marginBottom: 16,
     },
-    iconWrapper: {
-      width: 100,
-      height: 100,
-      borderRadius: 29,
-      alignItems: "center",
-      justifyContent: "center",
-      marginRight: 18,
-      overflow: "hidden",
-    },
     iconImage: {
       width: 100,
       height: 100,
       borderRadius: 22,
+      marginRight: 18,
     },
     cardContent: {
       flex: 1,

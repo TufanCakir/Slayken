@@ -60,41 +60,33 @@ export default function Footer() {
       {TABS.map(({ key, screen, Icon, iconProps, labelKey }) => {
         const isActive = current === screen;
         return (
-          <View key={key} style={styles.tabWrapper}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate(screen)}
-              activeOpacity={0.87}
+          <TouchableOpacity
+            key={key}
+            onPress={() => navigation.navigate(screen)}
+            activeOpacity={0.87}
+            style={[
+              styles.tab,
+              isActive && styles.activeTab,
+              isActive && { borderColor: theme.borderGlowColor },
+            ]}
+          >
+            <View style={styles.icon}>
+              <Icon
+                {...iconProps}
+                size={24}
+                color={isActive ? theme.textColor : "#bdbdbd"}
+              />
+            </View>
+            <Text
               style={[
-                styles.tab,
-                isActive && [
-                  styles.activeTab,
-                  {
-                    borderColor: theme.borderGlowColor,
-                  },
-                ],
+                styles.label,
+                isActive && styles.activeLabel,
+                isActive && { color: theme.textColor },
               ]}
             >
-              <View style={styles.icon}>
-                <Icon
-                  {...iconProps}
-                  size={24}
-                  color={isActive ? theme.textColor : "#bdbdbd"}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.label,
-                  isActive && {
-                    color: theme.textColor,
-                    fontWeight: "bold",
-                    opacity: 1,
-                  },
-                ]}
-              >
-                {t(labelKey)}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              {t(labelKey)}
+            </Text>
+          </TouchableOpacity>
         );
       })}
     </View>
@@ -120,10 +112,8 @@ function createStyles(theme) {
       shadowRadius: 8,
       elevation: 16,
     },
-    tabWrapper: {
-      flex: 1,
-    },
     tab: {
+      flex: 1,
       borderWidth: 2.5,
       borderColor: theme.borderColor,
       backgroundColor: theme.accentColor,
@@ -136,13 +126,11 @@ function createStyles(theme) {
       marginVertical: 3,
     },
     activeTab: {
-      borderColor: theme.borderGlowColor,
       shadowColor: theme.glowColor,
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.38,
       shadowRadius: 11,
       elevation: 7,
-      backgroundColor: theme.accentColor,
     },
     label: {
       fontSize: 13,
@@ -151,6 +139,11 @@ function createStyles(theme) {
       color: theme.textColor,
       letterSpacing: 0.2,
       opacity: 0.83,
+      fontWeight: "normal",
+    },
+    activeLabel: {
+      fontWeight: "bold",
+      opacity: 1,
     },
     icon: {
       alignItems: "center",

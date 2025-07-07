@@ -12,8 +12,7 @@ import { useThemeContext } from "../context/ThemeContext";
 
 // Belohnungs-Icon mit eigenen Bildern (Coin/Crystal)
 function RewardIcon({ type, style }) {
-  const imgSrc =
-    type === "crystal" ? getItemImageUrl("crystal") : getItemImageUrl("coin");
+  const imgSrc = getItemImageUrl(type);
   return <Image source={imgSrc} style={style} contentFit="contain" />;
 }
 
@@ -41,7 +40,7 @@ export default function MissionItem({ item, onCollect }) {
         }),
       ]).start();
     }
-  }, [item.completed, item.collected]);
+  }, [item.completed, item.collected, scaleAnim, opacityAnim]);
 
   const isCollectable = item.completed && !item.collected;
   const isCollected = !!item.collected;
@@ -61,23 +60,22 @@ export default function MissionItem({ item, onCollect }) {
       </Text>
 
       {isCollectable && (
-        <View style={styles.progressBarContainer}>
-          <View style={styles.progressBarFill} />
-        </View>
-      )}
-
-      {isCollectable && (
-        <TouchableOpacity
-          onPress={() => onCollect(item)}
-          style={styles.collectButton}
-          accessibilityRole="button"
-          accessibilityLabel={`Belohnung für ${item.title} einsammeln`}
-        >
-          <View style={styles.rewardRow}>
-            <RewardIcon type={item.reward.type} style={styles.icon} />
-            <Text style={styles.collectText}>+{item.reward.amount}</Text>
+        <>
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarFill} />
           </View>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onCollect(item)}
+            style={styles.collectButton}
+            accessibilityRole="button"
+            accessibilityLabel={`Belohnung für ${item.title} einsammeln`}
+          >
+            <View style={styles.rewardRow}>
+              <RewardIcon type={item.reward.type} style={styles.icon} />
+              <Text style={styles.collectText}>+{item.reward.amount}</Text>
+            </View>
+          </TouchableOpacity>
+        </>
       )}
 
       {isCollected && (

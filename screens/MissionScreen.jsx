@@ -12,19 +12,26 @@ export default function MissionScreen() {
   const { addCoins } = useCoins();
   const { missions, collectReward } = useMissions();
   const { theme } = useThemeContext();
-  const { imageMap } = useAssets(); // ⬅️ für spätere Mission-Buttons
+  const { imageMap } = useAssets();
 
   const styles = createStyles(theme);
 
+  // Belohnungs-Logik als Utility
   const handleCollect = (mission) => {
-    if (mission.completed && !mission.collected) {
-      if (mission.reward.type === "crystal") {
+    if (!mission.completed || mission.collected) return;
+
+    switch (mission.reward.type) {
+      case "crystal":
         addCrystals(mission.reward.amount);
-      } else if (mission.reward.type === "coin") {
+        break;
+      case "coin":
         addCoins(mission.reward.amount);
-      }
-      collectReward(mission.id);
+        break;
+      // Optional: falls neue Typen hinzukommen
+      default:
+        break;
     }
+    collectReward(mission.id);
   };
 
   return (
@@ -37,7 +44,7 @@ export default function MissionScreen() {
           <MissionItem
             item={item}
             onCollect={handleCollect}
-            imageMap={imageMap} // ⬅️ Button-Hintergrund später übergeben
+            imageMap={imageMap}
           />
         )}
         ListEmptyComponent={

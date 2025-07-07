@@ -4,7 +4,7 @@ import { useThemeContext } from "../context/ThemeContext";
 export default function ThemeSwitcher() {
   const { uiThemeType, setUiThemeType, availableThemes, theme } =
     useThemeContext();
-  const styles = createStyles(theme, uiThemeType);
+  const styles = createStyles(theme);
 
   return (
     <View style={styles.wrapper}>
@@ -16,28 +16,35 @@ export default function ThemeSwitcher() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollRow}
       >
-        {availableThemes.map((key) => (
-          <Pressable
-            key={key}
-            onPress={() => setUiThemeType(key)}
-            style={[styles.button, uiThemeType === key && styles.buttonActive]}
-          >
-            <Text
+        {availableThemes.map((key) => {
+          const isActive = uiThemeType === key;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setUiThemeType(key)}
               style={[
-                styles.buttonText,
-                uiThemeType === key && styles.buttonTextActive,
+                styles.button,
+                isActive && styles.buttonActive,
+                // Optional: Helleres Border-Highlight für das aktive Theme
+                isActive && {
+                  borderColor: theme.glowColor || theme.accentColor,
+                },
               ]}
             >
-              {key.toUpperCase()}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[styles.buttonText, isActive && styles.buttonTextActive]}
+              >
+                {key.toUpperCase()}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
     </View>
   );
 }
 
-function createStyles(theme, activeKey) {
+function createStyles(theme) {
   return StyleSheet.create({
     wrapper: {
       paddingVertical: 10,
@@ -72,8 +79,10 @@ function createStyles(theme, activeKey) {
       backgroundColor: theme.accentColor,
       borderColor: theme.accentColor,
       opacity: 1,
-      shadowOpacity: 0.17,
       shadowColor: theme.accentColor,
+      shadowOpacity: 0.15,
+      shadowRadius: 7,
+      shadowOffset: { width: 0, height: 2 },
     },
     buttonText: {
       fontWeight: "bold",

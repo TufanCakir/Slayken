@@ -15,35 +15,40 @@ export default function LanguageSection() {
     <View style={styles.section}>
       <Text style={styles.current}>{language.toUpperCase()}</Text>
       <View style={styles.row}>
-        {LANGUAGES.map((code) => (
-          <Pressable
-            key={code}
-            onPress={() => setLanguage(code)}
-            disabled={language === code}
-            accessibilityRole="button"
-            accessibilityState={{ selected: language === code }}
-            style={({ pressed }) => [
-              styles.langButton,
-              language === code && styles.langButtonActive,
-              pressed && styles.langButtonPressed,
-            ]}
-          >
-            <Text
-              style={[
-                styles.langButtonText,
-                language === code && styles.langButtonTextActive,
-              ]}
+        {LANGUAGES.map((code) => {
+          const isActive = language === code;
+          return (
+            <Pressable
+              key={code}
+              onPress={() => setLanguage(code)}
+              disabled={isActive}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              style={({ pressed }) => ({
+                ...styles.langButton,
+                ...(isActive && styles.langButtonActive),
+                ...(pressed && !isActive && styles.langButtonPressed),
+              })}
             >
-              {t(`languageLabels.${code}`)}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={{
+                  ...styles.langButtonText,
+                  ...(isActive && styles.langButtonTextActive),
+                }}
+              >
+                {t(`languageLabels.${code}`)}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 function createStyles(theme) {
+  const accent = theme.accentColor;
+  const text = theme.textColor;
   return StyleSheet.create({
     section: {
       marginTop: 20,
@@ -57,7 +62,7 @@ function createStyles(theme) {
       fontWeight: "bold",
       marginBottom: 12,
       letterSpacing: 1.1,
-      color: theme.textColor,
+      color: text,
     },
     row: {
       flexDirection: "row",
@@ -69,13 +74,13 @@ function createStyles(theme) {
       borderRadius: 8,
       minWidth: 90,
       alignItems: "center",
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       marginRight: 8,
       marginBottom: 5,
       opacity: 1,
     },
     langButtonActive: {
-      backgroundColor: theme.textColor,
+      backgroundColor: text,
     },
     langButtonPressed: {
       opacity: 0.7,
@@ -85,10 +90,10 @@ function createStyles(theme) {
       fontWeight: "bold",
       letterSpacing: 0.5,
       textAlign: "center",
-      color: theme.textColor,
+      color: text,
     },
     langButtonTextActive: {
-      color: theme.accentColor,
+      color: accent,
     },
   });
 }

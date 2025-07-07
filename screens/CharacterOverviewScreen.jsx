@@ -51,7 +51,6 @@ export default function CharacterOverviewScreen() {
   const renderCharacter = ({ item }) => {
     const isActive = item.id === activeClassId;
     const element = elementData[item.element] || {};
-
     const availableSkins = skinData
       .filter(
         (skin) =>
@@ -60,7 +59,6 @@ export default function CharacterOverviewScreen() {
           skin.characterId === item.name
       )
       .filter((skin) => ownedSkins[skin.id]);
-
     const currentSkin = availableSkins.find((s) => s.id === item.activeSkin);
     const avatarSrc = currentSkin?.image || item.classUrl;
 
@@ -68,16 +66,10 @@ export default function CharacterOverviewScreen() {
       <View style={[styles.card, isActive && styles.cardActive]}>
         {item.eventReward && (
           <View style={styles.exclusiveBadge}>
-            <MaterialCommunityIcons
-              name="crown"
-              size={14}
-              color="#111"
-              style={{ marginRight: 4 }}
-            />
+            <MaterialCommunityIcons name="crown" size={14} color="#111" />
             <Text style={styles.exclusiveBadgeText}>Exklusiv</Text>
           </View>
         )}
-
         <Image
           source={{ uri: avatarSrc }}
           style={styles.avatar}
@@ -99,54 +91,37 @@ export default function CharacterOverviewScreen() {
               contentContainerStyle={styles.skinsScrollView}
               style={styles.skinsScrollStyle}
             >
-              <TouchableOpacity
+              <SkinButton
+                key="default"
+                active={!item.activeSkin}
                 onPress={() => handleEquipSkin(item, undefined)}
-                style={[
-                  styles.skinBtn,
-                  !item.activeSkin && styles.skinBtnActive,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="account"
-                  size={24}
-                  color={
-                    !item.activeSkin
-                      ? theme.borderGlowColor || "gold"
-                      : theme.textColor
+                label="Standard"
+                icon={
+                  <MaterialCommunityIcons
+                    name="account"
+                    size={24}
+                    color={
+                      !item.activeSkin
+                        ? theme.borderGlowColor || "gold"
+                        : theme.textColor
+                    }
+                  />
+                }
+              />
+              {availableSkins.map((skin) => (
+                <SkinButton
+                  key={skin.id}
+                  active={skin.id === item.activeSkin}
+                  onPress={() => handleEquipSkin(item, skin.id)}
+                  label={skin.label}
+                  icon={
+                    <Image
+                      source={{ uri: skin.image }}
+                      style={styles.skinImg}
+                      contentFit="contain"
+                    />
                   }
                 />
-                <Text
-                  style={[
-                    styles.skinLabel,
-                    !item.activeSkin && styles.skinLabelActive,
-                  ]}
-                >
-                  Standard
-                </Text>
-              </TouchableOpacity>
-              {availableSkins.map((skin) => (
-                <TouchableOpacity
-                  key={skin.id}
-                  onPress={() => handleEquipSkin(item, skin.id)}
-                  style={[
-                    styles.skinBtn,
-                    skin.id === item.activeSkin && styles.skinBtnActive,
-                  ]}
-                >
-                  <Image
-                    source={{ uri: skin.image }}
-                    style={styles.skinImg}
-                    contentFit="contain"
-                  />
-                  <Text
-                    style={[
-                      styles.skinLabel,
-                      skin.id === item.activeSkin && styles.skinLabelActive,
-                    ]}
-                  >
-                    {skin.label}
-                  </Text>
-                </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
@@ -163,14 +138,15 @@ export default function CharacterOverviewScreen() {
 
         {!isActive ? (
           <>
-            <TouchableOpacity
+            <ActionButton
               style={styles.activateButton}
+              label="Als Klasse aktivieren"
               onPress={() => setActiveClassId(item.id)}
-            >
-              <Text style={styles.activateText}>Als Klasse aktivieren</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              textStyle={styles.activateText}
+            />
+            <ActionButton
               style={styles.deleteButton}
+              label="Löschen"
               onPress={() =>
                 Alert.alert(
                   "Charakter löschen?",
@@ -185,9 +161,8 @@ export default function CharacterOverviewScreen() {
                   ]
                 )
               }
-            >
-              <Text style={styles.deleteText}>Löschen</Text>
-            </TouchableOpacity>
+              textStyle={styles.deleteText}
+            />
           </>
         ) : (
           <Text style={styles.activeLabel}>🎖️ Aktive Klasse</Text>
@@ -206,6 +181,31 @@ export default function CharacterOverviewScreen() {
         contentContainerStyle={styles.grid}
       />
     </ScreenLayout>
+  );
+}
+
+// --- Helper Buttons (keine Duplikate im Render!) ---
+function SkinButton({ active, onPress, icon, label }) {
+  const { theme } = useThemeContext();
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.skinBtn, active && styles.skinBtnActive]}
+    >
+      {icon}
+      <Text style={[styles.skinLabel, active && styles.skinLabelActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function ActionButton({ style, label, onPress, textStyle }) {
+  return (
+    <TouchableOpacity style={style} onPress={onPress}>
+      <Text style={textStyle}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 

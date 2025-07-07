@@ -25,21 +25,24 @@ export default function MusicSection() {
   } = useMusic();
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
-  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Track navigation handlers
-  const handlePrevTrack = async () => {
-    if (currentIndex > 0) {
-      setIsLoadingTrack(true);
+  const prevDisabled = currentIndex === 0 || isLoading;
+  const nextDisabled = isLoading;
+  const handlePrev = async () => {
+    if (!prevDisabled) {
+      setIsLoading(true);
       await playMusic(allTracks[currentIndex - 1]);
-      setIsLoadingTrack(false);
+      setIsLoading(false);
     }
   };
-  const handleNextTrack = async () => {
-    const nextIdx = (currentIndex + 1) % allTracks.length;
-    setIsLoadingTrack(true);
-    await playMusic(allTracks[nextIdx]);
-    setIsLoadingTrack(false);
+  const handleNext = async () => {
+    if (!nextDisabled) {
+      setIsLoading(true);
+      await playMusic(allTracks[(currentIndex + 1) % allTracks.length]);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,10 +52,10 @@ export default function MusicSection() {
         onPress={isPlaying ? pauseMusic : resumeMusic}
         accessibilityRole="button"
         accessibilityState={{ selected: isPlaying }}
-        style={({ pressed }) => [
-          styles.linkButton,
-          pressed && styles.buttonPressed,
-        ]}
+        style={({ pressed }) => ({
+          ...styles.linkButton,
+          ...(pressed && styles.buttonPressed),
+        })}
       >
         <Text style={styles.linkText}>
           {isPlaying ? t("pauseMusic") : t("playMusic")}
@@ -62,7 +65,7 @@ export default function MusicSection() {
       {/* Volume Slider */}
       <View style={styles.volumeContainer}>
         <Text style={styles.current}>
-          {`${t("volumeLabel")}: ${Math.round(volume * 100)}%`}
+          {t("volumeLabel")}: {Math.round(volume * 100)}%
         </Text>
         <Slider
           minimumValue={0}
@@ -78,7 +81,7 @@ export default function MusicSection() {
 
       {/* Track Info */}
       <View style={styles.trackInfoContainer}>
-        <Text style={styles.currentTrackLabel}>{`${t("currentTrack")}:`}</Text>
+        <Text style={styles.currentTrackLabel}>{t("currentTrack")}:</Text>
         <Text style={styles.trackTitle}>{currentTrack?.title || "—"}</Text>
       </View>
 
@@ -86,11 +89,11 @@ export default function MusicSection() {
       <View style={styles.trackControls}>
         <TrackButton
           label={t("prevTrack")}
-          onPress={handlePrevTrack}
-          disabled={currentIndex === 0 || isLoadingTrack}
+          onPress={handlePrev}
+          disabled={prevDisabled}
           theme={theme}
         />
-        {isLoadingTrack && (
+        {isLoading && (
           <ActivityIndicator
             size="small"
             color={theme.accentColor}
@@ -99,8 +102,8 @@ export default function MusicSection() {
         )}
         <TrackButton
           label={t("nextTrack")}
-          onPress={handleNextTrack}
-          disabled={isLoadingTrack}
+          onPress={handleNext}
+          disabled={nextDisabled}
           theme={theme}
         />
       </View>
@@ -113,17 +116,15 @@ function TrackButton({ label, onPress, disabled, theme }) {
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [
-        {
-          flex: 1,
-          paddingVertical: 11,
-          borderRadius: 9,
-          marginHorizontal: 6,
-          alignItems: "center",
-          backgroundColor: theme.accentColor,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      style={({ pressed }) => ({
+        flex: 1,
+        paddingVertical: 11,
+        borderRadius: 9,
+        marginHorizontal: 6,
+        alignItems: "center",
+        backgroundColor: theme.accentColor,
+        opacity: disabled ? 0.55 : pressed ? 0.7 : 1,
+      })}
     >
       <Text
         style={{

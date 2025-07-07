@@ -2,7 +2,6 @@ import React, { useCallback } from "react";
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Updates from "expo-updates";
-import { useLanguage } from "../../context/LanguageContext";
 import { useClass } from "../../context/ClassContext";
 import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -12,6 +11,7 @@ export default function DeleteSection() {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
+  // Alert-Handler – kompakt und klar
   const confirmReset = useCallback(() => {
     Alert.alert(
       t("settingsLabels.resetConfirmTitle"),
@@ -26,7 +26,7 @@ export default function DeleteSection() {
               await AsyncStorage.clear();
               await clearAllClasses();
               await Updates.reloadAsync();
-            } catch (e) {
+            } catch {
               Alert.alert(t("settingsLabels.resetError"));
             }
           },
@@ -40,10 +40,10 @@ export default function DeleteSection() {
       <Pressable
         accessibilityRole="button"
         onPress={confirmReset}
-        style={({ pressed }) => [
-          styles.resetButton,
-          pressed && styles.resetButtonPressed,
-        ]}
+        style={({ pressed }) => ({
+          ...styles.resetButton,
+          ...(pressed && styles.resetButtonPressed),
+        })}
       >
         <Text style={styles.resetText}>{t("settingsLabels.resetApp")}</Text>
       </Pressable>
@@ -51,14 +51,17 @@ export default function DeleteSection() {
   );
 }
 
+// Styles ohne Copy-Paste, alles zentral
 function createStyles(theme) {
+  const accent = theme.accentColor;
+  const text = theme.textColor;
   return StyleSheet.create({
     section: {
       marginBottom: 36,
       alignItems: "center",
     },
     resetButton: {
-      backgroundColor: theme.accentColor,
+      backgroundColor: accent,
       borderRadius: 14,
       paddingVertical: 15,
       paddingHorizontal: 36,
@@ -69,7 +72,7 @@ function createStyles(theme) {
       opacity: 0.7,
     },
     resetText: {
-      color: theme.textColor,
+      color: text,
       fontSize: 17,
       fontWeight: "bold",
       letterSpacing: 0.12,

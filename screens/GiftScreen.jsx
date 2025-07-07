@@ -12,7 +12,6 @@ import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useGifts } from "../context/GiftContext";
-import GiftBox from "../components/GiftBox";
 import giftData from "../data/giftData.json";
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
@@ -29,21 +28,24 @@ export default function GiftScreen() {
   const { addXp } = useAccountLevel();
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
-  // Vorbereitete Gifts mit Bild-URLs
-  const gifts = useMemo(() => {
-    return giftData.map((gift) => {
-      const typeImage =
-        gift.type === "coins"
-          ? "coin"
-          : gift.type === "crystals"
-          ? "crystal"
-          : gift.type;
-      return {
+  // Gifts vorbereiten und Memoisieren
+  const gifts = useMemo(
+    () =>
+      giftData.map((gift) => ({
         ...gift,
-        imageUrl: gift.type === "box" ? null : getItemImageUrl(typeImage),
-      };
-    });
-  }, []);
+        imageUrl:
+          gift.type === "box"
+            ? getItemImageUrl("box") // Optional: Fallback-Bild oder Icon für Box
+            : getItemImageUrl(
+                gift.type === "coins"
+                  ? "coin"
+                  : gift.type === "crystals"
+                  ? "crystal"
+                  : gift.type
+              ),
+      })),
+    []
+  );
 
   const remainingGifts = useMemo(
     () => gifts.filter((gift) => !collectedGifts[gift.id]),
@@ -52,33 +54,35 @@ export default function GiftScreen() {
 
   const allCollected = remainingGifts.length === 0;
 
-  const handleCollect = useCallback(
-    async (gift) => {
-      if (collectedGifts[gift.id]) return;
-      await collectGift(gift.id);
+  // Hilfsfunktion für Belohnung
+  const applyReward = useCallback(
+    (gift) => {
       if (gift.type === "coins") addCoins(gift.amount || 0);
       if (gift.type === "crystals") addCrystals(gift.amount || 0);
       if (gift.type === "exp") addXp(gift.amount || 0);
     },
-    [collectedGifts, collectGift, addCoins, addCrystals, addXp]
+    [addCoins, addCrystals, addXp]
+  );
+
+  const handleCollect = useCallback(
+    async (gift) => {
+      if (collectedGifts[gift.id]) return;
+      await collectGift(gift.id);
+      applyReward(gift);
+    },
+    [collectedGifts, collectGift, applyReward]
   );
 
   const collectAll = useCallback(async () => {
     const ids = remainingGifts.map((g) => g.id);
     if (ids.length === 0) return;
-
     await collectMultipleGifts(ids);
-    for (const gift of remainingGifts) {
-      if (gift.type === "coins") addCoins(gift.amount || 0);
-      if (gift.type === "crystals") addCrystals(gift.amount || 0);
-      if (gift.type === "exp") addXp(gift.amount || 0);
-    }
-  }, [remainingGifts, collectMultipleGifts, addCoins, addCrystals, addXp]);
+    remainingGifts.forEach(applyReward);
+  }, [remainingGifts, collectMultipleGifts, applyReward]);
 
   const renderItem = useCallback(
     ({ item }) => {
       const isCollected = collectedGifts[item.id];
-
       return (
         <TouchableOpacity
           style={[
@@ -94,16 +98,12 @@ export default function GiftScreen() {
           disabled={isCollected}
         >
           <View style={styles.iconWrapper}>
-            {item.type === "box" ? (
-              <GiftBox />
-            ) : (
-              <Image
-                source={item.imageUrl}
-                style={styles.giftIcon}
-                contentFit="contain"
-                transition={300}
-              />
-            )}
+            <Image
+              source={item.imageUrl}
+              style={styles.giftIcon}
+              contentFit="contain"
+              transition={300}
+            />
           </View>
           <Text
             style={[
@@ -136,7 +136,6 @@ export default function GiftScreen() {
         />
       )}
       <Text style={styles.header}>{t("giftsTitle")}</Text>
-
       <FlatList
         data={remainingGifts}
         keyExtractor={(item) => item.id}
@@ -144,7 +143,6 @@ export default function GiftScreen() {
         ListEmptyComponent={<Text style={styles.empty}>{t("noGifts")}</Text>}
         contentContainerStyle={styles.listContainer}
       />
-
       {!allCollected && (
         <View style={styles.buttonGroup}>
           <TouchableOpacity

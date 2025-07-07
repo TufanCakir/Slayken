@@ -12,33 +12,27 @@ export default function useNavigationLoading({ delay = 1000, onLoaded } = {}) {
   const { setLoading } = useLoading();
   const timeoutRef = useRef(null);
 
-  const clearLoader = useCallback(() => {
+  // Loader wirklich beenden & Timeout löschen
+  const stopLoading = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setLoading(false);
     if (typeof onLoaded === "function") onLoaded();
   }, [setLoading, onLoaded]);
 
+  // Hauptfunktion für onStateChange
   const onNavigationStateChange = useCallback(() => {
     setLoading(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(stopLoading, delay);
+  }, [delay, setLoading, stopLoading]);
 
-    // Bereits laufenden Timeout stoppen
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Nach `delay` das Laden beenden
-    timeoutRef.current = setTimeout(clearLoader, delay);
-  }, [delay, clearLoader, setLoading]);
-
-  // Cleanup beim Unmount
+  // Cleanup beim Unmount: Ladeanzeige IMMER beenden
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        setLoading(false); // Sicherheitshalber beim Unmount
-      }
-    };
-    // eslint-disable-next-line
-  }, [setLoading]);
+    return stopLoading;
+  }, [stopLoading]);
 
   return onNavigationStateChange;
 }

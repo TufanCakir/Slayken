@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 
-// Elementfarben
+// Elementfarben zentral und einheitlich
 const ELEMENT_COLORS = {
   fire: "#ff5500",
   ice: "#3399ff",
@@ -15,35 +15,41 @@ const ELEMENT_COLORS = {
 
 // Countdown-Hook
 function useCountdown(targetDateString) {
-  const [timeLeft, setTimeLeft] = useState(() => {
-    if (!targetDateString) return null;
-    const t = new Date(targetDateString);
-    if (isNaN(t.getTime())) return null;
-    return calculateTimeLeft(t);
-  });
-
+  const [timeLeft, setTimeLeft] = useState(() =>
+    calcTimeLeft(targetDateString)
+  );
   useEffect(() => {
     if (!targetDateString) return;
     const targetDate = new Date(targetDateString);
     if (isNaN(targetDate.getTime())) return;
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(targetDate));
+      setTimeLeft(calcTimeLeft(targetDate));
     }, 60000);
     return () => clearInterval(interval);
   }, [targetDateString]);
-
   return timeLeft;
 }
 
-function calculateTimeLeft(targetDate) {
+function calcTimeLeft(targetDateString) {
+  if (!targetDateString) return null;
+  const target = new Date(targetDateString);
   const now = new Date();
-  const diff = targetDate - now;
-  if (diff <= 0) return null;
+  const diff = target - now;
+  if (isNaN(target.getTime()) || diff <= 0) return null;
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
     hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
     minutes: Math.floor((diff / (1000 * 60)) % 60),
   };
+}
+
+// Countdown-Text ausgeben
+function formatCountdown(countdown) {
+  if (!countdown) return "✅ Jetzt verfügbar";
+  const { days, hours, minutes } = countdown;
+  return `⏳ Noch ${days} Tag${
+    days !== 1 ? "e" : ""
+  }, ${hours} Std, ${minutes} Min`;
 }
 
 export default function TeaserCard({ item }) {
@@ -53,17 +59,12 @@ export default function TeaserCard({ item }) {
 
   const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
   const countdown = useCountdown(item.unlockDate);
+  const countdownText = formatCountdown(countdown);
 
-  // Bildquelle
-  const fallbackUri = `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`;
+  // Bildquelle logisch und fallback
   const assetKey = `class_${item.id}`;
+  const fallbackUri = `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`;
   const imageSource = imageMap[assetKey] || { uri: fallbackUri };
-
-  const countdownText = countdown
-    ? `⏳ Noch ${countdown.days} Tag${countdown.days !== 1 ? "e" : ""}, ${
-        countdown.hours
-      } Std, ${countdown.minutes} Min`
-    : "✅ Jetzt verfügbar";
 
   const styles = createStyles(color, theme);
 
@@ -71,9 +72,7 @@ export default function TeaserCard({ item }) {
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.label}>{item.label}</Text>
-        <Text style={styles.date} numberOfLines={1}>
-          {countdownText}
-        </Text>
+        <Text style={styles.date}>{countdownText}</Text>
       </View>
       <View style={styles.icon}>
         <Image
@@ -109,19 +108,19 @@ function createStyles(color, theme) {
     header: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 7,
       alignItems: "center",
+      marginBottom: 7,
     },
     label: {
       fontSize: 15,
-      letterSpacing: 0.5,
       fontWeight: "bold",
-      color: color,
+      letterSpacing: 0.5,
+      color,
     },
     date: {
       fontSize: 13,
       fontWeight: "bold",
-      color: countdownColor(color),
+      color: color === ELEMENT_COLORS.default ? "#facc15" : color,
       marginLeft: 8,
       flexShrink: 1,
     },
@@ -144,15 +143,11 @@ function createStyles(color, theme) {
       letterSpacing: 1.1,
     },
     description: {
-      color: theme.textColor ? theme.textColor + "cc" : "#cbd5e1",
+      color: (theme.textColor || "#cbd5e1") + "cc",
       fontSize: 14,
       textAlign: "center",
       lineHeight: 20,
       marginTop: 2,
     },
   });
-}
-
-function countdownColor(color) {
-  return color === ELEMENT_COLORS.default ? "#facc15" : color;
 }

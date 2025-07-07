@@ -55,22 +55,17 @@ function AppContent() {
     [baseNavTheme]
   );
 
-  // Alle wichtigen Bilder zum Preloaden
+  // Wichtige Bilder für Preload
   const { images: importantImages, newsImages } = useMemo(
     () => getImportantImages(theme.bgImage),
     [theme.bgImage]
   );
-
-  // Lade alle Images, Chunkweise (5er Gruppen)
   const { loaded, progress, localUris } = useImagePreloader(importantImages, 5);
 
-  // Erzeuge ein ImageMap-Objekt aus geladenen URIs
   const imageMap = useMemo(
     () => buildImageMap(localUris, newsImages),
     [localUris, newsImages]
   );
-
-  // Theme-spezifisches Hintergrundbild, immer lokal wenn geladen
   const localBgImage = useMemo(
     () => imageMap[theme.bgImage] || theme.bgImage,
     [imageMap, theme.bgImage]
@@ -79,40 +74,46 @@ function AppContent() {
   // Progressbar für Ladeanzeige
   const progressPercent = Math.min(Math.round(progress * 100), 100);
 
-  // Ladeanzeige solange nicht alles da
-  if (!loaded) {
+  // Kleine Hilfskomponente für Progressbar
+  const ProgressBar = ({ percent }) => (
+    <View style={styles.progressBarBackground}>
+      <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
+    </View>
+  );
+
+  // Lade- und Fehler-Layout kompakt
+  if (!loaded || error) {
     return (
-      <View style={styles.loadingContainer}>
+      <RNSafeAreaView
+        style={error ? styles.errorContainer : styles.loadingContainer}
+      >
+        {localBgImage && (
+          <Image
+            source={localBgImage}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={300}
+          />
+        )}
         <StatusBar
           translucent
           backgroundColor="transparent"
           barStyle={uiThemeType === "dark" ? "light-content" : "dark-content"}
         />
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>Lädt Assets… {progressPercent}%</Text>
-        <View style={styles.progressBarBackground}>
-          <View
-            style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
-          />
-        </View>
-      </View>
-    );
-  }
-
-  // Fehleranzeige
-  if (error) {
-    return (
-      <RNSafeAreaView style={styles.errorContainer}>
-        <Image
-          source={localBgImage}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={300}
-        />
-        <View style={styles.errorOverlay}>
-          <Text style={[styles.errorText, { color: theme.accentColor }]}>
-            Oops, da ist etwas schiefgelaufen…
-          </Text>
+        <View style={error ? styles.errorOverlay : undefined}>
+          {error ? (
+            <Text style={[styles.errorText, { color: theme.accentColor }]}>
+              Oops, da ist etwas schiefgelaufen…
+            </Text>
+          ) : (
+            <>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>
+                Lädt Assets… {progressPercent}%
+              </Text>
+              <ProgressBar percent={progressPercent} />
+            </>
+          )}
         </View>
       </RNSafeAreaView>
     );
@@ -121,8 +122,7 @@ function AppContent() {
   // Main-App
   return (
     <OnlineGuard>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        {/* Hintergrundbild für gesamte App */}
+      <SafeAreaView style={styles.safeArea}>
         <Image
           source={localBgImage}
           style={StyleSheet.absoluteFill}
@@ -160,7 +160,6 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "transparent",
   },
   errorContainer: {
     flex: 1,

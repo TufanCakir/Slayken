@@ -7,7 +7,7 @@ import { useAccountLevel } from "../context/AccountLevelContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
 import { Image } from "expo-image";
-import { useAssets } from "../context/AssetsContext"; // ✅ NEU: useAssets importieren
+import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 
 export default function Header() {
@@ -15,23 +15,20 @@ export default function Header() {
   const { crystals } = useCrystals();
   const { level, xp, xpToNextLevel } = useAccountLevel();
   const { theme } = useThemeContext();
-  const { imageMap } = useAssets(); // ✅ Assets holen
+  const { imageMap } = useAssets();
 
   const [username, setUsername] = useState("Spieler");
 
-  // Fortschritt robust berechnen
   const progress = xpToNextLevel > 0 ? xp / xpToNextLevel : 0;
   const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
   useEffect(() => {
     let isMounted = true;
-    const fetchUsername = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem("user");
+    AsyncStorage.getItem("user")
+      .then((storedUser) => {
         if (storedUser && isMounted) setUsername(storedUser);
-      } catch (e) {}
-    };
-    fetchUsername();
+      })
+      .catch(() => {});
     return () => {
       isMounted = false;
     };
@@ -51,18 +48,18 @@ export default function Header() {
     {
       key: "coins",
       image: imageMap.coinIcon || getItemImageUrl("coin"),
+      value: coins,
     },
     {
       key: "crystals",
       image: imageMap.crystalIcon || getItemImageUrl("crystal"),
+      value: crystals,
     },
   ];
 
-  const currencyValues = { coins, crystals };
-
   return (
     <View style={styles.headerContainer}>
-      {/* USER + LEVEL BLOCK */}
+      {/* USER + LEVEL */}
       <View style={styles.leftBlock}>
         <Text style={styles.username}>{username}</Text>
         <Text style={styles.level}>
@@ -82,10 +79,6 @@ export default function Header() {
               }),
               backgroundColor: theme.glowColor || "#14b8a6",
               shadowColor: theme.borderGlowColor,
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.45,
-              shadowRadius: 10,
-              elevation: 6,
             },
           ]}
         />
@@ -96,7 +89,7 @@ export default function Header() {
 
       {/* CURRENCY */}
       <View style={styles.rightBlock}>
-        {currencyList.map((c) => (
+        {currencyList.map(({ key, image, value }) => (
           <View
             style={[
               styles.currencyItem,
@@ -105,15 +98,15 @@ export default function Header() {
                 shadowColor: theme.glowColor,
               },
             ]}
-            key={c.key}
+            key={key}
           >
             <Image
-              source={c.image}
+              source={image}
               style={styles.icon}
               contentFit="contain"
               transition={250}
             />
-            <Text style={styles.currencyText}>{currencyValues[c.key]}</Text>
+            <Text style={styles.currencyText}>{value}</Text>
           </View>
         ))}
       </View>

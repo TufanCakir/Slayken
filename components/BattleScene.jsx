@@ -26,6 +26,12 @@ const EFFECT_MAP = {
   StormStrikeEffect,
 };
 
+function extractNameFromUrl(url) {
+  if (typeof url !== "string") return "";
+  const match = /\/([\w-]+)\.png$/i.exec(url);
+  return match ? match[1].toLowerCase() : "";
+}
+
 export default function BattleScene({
   boss,
   bossHp,
@@ -41,12 +47,15 @@ export default function BattleScene({
   const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // Aktiver Charakter
+  // Aktiver Charakter + Stats
   const activeCharacter = classList.find((c) => c.id === activeClassId);
-  const { stats: charStats = {} } = useMemo(() => {
-    if (!activeCharacter) return { stats: {} };
-    return getCharacterStatsWithEquipment(activeCharacter);
-  }, [activeCharacter]);
+  const { stats: charStats = {} } = useMemo(
+    () =>
+      activeCharacter
+        ? getCharacterStatsWithEquipment(activeCharacter)
+        : { stats: {} },
+    [activeCharacter]
+  );
 
   if (!activeCharacter) {
     return (
@@ -56,47 +65,46 @@ export default function BattleScene({
     );
   }
 
-  // Boss-Stats mit Scaling!
-  const scaledBoss = useMemo(() => {
-    if (!boss || !activeCharacter) return boss;
-    const level = activeCharacter.level || 1;
-    return scaleBossStats(boss, level);
-  }, [boss, activeCharacter]);
+  // Boss-Stats (mit Scaling, fallback-sicher)
+  const scaledBoss = useMemo(
+    () =>
+      boss && activeCharacter
+        ? scaleBossStats(boss, activeCharacter.level || 1)
+        : boss,
+    [boss, activeCharacter]
+  );
 
-  // ------- Boss-Bild -------
+  // Boss-Bild
   const bossKey = scaledBoss?.image
     ? `eventboss_${extractNameFromUrl(scaledBoss.image)}`
     : null;
   const bossImgSrc =
     imageMap[bossKey] || scaledBoss?.image || getBossImageUrl(scaledBoss?.id);
 
-  // ------- Charakter-Bild (Skin Support!) -------
+  // Charakter-Bild (Skin)
   const charId = activeCharacter.baseId || activeCharacter.id;
   let avatarSrc = activeCharacter.classUrl;
   if (activeCharacter.activeSkin) {
-    const skin =
-      skinData.find(
-        (s) =>
-          (s.characterId === charId || s.characterId === activeCharacter.id) &&
-          s.id === activeCharacter.activeSkin
-      ) || null;
+    const skin = skinData.find(
+      (s) =>
+        (s.characterId === charId || s.characterId === activeCharacter.id) &&
+        s.id === activeCharacter.activeSkin
+    );
     if (skin?.image) avatarSrc = skin.image;
   }
   const classKey =
-    avatarSrc && typeof avatarSrc === "string"
+    typeof avatarSrc === "string"
       ? `class_${extractNameFromUrl(avatarSrc)}`
       : null;
   const classImgSrc = imageMap[classKey] || avatarSrc;
 
-  // Stats & Balken
+  // Werte & Balken
   const { name, level, exp, expToNextLevel } = activeCharacter;
   const maxHp = bossMaxHp ?? scaledBoss?.hp ?? 100;
   const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
   const bossName =
     scaledBoss?.name || scaledBoss?.eventName || "Unbekannter Boss";
   const expPercent = Math.min((exp / expToNextLevel) * 100, 100);
-
-  // Skills
   const characterSkills =
     activeCharacter.skills?.length > 0 ? activeCharacter.skills : skillPool;
 
@@ -119,9 +127,9 @@ export default function BattleScene({
 
   let EffectComponent = null;
   if (activeEffect && EFFECT_MAP[activeEffect]) {
-    const Component = EFFECT_MAP[activeEffect];
+    const Effect = EFFECT_MAP[activeEffect];
     EffectComponent = (
-      <Component
+      <Effect
         onEnd={() => {
           setActiveEffect(null);
           handleFight?.({
@@ -149,7 +157,7 @@ export default function BattleScene({
               style={[
                 styles.hpBar,
                 { width: `${bossHpPercent}%` },
-                bossHpPercent < 10 && { minWidth: 8 }, // nie ganz weg!
+                bossHpPercent < 10 && { minWidth: 8 },
               ]}
             />
           </View>
@@ -216,13 +224,6 @@ export default function BattleScene({
   );
 }
 
-// -------- Helper --------
-function extractNameFromUrl(url) {
-  if (typeof url !== "string") return "";
-  const match = /\/([\w-]+)\.png$/i.exec(url);
-  return match ? match[1].toLowerCase() : "";
-}
-
 // -------- Styles --------
 function createStyles(theme) {
   const text = theme.textColor || "#fff";
@@ -249,7 +250,7 @@ function createStyles(theme) {
     },
     title: {
       fontSize: 18,
-      color: highlight,
+      color: text,
       marginBottom: 4,
       letterSpacing: 0.5,
     },
@@ -260,7 +261,7 @@ function createStyles(theme) {
     },
     hpValue: {
       fontSize: 12,
-      color: highlight,
+      color: text,
     },
     barContainer: {
       width: "100%",
@@ -302,7 +303,7 @@ function createStyles(theme) {
     victory: {
       fontSize: 15,
       marginTop: 10,
-      color: highlight,
+      color: text,
       letterSpacing: 0.2,
     },
     playerArea: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -322,18 +323,18 @@ function createStyles(theme) {
     },
     charName: {
       fontSize: 15,
-      color: highlight,
+      color: text,
       marginBottom: 2,
     },
     charLevel: {
       fontSize: 12,
-      color: border,
+      color: text,
       marginBottom: 2,
       fontWeight: "600",
     },
     charXp: {
       fontSize: 12,
-      color: highlight,
+      color: text,
       marginBottom: 5,
     },
     avatar: {
@@ -343,7 +344,7 @@ function createStyles(theme) {
     },
     textLight: {
       fontSize: 14,
-      color: text + "bb",
+      color: text,
       textAlign: "center",
       marginTop: 40,
     },

@@ -71,7 +71,6 @@ const SOCIALS = [
 export default function StartScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const { imageMap } = useAssets();
   const { classList, activeClassId } = useClass();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -81,7 +80,7 @@ export default function StartScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centerContent}>
-        {activeCharacter ? (
+        {activeCharacter?.classUrl ? (
           <Image
             source={{ uri: activeCharacter.classUrl }}
             style={styles.characterImage}
@@ -134,6 +133,7 @@ export default function StartScreen() {
                   key={social.key}
                   onPress={() => Linking.openURL(social.url)}
                   style={styles.socialIcon}
+                  activeOpacity={0.75}
                 >
                   {social.icon(theme)}
                 </TouchableOpacity>
@@ -151,6 +151,7 @@ export default function StartScreen() {
 }
 
 function createStyles(theme) {
+  const accentBg = theme.accentColor + "f0";
   return StyleSheet.create({
     container: { flex: 1 },
     centerContent: {
@@ -202,7 +203,7 @@ function createStyles(theme) {
       right: 22,
       padding: 12,
       borderRadius: 24,
-      backgroundColor: theme.accentColor + "f0",
+      backgroundColor: accentBg,
     },
     modalOverlay: {
       flex: 1,
@@ -245,6 +246,8 @@ function createStyles(theme) {
     socialIcon: {
       alignItems: "center",
       justifyContent: "center",
+      marginHorizontal: 6,
+      marginVertical: 2,
     },
     closeText: {
       fontSize: 18,

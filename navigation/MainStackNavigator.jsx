@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import StartScreen from "../screens/StartScreen";
 import HomeScreen from "../screens/HomeScreen";
 import StoryScreen from "../screens/StoryScreen";
+import BattleScreen from "../screens/BattleScreen";
 import EndlessModeScreen from "../screens/EndlessModeScreen";
 import EventScreen from "../screens/EventScreen";
 import NewsScreen from "../screens/NewsScreen";
@@ -45,8 +46,9 @@ export default function MainStackNavigator() {
       <Stack.Screen name="StartScreen" component={StartScreen} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="StoryScreen" component={StoryScreen} />
-      <Stack.Screen name="EndlessModeScreen" component={EndlessModeScreen} />
+      <Stack.Screen name="BattleScreen" component={BattleScreen} />
       <Stack.Screen name="EventScreen" component={EventScreen} />
+      <Stack.Screen name="EndlessModeScreen" component={EndlessModeScreen} />
       <Stack.Screen name="NewsScreen" component={NewsScreen} />
       <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       <Stack.Screen name="GiftScreen" component={GiftScreen} />

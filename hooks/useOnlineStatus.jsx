@@ -8,24 +8,19 @@ import NetInfo from "@react-native-community/netinfo";
 export default function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(null);
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      // Vorsicht: state.isInternetReachable kann beim ersten Call noch "null" sein
-      if (state.isConnected === false) {
-        setIsOnline(false);
-      } else if (state.isInternetReachable === false) {
-        setIsOnline(false);
-      } else if (
-        state.isConnected === true &&
-        state.isInternetReachable !== false
-      ) {
-        setIsOnline(true);
-      } else {
-        setIsOnline(null); // Status noch unbekannt (z. B. beim ersten Mal)
-      }
-    });
+  // Hilfsfunktion für einheitliche Status-Logik
+  function resolveOnlineStatus(state) {
+    if (state.isConnected === false) return false;
+    if (state.isInternetReachable === false) return false;
+    if (state.isConnected === true && state.isInternetReachable !== false)
+      return true;
+    return null; // Status noch unbekannt
+  }
 
-    return () => unsubscribe();
+  useEffect(() => {
+    const handleStatus = (state) => setIsOnline(resolveOnlineStatus(state));
+    const unsubscribe = NetInfo.addEventListener(handleStatus);
+    return unsubscribe;
   }, []);
 
   return isOnline;

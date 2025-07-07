@@ -1,4 +1,3 @@
-import React from "react";
 import {
   View,
   Text,
@@ -23,10 +22,6 @@ export default function PreBattleInfoScreen() {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  const handleStartBattle = () => {
-    navigation.replace("EndlessModeScreen");
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Kampfinfos</Text>
@@ -40,7 +35,10 @@ export default function PreBattleInfoScreen() {
           </Text>
         ))}
       </ScrollView>
-      <TouchableOpacity style={styles.button} onPress={handleStartBattle}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.replace("BattleScreen")}
+      >
         <Text style={styles.buttonText}>Weiter zum Kampf</Text>
       </TouchableOpacity>
     </View>

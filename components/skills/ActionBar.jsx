@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,47 @@ import useCooldownTimer from "../../hooks/useCooldownTimer";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useAssets } from "../../context/AssetsContext";
 
+function TooltipModal({ skill, visible, onClose, styles }) {
+  if (!skill || !visible) return null;
+  return (
+    <Modal transparent animationType="fade" visible>
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        onPress={onClose}
+        activeOpacity={1}
+      >
+        <View style={styles.tooltipBottomBox}>
+          <Text style={styles.tooltipTitle}>{skill.name}</Text>
+          <Text style={styles.tooltipDescription}>{skill.description}</Text>
+          <Text style={styles.tooltipPower}>Power: {skill.power}</Text>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+function UnlockModal({ skill, visible, onClose, getSkillImage, styles }) {
+  if (!skill || !visible) return null;
+  return (
+    <Modal transparent animationType="fade" visible>
+      <View style={styles.unlockOverlay}>
+        <View style={styles.unlockBox}>
+          <Text style={styles.unlockTitle}>Neue Fähigkeit freigeschaltet!</Text>
+          <Image
+            source={getSkillImage(skill)}
+            style={styles.unlockImage}
+            contentFit="contain"
+          />
+          <Text style={styles.unlockSkillName}>{skill.name}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.unlockButton}>
+            <Text style={styles.unlockButtonText}>Schließen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ActionBar({
   skills = [],
   activeCharacter,
@@ -22,13 +63,14 @@ export default function ActionBar({
   const [cooldowns, setCooldowns] = useState({});
   const [pressedIndex, setPressedIndex] = useState(null);
   const [unlockedSkill, setUnlockedSkill] = useState(null);
+
   const unlockedSkillIds = useRef(new Set());
   const prevLevel = useRef(activeCharacter?.level);
-
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Status-Check für Skills (einmalig definiert)
   const isUnlocked = (skill) => {
     if (!skill || !activeCharacter) return false;
     if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
@@ -47,6 +89,7 @@ export default function ActionBar({
     return true;
   };
 
+  // Bei Level-Up: Neue Skills erkennen
   useEffect(() => {
     if (!activeCharacter) return;
     if (activeCharacter.level > prevLevel.current) {
@@ -61,14 +104,26 @@ export default function ActionBar({
     prevLevel.current = activeCharacter.level;
   }, [activeCharacter.level, activeCharacter.element, skills]);
 
+  // Skillbild laden
   const getSkillImage = (skill) => {
     const key = `skill_${skill.id}`;
     return imageMap[key] || require("../../assets/logo.png");
   };
 
-  const handlePress = (skill) => {
-    if (!isUnlocked(skill)) return;
-    if ((cooldowns[skill.id] || 0) > Date.now()) return;
+  // Status aller Skills vorberechnen (Memo für Performance)
+  const skillStatuses = useMemo(
+    () =>
+      skills.map((skill) => {
+        const unlocked = isUnlocked(skill);
+        const cooldownEnd = cooldowns[skill.id] || 0;
+        const isCoolingDown = cooldownEnd > Date.now();
+        return { skill, unlocked, isCoolingDown, cooldownEnd };
+      }),
+    [skills, activeCharacter, cooldowns]
+  );
+
+  const handlePress = (skill, unlocked, isCoolingDown) => {
+    if (!unlocked || isCoolingDown) return;
     onSkillPress?.(skill);
     if (skill.cooldown) {
       setCooldowns((prev) => ({
@@ -83,10 +138,6 @@ export default function ActionBar({
     setTooltipSkill(skill);
     setPressedIndex(idx);
   };
-  const handleTooltipClose = () => {
-    setTooltipSkill(null);
-    setPressedIndex(null);
-  };
 
   if (!activeCharacter) {
     return (
@@ -99,105 +150,70 @@ export default function ActionBar({
   return (
     <>
       <View style={styles.barContainer}>
-        {skills.map((skill, index) => {
-          const unlocked = isUnlocked(skill);
-          const cooldownEnd = cooldowns[skill.id] || 0;
-          const seconds = useCooldownTimer(cooldownEnd, 100, () =>
-            setCooldowns((prev) => ({ ...prev, [skill.id]: 0 }))
-          );
-          const isCoolingDown = cooldownEnd > Date.now();
-          const skillImage = getSkillImage(skill);
+        {skillStatuses.map(
+          ({ skill, unlocked, isCoolingDown, cooldownEnd }, index) => {
+            const seconds = useCooldownTimer(cooldownEnd, 100, () =>
+              setCooldowns((prev) => ({ ...prev, [skill.id]: 0 }))
+            );
+            const skillImage = getSkillImage(skill);
 
-          return (
-            <TouchableOpacity
-              key={skill.id || index}
-              disabled={!unlocked || isCoolingDown}
-              style={[
-                styles.skillButton,
-                !unlocked && { opacity: 0.3 },
-                isCoolingDown && { opacity: 0.5 },
-                pressedIndex === index && styles.skillButtonPressed,
-              ]}
-              onPress={() => handlePress(skill)}
-              onLongPress={() => handleLongPress(skill, index)}
-              delayLongPress={150}
-              onPressOut={() => setPressedIndex(null)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={skillImage}
-                style={styles.skillIcon}
-                contentFit="contain"
-                transition={300}
-              />
-              {isCoolingDown && unlocked && (
-                <View style={styles.cooldownOverlay}>
-                  <CircularCooldown
-                    duration={skill.cooldown}
-                    size={36}
-                    strokeWidth={3}
-                  />
-                  <Text style={styles.cooldownTextOverlay}>
-                    {seconds.toFixed(1)}s
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={skill.id || index}
+                disabled={!unlocked || isCoolingDown}
+                style={[
+                  styles.skillButton,
+                  !unlocked && { opacity: 0.3 },
+                  isCoolingDown && { opacity: 0.5 },
+                  pressedIndex === index && styles.skillButtonPressed,
+                ]}
+                onPress={() => handlePress(skill, unlocked, isCoolingDown)}
+                onLongPress={() => handleLongPress(skill, index)}
+                delayLongPress={150}
+                onPressOut={() => setPressedIndex(null)}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={skillImage}
+                  style={styles.skillIcon}
+                  contentFit="contain"
+                  transition={300}
+                />
+                {isCoolingDown && unlocked && (
+                  <View style={styles.cooldownOverlay}>
+                    <CircularCooldown
+                      duration={skill.cooldown}
+                      size={36}
+                      strokeWidth={3}
+                    />
+                    <Text style={styles.cooldownTextOverlay}>
+                      {seconds.toFixed(1)}s
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          }
+        )}
       </View>
 
-      {/* Tooltip Modal */}
-      <Modal
-        transparent
-        animationType="fade"
+      <TooltipModal
+        skill={tooltipSkill}
         visible={!!tooltipSkill}
-        onRequestClose={handleTooltipClose}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          onPress={handleTooltipClose}
-          activeOpacity={1}
-        >
-          <View style={styles.tooltipBottomBox}>
-            <Text style={styles.tooltipTitle}>{tooltipSkill?.name}</Text>
-            <Text style={styles.tooltipDescription}>
-              {tooltipSkill?.description}
-            </Text>
-            <Text style={styles.tooltipPower}>
-              Power: {tooltipSkill?.power}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => {
+          setTooltipSkill(null);
+          setPressedIndex(null);
+        }}
+        styles={styles}
+      />
 
-      {/* Unlock Modal */}
-      <Modal
-        transparent
-        animationType="fade"
+      <UnlockModal
+        skill={unlockedSkill}
         visible={!!unlockedSkill}
-        onRequestClose={() => setUnlockedSkill(null)}
-      >
-        <View style={styles.unlockOverlay}>
-          <View style={styles.unlockBox}>
-            <Text style={styles.unlockTitle}>
-              Neue Fähigkeit freigeschaltet!
-            </Text>
-            <Image
-              source={unlockedSkill ? getSkillImage(unlockedSkill) : undefined}
-              style={styles.unlockImage}
-              contentFit="contain"
-            />
-            <Text style={styles.unlockSkillName}>{unlockedSkill?.name}</Text>
-            <TouchableOpacity
-              onPress={() => setUnlockedSkill(null)}
-              style={styles.unlockButton}
-            >
-              <Text style={styles.unlockButtonText}>Schließen</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setUnlockedSkill(null)}
+        getSkillImage={getSkillImage}
+        styles={styles}
+      />
     </>
   );
 }
@@ -208,7 +224,6 @@ function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
   return StyleSheet.create({
-    // Die gesamte ActionBar-Leiste
     barContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -222,7 +237,6 @@ function createStyles(theme) {
       alignSelf: "center",
       backgroundColor: accent,
     },
-    // Einzelner Skill-Button
     skillButton: {
       alignItems: "center",
       justifyContent: "center",
@@ -243,7 +257,6 @@ function createStyles(theme) {
     skillButtonPressed: {
       borderColor: "#ffe66d",
     },
-    // Cooldown-Overlay (grau über SkillIcon)
     cooldownOverlay: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: "#222c",
@@ -253,12 +266,11 @@ function createStyles(theme) {
       borderColor: borderGlow,
     },
     cooldownTextOverlay: {
-      color: glow,
+      color: text,
       fontSize: 16,
       marginTop: 4,
       letterSpacing: 0.2,
     },
-    // Tooltip Modal
     modalOverlay: {
       flex: 1,
       justifyContent: "flex-end",
@@ -288,7 +300,6 @@ function createStyles(theme) {
       fontSize: 14,
       marginTop: 2,
     },
-    // Unlock Modal
     unlockOverlay: {
       flex: 1,
       justifyContent: "center",

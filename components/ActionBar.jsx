@@ -8,22 +8,26 @@ export default function ActionBar({ navigation, t }) {
 
   const buttons = [
     {
-      icon: <Ionicons name="gift-outline" size={24} color={iconColor} />,
+      Icon: Ionicons,
+      iconProps: { name: "gift-outline", size: 24, color: iconColor },
       screen: "GiftScreen",
       label: t("giftLabel"),
     },
     {
-      icon: <Entypo name="news" size={24} color={iconColor} />,
+      Icon: Entypo,
+      iconProps: { name: "news", size: 24, color: iconColor },
       screen: "NewsScreen",
       label: t("newsLabel"),
     },
     {
-      icon: <FontAwesome5 name="tasks" size={24} color={iconColor} />,
+      Icon: FontAwesome5,
+      iconProps: { name: "tasks", size: 24, color: iconColor },
       screen: "MissionScreen",
       label: t("missionsLabel"),
     },
     {
-      icon: <Feather name="settings" size={24} color={iconColor} />,
+      Icon: Feather,
+      iconProps: { name: "settings", size: 24, color: iconColor },
       screen: "SettingsScreen",
       label: t("settingsLabel"),
     },
@@ -33,15 +37,15 @@ export default function ActionBar({ navigation, t }) {
 
   return (
     <View style={styles.row}>
-      {buttons.map(({ icon, screen, label }, index) => (
+      {buttons.map(({ Icon, iconProps, screen, label }, idx) => (
         <TouchableOpacity
-          key={index}
+          key={screen}
           style={styles.button}
           onPress={() => navigation.navigate(screen)}
           activeOpacity={0.85}
         >
           <View style={styles.inner}>
-            {icon}
+            <Icon {...iconProps} />
             <Text style={styles.label}>{label}</Text>
           </View>
         </TouchableOpacity>
@@ -51,9 +55,6 @@ export default function ActionBar({ navigation, t }) {
 }
 
 function createStyles(theme) {
-  // Hole Glow- und Border-Farben aus deinem Theme (Fallbacks inklusive)
-  const borderGlow = theme.borderGlowColor || theme.borderColor || "#facc15";
-
   return StyleSheet.create({
     row: {
       flexDirection: "row",
@@ -64,8 +65,6 @@ function createStyles(theme) {
       width: "100%",
     },
     button: {
-      borderWidth: 2.5,
-      borderColor: theme.borderColor,
       flex: 1,
       marginHorizontal: 6,
       height: 74,
@@ -73,7 +72,8 @@ function createStyles(theme) {
       backgroundColor: theme.accentColor,
       justifyContent: "center",
       alignItems: "center",
-      overflow: "visible",
+      borderWidth: 2.5,
+      borderColor: theme.borderGlowColor || theme.borderColor || "#facc15",
     },
     inner: {
       alignItems: "center",

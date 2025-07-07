@@ -8,7 +8,7 @@ export default function BattleButton({ onPress, label, style }) {
   const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // Beispiel: Button-Hintergrundbild (du kannst später in imageMap["button_bg"] legen)
+  // Hintergrundbild optional aus imageMap
   const buttonBg = imageMap["button_bg"];
 
   return (
@@ -17,12 +17,12 @@ export default function BattleButton({ onPress, label, style }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-      {buttonBg && (
+      {!!buttonBg && (
         <Image
           source={buttonBg}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          transition={500}
+          transition={400}
         />
       )}
       <Text style={styles.text}>{label}</Text>
@@ -35,14 +35,13 @@ function createStyles(theme) {
     button: {
       marginTop: 12,
       borderRadius: 18,
-      borderWidth: 2.5,
-      borderColor: theme.borderColor,
       backgroundColor: theme.accentColor,
       width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      overflow: "hidden", // wichtig für Hintergrundbilder
+      overflow: "hidden",
       transform: [{ skewY: "-3deg" }],
+      minHeight: 54,
     },
     text: {
       fontSize: 25,
@@ -51,6 +50,10 @@ function createStyles(theme) {
       letterSpacing: 0.7,
       textAlign: "center",
       zIndex: 2,
+      // TextShadow optional fürs Feeling:
+      textShadowColor: theme.shadowColor + "70",
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 4,
     },
   });
 }

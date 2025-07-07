@@ -1,6 +1,12 @@
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+} from "react-native";
 import ActionBar from "../components/ActionBar";
 import BattleButton from "../components/BattleButton";
 import ScreenLayout from "../components/ScreenLayout";
@@ -28,6 +34,7 @@ const tutorialSteps = [
 ];
 
 const battleButtonsConfig = [
+  { screen: "BattleScreen", labelKey: "battleLabel" },
   { screen: "PreBattleInfoScreen", labelKey: "endlessfightLabel" },
   { screen: "EventScreen", labelKey: "eventLabel" },
   { screen: "StoryScreen", labelKey: "storyLabel" },
@@ -38,7 +45,6 @@ const battleButtonsConfig = [
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-
   const { collectedGifts } = useGifts();
   const { classList } = useClass();
   const completeMissionOnce = useCompleteMissionOnce();
@@ -46,7 +52,6 @@ export default function HomeScreen() {
   const hasClass = classList.length > 0;
   const hasClaimedGift = Object.values(collectedGifts || {}).some(Boolean);
 
-  // Tutorial Step bestimmen (memoized)
   const tutorialStep = useMemo(() => {
     if (!hasClaimedGift) return 1;
     if (!hasClass) return 2;
@@ -57,7 +62,6 @@ export default function HomeScreen() {
     completeMissionOnce("2");
   }, []);
 
-  // Tutorial-Block extrahiert, wiederverwendbar, clean
   const renderTutorial = () => {
     if (tutorialStep < 3) {
       const step = tutorialSteps.find((s) => s.key === tutorialStep);
@@ -91,26 +95,36 @@ export default function HomeScreen() {
     return null;
   };
 
-  // BattleButton-Liste generisch, kein CopyPaste
-  const renderBattleButtons = () =>
-    battleButtonsConfig.map((btn) => (
-      <BattleButton
-        key={btn.screen}
-        onPress={() => navigateTo(navigation, btn.screen)}
-        label={t(btn.labelKey)}
-        theme={theme}
-        style={styles.fullButton}
-      />
-    ));
+  const renderBattleButtons = () => (
+    <View style={localStyles.battleButtonContainer}>
+      {battleButtonsConfig.map((btn) => (
+        <BattleButton
+          key={btn.screen}
+          onPress={() => navigateTo(navigation, btn.screen)}
+          label={t(btn.labelKey)}
+        />
+      ))}
+    </View>
+  );
 
   return (
     <ScreenLayout style={styles.container}>
       <View style={StyleSheet.absoluteFill} />
-      <View style={styles.buttonList}>
+      <ScrollView contentContainerStyle={styles.buttonList}>
         <View style={styles.tutorialWrapper}>{renderTutorial()}</View>
         {tutorialStep === 3 && renderBattleButtons()}
-      </View>
-      <ActionBar theme={theme} navigation={navigation} t={t} />
+      </ScrollView>
+      <ActionBar navigation={navigation} t={t} />
     </ScreenLayout>
   );
 }
+
+const localStyles = StyleSheet.create({
+  battleButtonContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    paddingTop: 8,
+  },
+});

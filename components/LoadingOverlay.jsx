@@ -13,7 +13,6 @@ export default function LoadingOverlay() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const spinLoopRef = useRef();
 
-  // Animation starten & stoppen
   useEffect(() => {
     if (loading) {
       spinAnim.setValue(0);
@@ -43,7 +42,6 @@ export default function LoadingOverlay() {
         spinLoopRef.current?.stop();
       });
     }
-
     return () => {
       spinLoopRef.current?.stop();
     };
@@ -56,7 +54,6 @@ export default function LoadingOverlay() {
 
   if (!loading) return null;
 
-  // Sauberer Fallback, falls imageMap.spinner nicht vorhanden ist
   const spinnerSource = imageMap?.spinner || require("../assets/loading.png");
 
   return (

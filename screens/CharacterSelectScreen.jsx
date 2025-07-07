@@ -11,13 +11,13 @@ import { useNavigation } from "@react-navigation/native";
 import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
-import { useAssets } from "../context/AssetsContext"; // ✅ NEU: Assets importieren
+import { useAssets } from "../context/AssetsContext";
 
 export default function CharacterSelectScreen() {
   const navigation = useNavigation();
   const { classList, activeClassId, setActiveClassId } = useClass();
   const { theme } = useThemeContext();
-  const { imageMap } = useAssets(); // ✅ Assets holen
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
   const [selectedId, setSelectedId] = useState(activeClassId);
@@ -35,6 +35,23 @@ export default function CharacterSelectScreen() {
     }
   };
 
+  // Render-Helper für Card und EmptySlot, damit FlatList nicht dupliziert
+  const renderItem = ({ item }) =>
+    item ? (
+      <CharacterCard
+        item={item}
+        isSelected={selectedId === item.id}
+        onPress={() => setSelectedId(item.id)}
+        imageMap={imageMap}
+        theme={theme}
+      />
+    ) : (
+      <EmptySlot
+        theme={theme}
+        onPress={() => navigation.navigate("CreateCharacterScreen")}
+      />
+    );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Wähle deinen Kämpfer</Text>
@@ -42,41 +59,7 @@ export default function CharacterSelectScreen() {
         data={fullCharacterList}
         keyExtractor={(_, idx) => idx.toString()}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) =>
-          item ? (
-            <TouchableOpacity
-              style={[
-                styles.card,
-                selectedId === item.id && styles.selectedCard,
-              ]}
-              onPress={() => setSelectedId(item.id)}
-            >
-              {/** ✅ Bild über imageMap mit Fallback */}
-              <Image
-                source={
-                  imageMap[`class_${item.baseId}`] || { uri: item.classUrl }
-                }
-                style={styles.avatar}
-                contentFit="contain"
-                transition={300}
-              />
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.level}>Level {item.level}</Text>
-              <Text style={styles.element}>
-                {elementData[item.element]?.icon}{" "}
-                {elementData[item.element]?.label}
-              </Text>
-              <Text style={styles.classText}>{item.type}</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.emptySlot}
-              onPress={() => navigation.navigate("CreateCharacterScreen")}
-            >
-              <Text style={styles.emptyText}>+ Charakter erstellen</Text>
-            </TouchableOpacity>
-          )
-        }
+        renderItem={renderItem}
       />
       {selectedId && (
         <TouchableOpacity style={styles.startButton} onPress={handleStart}>
@@ -87,6 +70,42 @@ export default function CharacterSelectScreen() {
   );
 }
 
+// ---------- Mini-Komponenten ----------
+
+function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      style={[styles.card, isSelected && styles.selectedCard]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <Image
+        source={imageMap[`class_${item.baseId}`] || { uri: item.classUrl }}
+        style={styles.avatar}
+        contentFit="contain"
+        transition={300}
+      />
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.level}>Level {item.level}</Text>
+      <Text style={styles.element}>
+        {elementData[item.element]?.icon} {elementData[item.element]?.label}
+      </Text>
+      <Text style={styles.classText}>{item.type}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function EmptySlot({ theme, onPress }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity style={styles.emptySlot} onPress={onPress}>
+      <Text style={styles.emptyText}>+ Charakter erstellen</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ---------- Styles ----------
 function createStyles(theme) {
   const accent = theme.accentColor;
   const text = theme.textColor;

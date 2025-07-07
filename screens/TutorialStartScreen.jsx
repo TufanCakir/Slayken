@@ -19,13 +19,11 @@ export default function TutorialStartScreen() {
   const navigation = useNavigation();
   const [step, setStep] = useState(0);
 
-  const steps = tutorialData;
-  const currentStep = steps[step];
-
   useEffect(() => {
     AsyncStorage.getItem("tutorialPlayed").then((played) => {
       if (played === "true") startGame();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startGame = async () => {
@@ -38,12 +36,15 @@ export default function TutorialStartScreen() {
   };
 
   const handleNext = () => {
-    if (step === steps.length - 1) startGame();
-    else setStep(step + 1);
+    setStep((prev) => (prev === tutorialData.length - 1 ? prev : prev + 1));
+    if (step === tutorialData.length - 1) startGame();
   };
 
-  if (!currentStep) return null;
   const styles = createStyles(theme);
+  const currentStep = tutorialData[step];
+  if (!currentStep) return null;
+
+  const isLast = step === tutorialData.length - 1;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,7 +56,7 @@ export default function TutorialStartScreen() {
           activeOpacity={0.85}
         >
           <Text style={styles.buttonText}>
-            {step === steps.length - 1 ? "Los geht’s" : "Weiter"}
+            {isLast ? "Los geht’s" : "Weiter"}
           </Text>
         </TouchableOpacity>
       </View>

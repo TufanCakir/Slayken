@@ -47,5 +47,19 @@
     "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
     "bossId": "ashragul",
     "element": "fire"
+  },
+  {
+    "id": "zarael",
+    "label": "Kapitel 8",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "zarael",
+    "element": "fire"
+  },
+  {
+    "id": "maldrakar",
+    "label": "Kapitel 9",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "maldrakar",
+    "element": "fire"
   }
 ]

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLoading } from "../context/LoadingContext";
 
-// Daten-Module zentral
+// Zentrale Datenmodule-Definition
 const dataModules = {
   bossData: () => import("../data/bossData.json"),
   eventData: () => import("../data/eventData.json"),
@@ -10,7 +10,7 @@ const dataModules = {
 };
 
 /**
- * Hook für das zentrale Laden aller relevanten Daten.
+ * Lädt alle relevanten App-Daten asynchron und zentralisiert.
  * Gibt { data, error } zurück.
  */
 export default function useDataLoader() {
@@ -23,38 +23,35 @@ export default function useDataLoader() {
     isMounted.current = true;
     setLoading(true);
 
-    (async () => {
+    const loadAllData = async () => {
       try {
+        // Lade alle Datenmodule parallel
         const entries = Object.entries(dataModules);
-        // Lade alle Module parallel
-        const modules = await Promise.all(
-          entries.map(([, loader]) => loader())
-        );
+        const loadedModules = await Promise.all(entries.map(([, fn]) => fn()));
 
-        // Falls der Hook noch gemountet ist
         if (!isMounted.current) return;
 
-        // Exporte sauber in ein Objekt mappen
-        const loadedData = entries.reduce((acc, [key], idx) => {
-          acc[key] = modules[idx]?.default ?? modules[idx];
+        // Mapping zu finalem Datenobjekt
+        const result = entries.reduce((acc, [key], idx) => {
+          acc[key] = loadedModules[idx]?.default ?? loadedModules[idx];
           return acc;
         }, {});
 
-        setData(loadedData);
+        setData(result);
       } catch (err) {
         if (isMounted.current) {
           setError(err);
           console.error("Fehler beim Laden der Daten:", err);
         }
       } finally {
-        // sanfteres Laden (kurze Verzögerung), nur wenn gemountet
         if (isMounted.current) {
-          setTimeout(() => setLoading(false), 220);
+          setTimeout(() => setLoading(false), 200); // sanfteres UI
         }
       }
-    })();
+    };
 
-    // Cleanup: Kein State-Update nach Unmount
+    loadAllData();
+
     return () => {
       isMounted.current = false;
     };

@@ -9,7 +9,7 @@ export default function OnlineGuard({ children }) {
   const { theme } = useThemeContext();
   const [isConnected, setIsConnected] = useState(true);
 
-  // Connection-Check Funktion
+  // Internet-Check
   const checkConnection = useCallback(() => {
     NetInfo.fetch().then((state) => {
       setIsConnected(!!state.isConnected && !!state.isInternetReachable);
@@ -17,9 +17,7 @@ export default function OnlineGuard({ children }) {
   }, []);
 
   useEffect(() => {
-    // On mount: einmal checken
     checkConnection();
-    // Dann: Listener aktiv
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(!!state.isConnected && !!state.isInternetReachable);
     });
@@ -28,11 +26,17 @@ export default function OnlineGuard({ children }) {
 
   if (!isConnected) {
     return (
-      <View style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFillObject}>
         <BlurView intensity={70} tint="light" style={StyleSheet.absoluteFill} />
         <View style={styles.centered}>
           <View
-            style={[styles.card, { backgroundColor: theme.accentColor + "ee" }]}
+            style={[
+              styles.card,
+              {
+                backgroundColor: theme.accentColor + "ee",
+                shadowColor: theme.shadowColor,
+              },
+            ]}
           >
             <Text style={[styles.message, { color: theme.textColor }]}>
               {t("noInternetMessage")}
@@ -40,7 +44,10 @@ export default function OnlineGuard({ children }) {
             <TouchableOpacity
               style={[
                 styles.button,
-                { backgroundColor: theme.textColor + "22" },
+                {
+                  backgroundColor: theme.textColor + "22",
+                  borderColor: theme.borderGlowColor || "#fff3",
+                },
               ]}
               onPress={checkConnection}
               activeOpacity={0.85}
@@ -60,10 +67,9 @@ export default function OnlineGuard({ children }) {
 
 const styles = StyleSheet.create({
   centered: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    ...StyleSheet.absoluteFillObject,
   },
   card: {
     padding: 28,
@@ -71,8 +77,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minWidth: 260,
     elevation: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.11,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
   },
@@ -89,7 +94,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 6,
     borderWidth: 1.5,
-    borderColor: "transparent",
   },
   buttonText: {
     fontSize: 16,

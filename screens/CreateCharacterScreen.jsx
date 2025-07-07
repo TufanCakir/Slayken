@@ -13,14 +13,14 @@ import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { getClassImageUrl } from "../utils/classUtils";
 import { useThemeContext } from "../context/ThemeContext";
-import { useAssets } from "../context/AssetsContext"; // ✅ Assets-Context importieren
+import { useAssets } from "../context/AssetsContext";
 
 export default function CreateCharacterScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const { theme } = useThemeContext();
   const { setActiveClassId, updateCharacter } = useClass();
-  const { imageMap } = useAssets(); // ✅ Assets holen
+  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
   const goToNext = () => setStep(2);
@@ -42,70 +42,25 @@ export default function CreateCharacterScreen({ navigation }) {
     navigation.replace("CharacterSelectScreen");
   };
 
+  // ---------- Render-Logik ----------
   return (
     <View style={styles.container}>
       {step === 1 && (
-        <>
-          <Text style={styles.title}>Wie soll dein Held heißen?</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Name eingeben"
-            placeholderTextColor={theme.textColor + "99"}
-            style={styles.input}
-          />
-          <TouchableOpacity
-            onPress={goToNext}
-            style={[styles.nextButton, !name && styles.nextButtonDisabled]}
-            disabled={!name}
-          >
-            <Text style={styles.buttonText}>Weiter</Text>
-          </TouchableOpacity>
-        </>
+        <NameStep
+          name={name}
+          setName={setName}
+          onNext={goToNext}
+          theme={theme}
+        />
       )}
-
       {step === 2 && (
-        <>
-          <Text style={styles.title}>Wähle eine Klasse</Text>
-          <FlatList
-            data={classes.filter((cls) => !cls.eventReward)}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.classList}
-            renderItem={({ item }) => {
-              // ✅ Bild über imageMap holen, falls vorhanden
-              const classKey = `class_${item.id}`;
-              const imageSource = imageMap[classKey] || {
-                uri: getClassImageUrl(item.id),
-              };
-
-              return (
-                <TouchableOpacity
-                  onPress={() => finishCreation(item)}
-                  style={styles.classCard}
-                >
-                  <View style={styles.classRow}>
-                    <Image
-                      source={imageSource}
-                      style={styles.avatar}
-                      contentFit="contain"
-                      transition={300}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.optionTitle}>{item.label}</Text>
-                      <Text style={styles.optionDescription}>
-                        {item.description}
-                      </Text>
-                      <Text style={styles.elementLabel}>
-                        {elementData[item.element]?.icon}{" "}
-                        {elementData[item.element]?.label}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </>
+        <ClassSelectStep
+          name={name}
+          classes={classes}
+          imageMap={imageMap}
+          onSelect={finishCreation}
+          theme={theme}
+        />
       )}
 
       <TouchableOpacity
@@ -118,6 +73,72 @@ export default function CreateCharacterScreen({ navigation }) {
   );
 }
 
+// ---------- Step-Komponenten ----------
+function NameStep({ name, setName, onNext, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <>
+      <Text style={styles.title}>Wie soll dein Held heißen?</Text>
+      <TextInput
+        value={name}
+        onChangeText={setName}
+        placeholder="Name eingeben"
+        placeholderTextColor={theme.textColor + "99"}
+        style={styles.input}
+      />
+      <TouchableOpacity
+        onPress={onNext}
+        style={[styles.nextButton, !name && styles.nextButtonDisabled]}
+        disabled={!name}
+      >
+        <Text style={styles.buttonText}>Weiter</Text>
+      </TouchableOpacity>
+    </>
+  );
+}
+
+function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <>
+      <Text style={styles.title}>Wähle eine Klasse</Text>
+      <FlatList
+        data={classes.filter((cls) => !cls.eventReward)}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.classList}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => onSelect(item)}
+            style={styles.classCard}
+          >
+            <View style={styles.classRow}>
+              <Image
+                source={
+                  imageMap[`class_${item.id}`] || {
+                    uri: getClassImageUrl(item.id),
+                  }
+                }
+                style={styles.avatar}
+                contentFit="contain"
+                transition={300}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.optionTitle}>{item.label}</Text>
+                <Text style={styles.optionDescription}>{item.description}</Text>
+                <Text style={styles.elementLabel}>
+                  {elementData[item.element]?.icon}{" "}
+                  {elementData[item.element]?.label}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </>
+  );
+}
+
+// ---------- Styles ----------
 function createStyles(theme) {
   return StyleSheet.create({
     container: {

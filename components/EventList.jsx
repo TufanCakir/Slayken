@@ -11,15 +11,13 @@ import ScreenLayout from "./ScreenLayout";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 
-// Hilfsfunktion, um das Datum schön darzustellen:
+// Hilfsfunktion: schönes Datum
 function formatEndDate(iso) {
   const date = new Date(iso);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  const hour = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
-  return `Endet am: ${day}.${month}.${year}, ${hour}:${min}`;
+  return `Endet am: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 }
 
 export default function EventList({ availableEvents = [], onSelectEvent }) {
@@ -27,12 +25,18 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
   const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // <--- ÄNDERE HIER:
-  const activeEvents = availableEvents.filter(
-    (e) =>
-      new Date(e.activeFrom) <= new Date() && new Date() <= new Date(e.activeTo)
+  // Nur aktive Events (einmal berechnen)
+  const activeEvents = useMemo(
+    () =>
+      availableEvents.filter(
+        (e) =>
+          new Date(e.activeFrom) <= new Date() &&
+          new Date() <= new Date(e.activeTo)
+      ),
+    [availableEvents]
   );
 
+  // Kein aktives Event
   if (activeEvents.length === 0) {
     return (
       <ScreenLayout style={styles.container}>
@@ -43,67 +47,69 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
     );
   }
 
+  // Einzelnes Event Card-Rendering
+  const renderItem = ({ item }) => {
+    const imageKey = `event_${item.id}`;
+    const imageSource = imageMap[imageKey] || { uri: item.image };
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => onSelectEvent(item)}
+        activeOpacity={0.92}
+      >
+        <View style={styles.bannerContainer}>
+          <Image
+            source={imageSource}
+            style={styles.imageBackground}
+            contentFit="contain"
+            transition={300}
+          />
+
+          {/* Badges und Status */}
+          <View style={styles.topRow}>
+            {item.info ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.info}</Text>
+              </View>
+            ) : (
+              <View style={{ width: 1 }} />
+            )}
+            <View style={styles.progressStatus}>
+              {item.completed && (
+                <Text style={styles.completedBadge}>Geschafft!</Text>
+              )}
+              {item.star && <Text style={styles.starIcon}>★</Text>}
+            </View>
+          </View>
+
+          {/* Enddatum */}
+          <View style={styles.dateBox}>
+            <Text style={styles.dateText}>{formatEndDate(item.activeTo)}</Text>
+          </View>
+
+          {/* Text-Overlay */}
+          <View style={styles.textOverlay}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.description}>{item.description}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <ScreenLayout style={styles.container}>
       <FlatList
         data={activeEvents}
         keyExtractor={(item) => item.id?.toString()}
         contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => {
-          const key = `event_${item.id}`;
-          const imageSource = imageMap[key] || { uri: item.image };
-
-          return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => onSelectEvent(item)}
-              activeOpacity={0.92}
-            >
-              <View style={styles.bannerContainer}>
-                <Image
-                  source={imageSource}
-                  style={styles.imageBackground}
-                  contentFit="contain"
-                  transition={300}
-                />
-
-                {/* Badge/Label (oben links) + Fortschritt (oben rechts) */}
-                <View style={styles.topRow}>
-                  {item.info && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{item.info}</Text>
-                    </View>
-                  )}
-                  <View style={styles.progressStatus}>
-                    {item.completed && (
-                      <Text style={styles.completedBadge}>Geschafft!</Text>
-                    )}
-                    {item.star && <Text style={styles.starIcon}>★</Text>}
-                  </View>
-                </View>
-
-                {/* Enddatum anzeigen */}
-                <View style={styles.dateBox}>
-                  <Text style={styles.dateText}>
-                    {formatEndDate(item.activeTo)}
-                  </Text>
-                </View>
-
-                {/* Text-Overlay unten */}
-                <View style={styles.textOverlay}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.description}>{item.description}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={renderItem}
       />
     </ScreenLayout>
   );
 }
 
-// Theme-aware Styles
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
@@ -146,12 +152,16 @@ function createStyles(theme) {
       flexDirection: "row",
       justifyContent: "space-between",
       paddingHorizontal: 10,
+      alignItems: "center",
     },
     badge: {
       backgroundColor: accent,
       paddingHorizontal: 11,
       paddingVertical: 4,
       borderRadius: 8,
+      minWidth: 42,
+      alignItems: "center",
+      justifyContent: "center",
     },
     badgeText: {
       fontSize: 12,

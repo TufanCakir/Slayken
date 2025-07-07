@@ -29,21 +29,40 @@ import ScreenLayout from "../components/ScreenLayout";
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-// Helper functions
-function getEventBossKey(imageUrl, fallbackName) {
+// Bild/Background-Key Helper
+const getAssetKey = (url, prefix, fallback) => {
   let name = null;
-  if (typeof imageUrl === "string") {
-    const match = /\/([\w-]+)\.png$/i.exec(imageUrl);
+  if (typeof url === "string") {
+    const match = /\/([\w-]+)\.png$/i.exec(url);
     name = match ? match[1] : null;
   }
-  if (!name && fallbackName) name = fallbackName;
-  return name ? "eventboss_" + name.toLowerCase() : null;
-}
+  if (!name && fallback) name = fallback;
+  return name ? `${prefix}${name.toLowerCase()}` : null;
+};
 
-function getBackgroundKey(bgUrl) {
-  if (!bgUrl) return null;
-  const match = /\/([\w-]+)\.png$/i.exec(bgUrl);
-  return match ? "bg_" + match[1].toLowerCase() : null;
+function SkillUnlockModal({ visible, skills, onClose, styles }) {
+  if (!visible) return null;
+  return (
+    <Modal transparent animationType="fade" visible>
+      <View style={styles.modalOverlay}>
+        <View style={styles.skillModal}>
+          <Text style={styles.skillModalTitle}>
+            🎉 Neue Skills freigeschaltet!
+          </Text>
+          {skills.map((skill, idx) => (
+            <View key={idx} style={styles.skillItem}>
+              <Text style={styles.skillName}>{skill.name}</Text>
+              <Text style={styles.skillDescription}>{skill.description}</Text>
+              <Text style={styles.skillPower}>Power: {skill.power}</Text>
+            </View>
+          ))}
+          <Pressable style={styles.okButton} onPress={onClose}>
+            <Text style={styles.okText}>OK</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 export default function StoryScreen() {
@@ -54,7 +73,6 @@ export default function StoryScreen() {
   const { addCrystals } = useCrystals();
   const { classList, activeClassId, updateCharacter } = useClass();
   const { gainExp } = useLevelSystem();
-  const { missions } = useMissions();
   const completeMissionOnce = useCompleteMissionOnce();
   const { theme } = useThemeContext();
 
@@ -66,7 +84,7 @@ export default function StoryScreen() {
   const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Boss laden, wenn Kapitel gewählt
   useEffect(() => {
@@ -122,11 +140,7 @@ export default function StoryScreen() {
             if (newSkills.length > 0) {
               setNewUnlockedSkills(newSkills);
             } else {
-              // Reset auf Kapitel-Auswahl
-              setSelectedChapter(null);
-              setCurrentBoss(null);
-              setBossHp(100);
-              setBossMaxHp(100);
+              resetState();
             }
           }, 300);
         }
@@ -145,28 +159,35 @@ export default function StoryScreen() {
     ]
   );
 
-  const handleCloseSkillModal = useCallback(() => {
-    setNewUnlockedSkills(null);
+  const resetState = useCallback(() => {
     setSelectedChapter(null);
     setCurrentBoss(null);
     setBossHp(100);
     setBossMaxHp(100);
   }, []);
 
+  const handleCloseSkillModal = useCallback(() => {
+    setNewUnlockedSkills(null);
+    resetState();
+  }, [resetState]);
+
   // Hintergrund & Bildzuordnung
-  const bossBgKey = getBackgroundKey(currentBoss?.background);
+  const bossBgKey = getAssetKey(currentBoss?.background, "bg_");
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
-  const mappedBoss = currentBoss
-    ? {
-        ...currentBoss,
-        image:
-          (getEventBossKey(currentBoss.image, currentBoss.name) &&
-            imageMap[getEventBossKey(currentBoss.image, currentBoss.name)]) ||
-          currentBoss.image,
-      }
-    : null;
+  const mappedBoss = useMemo(() => {
+    if (!currentBoss) return null;
+    const bossImgKey = getAssetKey(
+      currentBoss.image,
+      "eventboss_",
+      currentBoss.name
+    );
+    return {
+      ...currentBoss,
+      image: (bossImgKey && imageMap[bossImgKey]) || currentBoss.image,
+    };
+  }, [currentBoss, imageMap]);
 
   // Kapitel-Auswahl
   if (!selectedChapter) {
@@ -179,10 +200,12 @@ export default function StoryScreen() {
           contentContainerStyle={styles.chapterList}
           renderItem={({ item }) => {
             const boss = bossData.find((b) => b.id === item.bossId);
-            const bossImage = boss
-              ? imageMap[getEventBossKey(boss.image, boss.name || boss.id)] ||
-                boss.image
-              : null;
+            const bossImgKey = getAssetKey(
+              boss?.image,
+              "eventboss_",
+              boss?.name || boss?.id
+            );
+            const bossImage = boss ? imageMap[bossImgKey] || boss.image : null;
             return (
               <TouchableOpacity
                 style={styles.chapterCard}
@@ -218,10 +241,7 @@ export default function StoryScreen() {
           />
         </View>
       )}
-      <Pressable
-        style={styles.backButton}
-        onPress={() => setSelectedChapter(null)}
-      >
+      <Pressable style={styles.backButton} onPress={resetState}>
         <Text style={styles.backText}>← Zurück zur Kapitel-Auswahl</Text>
       </Pressable>
 
@@ -239,32 +259,12 @@ export default function StoryScreen() {
         />
       )}
 
-      {newUnlockedSkills && (
-        <Modal transparent animationType="fade" visible>
-          <View style={styles.modalOverlay}>
-            <View style={styles.skillModal}>
-              <Text style={styles.skillModalTitle}>
-                🎉 Neue Skills freigeschaltet!
-              </Text>
-              {newUnlockedSkills.map((skill, idx) => (
-                <View key={idx} style={styles.skillItem}>
-                  <Text style={styles.skillName}>{skill.name}</Text>
-                  <Text style={styles.skillDescription}>
-                    {skill.description}
-                  </Text>
-                  <Text style={styles.skillPower}>Power: {skill.power}</Text>
-                </View>
-              ))}
-              <Pressable
-                style={styles.okButton}
-                onPress={handleCloseSkillModal}
-              >
-                <Text style={styles.okText}>OK</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-      )}
+      <SkillUnlockModal
+        visible={!!newUnlockedSkills}
+        skills={newUnlockedSkills || []}
+        onClose={handleCloseSkillModal}
+        styles={styles}
+      />
     </View>
   );
 }

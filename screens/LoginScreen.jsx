@@ -17,14 +17,11 @@ export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const navigation = useNavigation();
 
+  // Bei Mount: Ist schon eingeloggt? Dann skip!
   useEffect(() => {
-    const checkLogin = async () => {
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedUser) {
-        navigation.replace("HomeScreen");
-      }
-    };
-    checkLogin();
+    AsyncStorage.getItem("user").then((savedUser) => {
+      if (savedUser) navigation.replace("HomeScreen");
+    });
   }, []);
 
   const handleLogin = () => {
@@ -36,7 +33,6 @@ export default function LoginScreen() {
       );
       return;
     }
-
     Alert.alert(t("confirmTitle"), t("confirmLogin", { name: trimmed }), [
       { text: t("cancel"), style: "cancel" },
       {
@@ -45,7 +41,7 @@ export default function LoginScreen() {
           try {
             await AsyncStorage.setItem("user", trimmed);
             navigation.replace("CreateCharacterScreen");
-          } catch (err) {
+          } catch {
             Alert.alert(t("errorTitle"), t("loginFailed"));
           }
         },
@@ -85,6 +81,7 @@ export default function LoginScreen() {
   );
 }
 
+// ---------- Styles ----------
 function createStyles(theme) {
   return StyleSheet.create({
     container: {
@@ -118,8 +115,7 @@ function createStyles(theme) {
       alignItems: "center",
     },
     buttonDisabled: {
-      backgroundColor: theme.disabledColor || theme.accentColor,
-      opacity: 0.5,
+      opacity: 0.48,
     },
     buttonText: {
       color: theme.textColor,
