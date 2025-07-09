@@ -8,10 +8,10 @@ import {
   Dimensions,
   DeviceEventEmitter,
 } from "react-native";
-import * as RNIap from "react-native-iap";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { Image } from "expo-image";
+import Purchases from "react-native-purchases"; // RevenueCat SDK
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useThemeContext } from "../context/ThemeContext";
@@ -21,28 +21,24 @@ import SHOP_ITEMS from "../data/shopData.json";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const getPriceLabel = (item, iapProducts) => {
+const getPriceLabel = (item, rcProducts) => {
   if (item.currency.includes("coin") && item.currency.includes("crystal")) {
     return `${item.price} Coins/Kristalle`;
   }
   if (item.currency.includes("coin")) return `${item.price} Coins`;
   if (item.currency.includes("crystal")) return `${item.price} Kristalle`;
   if (item.currency.includes("iap") && item.iapId) {
-    return (
-      iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ||
-      "Echtgeld"
-    );
+    const product = rcProducts.find((p) => p.identifier === item.iapId);
+    return product ? product.product.priceString : "Echtgeld";
   }
   return "";
 };
 
-const getButtonLabel = (item, iapProducts) => {
+const getButtonLabel = (item, rcProducts) => {
   if (item.currency.includes("iap") && item.iapId) {
+    const product = rcProducts.find((p) => p.identifier === item.iapId);
     return (
-      "Für " +
-      (iapProducts.find((p) => p.productId === item.iapId)?.localizedPrice ??
-        "Echtgeld") +
-      " kaufen"
+      "Für " + (product ? product.product.priceString : "Echtgeld") + " kaufen"
     );
   }
   return "Kaufen";
@@ -54,7 +50,7 @@ const getImageSource = (item, imageMap) =>
   imageMap?.[`class_${item.characterId}`] ||
   require("../assets/logo.png");
 
-const ShopItemCard = ({ item, onBuy, styles, iapProducts, imageMap }) => (
+const ShopItemCard = ({ item, onBuy, styles, rcProducts, imageMap }) => (
   <View style={styles.cardRow}>
     <Image
       source={getImageSource(item, imageMap)}
@@ -66,10 +62,10 @@ const ShopItemCard = ({ item, onBuy, styles, iapProducts, imageMap }) => (
       {item.category === "skin" && (
         <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
       )}
-      <Text style={styles.price}>{getPriceLabel(item, iapProducts)}</Text>
+      <Text style={styles.price}>{getPriceLabel(item, rcProducts)}</Text>
       <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
         <Text style={styles.buttonText}>
-          {getButtonLabel(item, iapProducts)}
+          {getButtonLabel(item, rcProducts)}
         </Text>
       </TouchableOpacity>
     </View>
@@ -83,27 +79,28 @@ export default function ShopScreen() {
   const { imageMap } = useAssets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [index, setIndex] = useState(0);
+  const [rcProducts, setRcProducts] = useState([]);
 
-  // IAP
-  const iapItemIds = useMemo(
-    () => SHOP_ITEMS.filter((item) => item.iapId).map((item) => item.iapId),
-    []
-  );
-  const [iapProducts, setIapProducts] = useState([]);
-
+  // RevenueCat Init
   useEffect(() => {
-    let isMounted = true;
-    RNIap.initConnection().then(async () => {
-      if (iapItemIds.length > 0) {
-        const products = await RNIap.getProducts(iapItemIds);
-        if (isMounted) setIapProducts(products);
+    Purchases.configure({ apiKey: "DEIN_REVENUECAT_API_KEY" });
+
+    const fetchProducts = async () => {
+      try {
+        const offerings = await Purchases.getOfferings();
+        if (
+          offerings.current &&
+          offerings.current.availablePackages.length > 0
+        ) {
+          setRcProducts(offerings.current.availablePackages);
+        }
+      } catch (error) {
+        console.log("Fehler beim Abrufen der Produkte:", error);
       }
-    });
-    return () => {
-      isMounted = false;
-      RNIap.endConnection();
     };
-  }, [iapItemIds]);
+
+    fetchProducts();
+  }, []);
 
   // Kategorien
   const categories = useMemo(
@@ -152,10 +149,14 @@ export default function ShopScreen() {
       }
       if (canBuyIAP) {
         try {
-          await RNIap.requestPurchase({ sku: iapId });
+          const pkg = rcProducts.find((p) => p.identifier === iapId);
+          if (!pkg) throw new Error("Produkt nicht gefunden");
+          await Purchases.purchasePackage(pkg);
           await executePurchase(item, "IAP", () => {});
         } catch (err) {
-          alert("Kauf fehlgeschlagen: " + err.message);
+          if (!err.userCancelled) {
+            alert("Kauf fehlgeschlagen: " + err.message);
+          }
         }
         return;
       }
@@ -170,7 +171,7 @@ export default function ShopScreen() {
       }
       return alert("Ungültige Zahlungsoption oder nicht genug Währung.");
     },
-    [coins, crystals, executePurchase, spendCoins, spendCrystals]
+    [coins, crystals, executePurchase, spendCoins, spendCrystals, rcProducts]
   );
 
   const renderScene = useMemo(
@@ -187,7 +188,7 @@ export default function ShopScreen() {
                   item={item}
                   onBuy={handleBuy}
                   styles={styles}
-                  iapProducts={iapProducts}
+                  rcProducts={rcProducts}
                   imageMap={imageMap}
                 />
               )}
@@ -201,7 +202,7 @@ export default function ShopScreen() {
           return scenes;
         }, {})
       ),
-    [routes, getVisibleShopItems, handleBuy, styles, iapProducts, imageMap]
+    [routes, getVisibleShopItems, handleBuy, styles, rcProducts, imageMap]
   );
 
   return (

@@ -34,7 +34,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-localization", "react-native-iap"],
+    "plugins": ["expo-localization"],
     "runtimeVersion": {
       "policy": "appVersion"
     },
