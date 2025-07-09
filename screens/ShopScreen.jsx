@@ -11,13 +11,14 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { Image } from "expo-image";
-import Purchases from "react-native-purchases"; // RevenueCat SDK
+import Purchases from "react-native-purchases";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import ScreenLayout from "../components/ScreenLayout";
 import SHOP_ITEMS from "../data/shopData.json";
+import Constants from "expo-constants";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -81,9 +82,17 @@ export default function ShopScreen() {
   const [index, setIndex] = useState(0);
   const [rcProducts, setRcProducts] = useState([]);
 
-  // RevenueCat Init
   useEffect(() => {
-    Purchases.configure({ apiKey: "DEIN_REVENUECAT_API_KEY" });
+    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
+
+    if (!apiKey) {
+      console.warn(
+        "RevenueCat API Key nicht gefunden! Bitte .env und app.config.js prüfen."
+      );
+      return;
+    }
+
+    Purchases.configure({ apiKey });
 
     const fetchProducts = async () => {
       try {
@@ -102,11 +111,11 @@ export default function ShopScreen() {
     fetchProducts();
   }, []);
 
-  // Kategorien
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((item) => item.category))),
     []
   );
+
   const routes = useMemo(
     () =>
       categories.map((key) => ({
@@ -116,7 +125,6 @@ export default function ShopScreen() {
     [categories]
   );
 
-  // Kategorie → Shop-Items
   const getVisibleShopItems = useCallback(
     (category) => SHOP_ITEMS.filter((item) => item.category === category),
     []
