@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "Slayken",
     slug: "slayken",
-    version: "2.0.2",
+    version: "2.0.3",
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "light",
@@ -22,7 +22,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.tufancakir.myslayken",
-      buildNumber: "14",
+      buildNumber: "15",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
