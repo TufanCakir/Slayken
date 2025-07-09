@@ -22,7 +22,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.tufancakir.myslayken",
-      buildNumber: "15",
+      buildNumber: "16",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
