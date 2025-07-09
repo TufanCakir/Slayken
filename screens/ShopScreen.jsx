@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Dimensions,
   DeviceEventEmitter,
+  ActivityIndicator, // Für Lade-Indikator
+  Alert, // Für verbesserte Alerts
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
@@ -22,6 +24,7 @@ import Constants from "expo-constants";
 
 const { width: screenWidth } = Dimensions.get("window");
 
+// Hilfsfunktionen bleiben gleich, da sie bereits gut sind
 const getPriceLabel = (item, rcProducts) => {
   if (item.currency.includes("coin") && item.currency.includes("crystal")) {
     return `${item.price} Coins/Kristalle`;
@@ -35,7 +38,10 @@ const getPriceLabel = (item, rcProducts) => {
   return "";
 };
 
-const getButtonLabel = (item, rcProducts) => {
+const getButtonLabel = (item, rcProducts, isBuying) => {
+  if (isBuying) {
+    return "Wird gekauft...";
+  }
   if (item.currency.includes("iap") && item.iapId) {
     const product = rcProducts.find((p) => p.identifier === item.iapId);
     return (
@@ -51,7 +57,15 @@ const getImageSource = (item, imageMap) =>
   imageMap?.[`class_${item.characterId}`] ||
   require("../assets/logo.png");
 
-const ShopItemCard = ({ item, onBuy, styles, rcProducts, imageMap }) => (
+// ShopItemCard erhält jetzt einen isBuying-Prop
+const ShopItemCard = ({
+  item,
+  onBuy,
+  styles,
+  rcProducts,
+  imageMap,
+  isBuying,
+}) => (
   <View style={styles.cardRow}>
     <Image
       source={getImageSource(item, imageMap)}
@@ -64,10 +78,18 @@ const ShopItemCard = ({ item, onBuy, styles, rcProducts, imageMap }) => (
         <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
       )}
       <Text style={styles.price}>{getPriceLabel(item, rcProducts)}</Text>
-      <TouchableOpacity style={styles.button} onPress={() => onBuy(item)}>
-        <Text style={styles.buttonText}>
-          {getButtonLabel(item, rcProducts)}
-        </Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => onBuy(item)}
+        disabled={isBuying} // Button während des Kaufs deaktivieren
+      >
+        {isBuying ? (
+          <ActivityIndicator color={styles.buttonText.color} /> // Lade-Indikator im Button
+        ) : (
+          <Text style={styles.buttonText}>
+            {getButtonLabel(item, rcProducts, isBuying)}
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   </View>
@@ -81,8 +103,9 @@ export default function ShopScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [index, setIndex] = useState(0);
   const [rcProducts, setRcProducts] = useState([]);
+  const [isBuying, setIsBuying] = useState(false); // Neuer State für Ladezustand
+  const [buyingItemId, setBuyingItemId] = useState(null); // Speichert die ID des aktuell gekauften Items
 
-  // Nur abrufen, wenn mind. 1 IAP-Produkt vorhanden ist
   const hasIAPItems = useMemo(
     () => SHOP_ITEMS.some((item) => item.currency.includes("iap")),
     []
@@ -96,6 +119,8 @@ export default function ShopScreen() {
       console.warn(
         "RevenueCat API Key nicht gefunden! Bitte .env und app.config.js prüfen."
       );
+      // Optional: Ein Benutzer-Alert, wenn der API-Schlüssel fehlt und IAPs erwartet werden
+      // Alert.alert("Fehler", "In-App-Käufe sind derzeit nicht verfügbar.");
       return;
     }
 
@@ -104,14 +129,36 @@ export default function ShopScreen() {
     const fetchProducts = async () => {
       try {
         const offerings = await Purchases.getOfferings();
+        console.log("Alle RevenueCat Offerings:", offerings.all); // Hilfreich zum Debuggen!
+
+        // Zugriff auf dein spezifisches Offering über seinen Identifier
+        const myExclusiveSkinsOffering = offerings.all["exclusive_skins"];
+
         if (
-          offerings.current &&
-          offerings.current.availablePackages.length > 0
+          myExclusiveSkinsOffering &&
+          myExclusiveSkinsOffering.availablePackages.length > 0
         ) {
-          setRcProducts(offerings.current.availablePackages);
+          setRcProducts(myExclusiveSkinsOffering.availablePackages);
+          console.log(
+            "Verfügbare RC-Produkte aus 'exclusive_skins' Offering:",
+            myExclusiveSkinsOffering.availablePackages
+          );
+        } else {
+          console.log(
+            "Das 'exclusive_skins' Offering oder seine Packages wurden nicht gefunden."
+          );
+          // Optional: Eine Fehlermeldung für den Nutzer, wenn dieses spezifische Offering nicht geladen werden kann
+          Alert.alert(
+            "Fehler",
+            "Exklusive Skins konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+          );
         }
       } catch (error) {
-        console.log("Fehler beim Abrufen der Produkte:", error);
+        console.error("Fehler beim Abrufen der Produkte:", error); // console.error ist besser für Fehler
+        Alert.alert(
+          "Verbindungsfehler",
+          "Konnte In-App-Produkte nicht laden. Bitte überprüfe deine Internetverbindung."
+        );
       }
     };
 
@@ -137,56 +184,102 @@ export default function ShopScreen() {
     []
   );
 
-  const executePurchase = useCallback(async (item, payWith, deductFunc) => {
-    deductFunc(item.price);
-    await AsyncStorage.setItem(
-      item.category === "skin"
-        ? `unlock_skin_${item.id}`
-        : `unlock_character_${item.characterId}`,
-      "true"
-    );
-    DeviceEventEmitter.emit("skin:updated");
-    alert(`Du hast ${item.name} für ${item.price} ${payWith} gekauft.`);
-  }, []);
+  const executePurchase = useCallback(
+    async (item, payWith) => {
+      // Hier wird keine Währung abgezogen, wenn es ein IAP-Kauf ist.
+      if (payWith === "Coins") {
+        spendCoins(item.price);
+      } else if (payWith === "Kristalle") {
+        spendCrystals(item.price);
+      }
+
+      await AsyncStorage.setItem(
+        item.category === "skin"
+          ? `unlock_skin_${item.id}`
+          : `unlock_character_${item.characterId}`,
+        "true"
+      );
+      DeviceEventEmitter.emit("skin:updated");
+
+      Alert.alert(
+        "Kauf erfolgreich!",
+        `Du hast ${item.name} für ${item.price} ${payWith} gekauft. Viel Spaß damit!`
+      );
+    },
+    [spendCoins, spendCrystals]
+  ); // Abhängigkeiten hinzugefügt
 
   const handleBuy = useCallback(
     async (item) => {
+      // Wenn bereits ein Kauf läuft, ignorieren
+      if (isBuying) return;
+
+      setIsBuying(true); // Ladezustand aktivieren
+      setBuyingItemId(item.id); // Aktuelles Kauf-Item speichern
+
       const { price, currency, iapId } = item;
       const canPayCoins = currency.includes("coin");
       const canPayCrystals = currency.includes("crystal");
       const canBuyIAP = currency.includes("iap") && iapId;
 
-      if (canPayCoins && coins >= price) {
-        return executePurchase(item, "Coins", spendCoins);
-      }
-      if (canPayCrystals && crystals >= price) {
-        return executePurchase(item, "Kristalle", spendCrystals);
-      }
-      if (canBuyIAP) {
-        try {
+      try {
+        if (canPayCoins && coins >= price) {
+          await executePurchase(item, "Coins");
+        } else if (canPayCrystals && crystals >= price) {
+          await executePurchase(item, "Kristalle");
+        } else if (canBuyIAP) {
           const pkg = rcProducts.find((p) => p.identifier === iapId);
-          if (!pkg) throw new Error("Produkt nicht gefunden");
+          if (!pkg) {
+            throw new Error(
+              "Produkt konnte im Shop nicht gefunden werden. Bitte versuchen Sie es später erneut."
+            );
+          }
           await Purchases.purchasePackage(pkg);
-          await executePurchase(item, "IAP", () => {});
-        } catch (err) {
-          if (!err.userCancelled) {
-            alert("Kauf fehlgeschlagen: " + err.message);
+          await executePurchase(item, "Echtgeld"); // Für IAP-Käufe verwenden wir "Echtgeld" als Währung
+        } else {
+          // Fallback für nicht genug Währung
+          if (canPayCoins && coins < price) {
+            Alert.alert(
+              "Nicht genug Coins",
+              `Du benötigst ${price - coins} weitere Coins, um ${
+                item.name
+              } zu kaufen.`
+            );
+          } else if (canPayCrystals && crystals < price) {
+            Alert.alert(
+              "Nicht genug Kristalle",
+              `Du benötigst ${price - crystals} weitere Kristalle, um ${
+                item.name
+              } zu kaufen.`
+            );
+          } else {
+            Alert.alert(
+              "Kauf nicht möglich",
+              "Es ist nicht genügend Währung vorhanden oder der Kaufweg ist nicht gültig."
+            );
           }
         }
-        return;
+      } catch (err) {
+        if (err.userCancelled) {
+          Alert.alert(
+            "Kauf abgebrochen",
+            "Du hast den Kaufvorgang abgebrochen."
+          );
+        } else {
+          console.error("Fehler beim Kauf:", err); // Detailliertes Logging
+          Alert.alert(
+            "Kauf fehlgeschlagen",
+            `Beim Kauf von ${item.name} ist ein Fehler aufgetreten: ${
+              err.message || "Unbekannter Fehler"
+            }. Bitte versuche es erneut.`
+          );
+        }
+      } finally {
+        setIsBuying(false); // Ladezustand deaktivieren
+        setBuyingItemId(null); // Kauf-Item-ID zurücksetzen
       }
-
-      // Nur eigenen Alert, keine Meldung über "kein Echtgeldkauf möglich"
-      if (canPayCoins && coins < price) {
-        return alert("Nicht genug Coins .");
-      }
-      if (canPayCrystals && crystals < price) {
-        return alert("Nicht genug Kristalle.");
-      }
-
-      return alert("Nicht genug Währung vorhanden.");
     },
-    [coins, crystals, executePurchase, spendCoins, spendCrystals, rcProducts]
+    [coins, crystals, executePurchase, rcProducts, isBuying] // isBuying zu Abhängigkeiten hinzugefügt
   );
 
   const renderScene = useMemo(
@@ -205,6 +298,7 @@ export default function ShopScreen() {
                   styles={styles}
                   rcProducts={rcProducts}
                   imageMap={imageMap}
+                  isBuying={isBuying && buyingItemId === item.id} // isBuying für diese spezifische Karte
                 />
               )}
               ListEmptyComponent={
@@ -217,7 +311,16 @@ export default function ShopScreen() {
           return scenes;
         }, {})
       ),
-    [routes, getVisibleShopItems, handleBuy, styles, rcProducts, imageMap]
+    [
+      routes,
+      getVisibleShopItems,
+      handleBuy,
+      styles,
+      rcProducts,
+      imageMap,
+      isBuying,
+      buyingItemId,
+    ] // isBuying und buyingItemId zu Abhängigkeiten hinzugefügt
   );
 
   return (

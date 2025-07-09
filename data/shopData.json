@@ -1,15 +1,5 @@
 [
   {
-    "id": "sylas_classic",
-    "name": "Skin: Fire Warrior (Classic)",
-    "price": 750,
-    "category": "Coin/Crystal",
-    "currency": ["crystal"],
-    "characterId": "sylas",
-    "baseId": "sylas",
-    "skinImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/skins/sylas-skin1.png"
-  },
-  {
     "id": "sylas_exclusive",
     "name": "Skin: Reon Dragonheart (Exclusive)",
     "price": 3.99,
