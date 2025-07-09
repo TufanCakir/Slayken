@@ -82,9 +82,16 @@ export default function ShopScreen() {
   const [index, setIndex] = useState(0);
   const [rcProducts, setRcProducts] = useState([]);
 
-  useEffect(() => {
-    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
+  // Nur abrufen, wenn mind. 1 IAP-Produkt vorhanden ist
+  const hasIAPItems = useMemo(
+    () => SHOP_ITEMS.some((item) => item.currency.includes("iap")),
+    []
+  );
 
+  useEffect(() => {
+    if (!hasIAPItems) return;
+
+    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
     if (!apiKey) {
       console.warn(
         "RevenueCat API Key nicht gefunden! Bitte .env und app.config.js prüfen."
@@ -109,7 +116,7 @@ export default function ShopScreen() {
     };
 
     fetchProducts();
-  }, []);
+  }, [hasIAPItems]);
 
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((item) => item.category))),
@@ -168,16 +175,16 @@ export default function ShopScreen() {
         }
         return;
       }
-      if (
-        (canPayCoins || canPayCrystals || canBuyIAP) &&
-        coins < price &&
-        crystals < price
-      ) {
-        return alert(
-          "Nicht genug Coins/Kristalle oder kein Echtgeldkauf möglich."
-        );
+
+      // Nur eigenen Alert, keine Meldung über "kein Echtgeldkauf möglich"
+      if (canPayCoins && coins < price) {
+        return alert("Nicht genug Coins .");
       }
-      return alert("Ungültige Zahlungsoption oder nicht genug Währung.");
+      if (canPayCrystals && crystals < price) {
+        return alert("Nicht genug Kristalle.");
+      }
+
+      return alert("Nicht genug Währung vorhanden.");
     },
     [coins, crystals, executePurchase, spendCoins, spendCrystals, rcProducts]
   );
