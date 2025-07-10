@@ -1,4 +1,5 @@
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ShopProvider } from "../context/ShopContext";
 import { StageProvider } from "../context/StageContext";
 import { AssetsProvider } from "../context/AssetsContext";
 import { LoadingProvider } from "../context/LoadingContext";
@@ -16,29 +17,31 @@ import { MissionProvider } from "../context/MissionContext";
 export function AppProviders({ children }) {
   return (
     <SafeAreaProvider>
-      <StageProvider>
-        <GiftProvider>
-          <LoadingProvider>
-            <MusicProvider>
-              <ThemeProvider>
-                <LanguageProvider>
-                  <AccountLevelProvider>
-                    <CrystalProvider>
-                      <CoinProvider>
-                        <MissionProvider>
-                          <CharacterProvider>
-                            <ClassProvider>{children}</ClassProvider>
-                          </CharacterProvider>
-                        </MissionProvider>
-                      </CoinProvider>
-                    </CrystalProvider>
-                  </AccountLevelProvider>
-                </LanguageProvider>
-              </ThemeProvider>
-            </MusicProvider>
-          </LoadingProvider>
-        </GiftProvider>
-      </StageProvider>
+      <ShopProvider>
+        <StageProvider>
+          <GiftProvider>
+            <LoadingProvider>
+              <MusicProvider>
+                <ThemeProvider>
+                  <LanguageProvider>
+                    <AccountLevelProvider>
+                      <CrystalProvider>
+                        <CoinProvider>
+                          <MissionProvider>
+                            <CharacterProvider>
+                              <ClassProvider>{children}</ClassProvider>
+                            </CharacterProvider>
+                          </MissionProvider>
+                        </CoinProvider>
+                      </CrystalProvider>
+                    </AccountLevelProvider>
+                  </LanguageProvider>
+                </ThemeProvider>
+              </MusicProvider>
+            </LoadingProvider>
+          </GiftProvider>
+        </StageProvider>
+      </ShopProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -10,13 +10,13 @@ import {
   ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import elementData from "../data/elementData.json";
-import skinData from "../data/skinData.json";
+import SHOP_ITEMS from "../data/shopData.json";
 import ScreenLayout from "../components/ScreenLayout";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useShop } from "../context/ShopContext";
 
 const CARD_WIDTH = Dimensions.get("window").width / 2 - 24;
 
@@ -30,19 +30,18 @@ export default function CharacterOverviewScreen() {
   } = useClass();
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
+  const { isUnlocked } = useShop();
 
-  const [ownedSkins, setOwnedSkins] = useState({});
-  useEffect(() => {
-    (async () => {
-      const all = await AsyncStorage.getAllKeys();
-      const mySkins = all
-        .filter((k) => k.startsWith("unlock_skin_"))
-        .map((k) => k.replace("unlock_skin_", ""));
-      const dict = {};
-      mySkins.forEach((id) => (dict[id] = true));
-      setOwnedSkins(dict);
-    })();
-  }, []);
+  // Funktion ist lokal, aber wird nur im RenderCharacter genutzt:
+  function getUnlockedSkinsForChar(item) {
+    const charId = item.baseId || item.id;
+    return SHOP_ITEMS.filter(
+      (skin) =>
+        skin.category?.toLowerCase().includes("skin") &&
+        skin.characterId === charId &&
+        isUnlocked(skin)
+    );
+  }
 
   const handleEquipSkin = async (char, skinId) => {
     await updateCharacter({ ...char, activeSkin: skinId });
@@ -51,16 +50,12 @@ export default function CharacterOverviewScreen() {
   const renderCharacter = ({ item }) => {
     const isActive = item.id === activeClassId;
     const element = elementData[item.element] || {};
-    const availableSkins = skinData
-      .filter(
-        (skin) =>
-          skin.characterId === (item.baseId || item.id) ||
-          skin.characterId === item.id ||
-          skin.characterId === item.name
-      )
-      .filter((skin) => ownedSkins[skin.id]);
-    const currentSkin = availableSkins.find((s) => s.id === item.activeSkin);
-    const avatarSrc = currentSkin?.image || item.classUrl;
+    // Alle für diesen Charakter freigeschalteten Skins aus dem Shop:
+    const availableSkins = getUnlockedSkinsForChar(item);
+    // Aktueller Skin:
+    const currentSkin =
+      availableSkins.find((s) => s.id === item.activeSkin) || null;
+    const avatarSrc = currentSkin?.skinImage || item.classUrl;
 
     return (
       <View style={[styles.card, isActive && styles.cardActive]}>
@@ -113,10 +108,10 @@ export default function CharacterOverviewScreen() {
                   key={skin.id}
                   active={skin.id === item.activeSkin}
                   onPress={() => handleEquipSkin(item, skin.id)}
-                  label={skin.label}
+                  label={skin.name || "Skin"}
                   icon={
                     <Image
-                      source={{ uri: skin.image }}
+                      source={{ uri: skin.skinImage }}
                       style={styles.skinImg}
                       contentFit="contain"
                     />
@@ -184,7 +179,7 @@ export default function CharacterOverviewScreen() {
   );
 }
 
-// --- Helper Buttons (keine Duplikate im Render!) ---
+// --- Helper Buttons ---
 function SkinButton({ active, onPress, icon, label }) {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
@@ -209,6 +204,7 @@ function ActionButton({ style, label, onPress, textStyle }) {
   );
 }
 
+// --- Styles ---
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
