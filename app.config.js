@@ -22,7 +22,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.tufancakir.myslayken",
-      buildNumber: "20",
+      buildNumber: "21",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
@@ -45,7 +45,7 @@ export default {
       eas: {
         projectId: "7093121d-57da-48ed-b15c-1d419bfa27f4",
       },
-      revenueCatApiKey: process.env.REVENUECAT_PUBLIC_API_KEY,
+      revenueCatApiKey: process.env.REVENUECAT_API_KEY,
     },
   },
 };

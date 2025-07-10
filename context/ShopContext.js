@@ -1,64 +1,65 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+// context/ShopContext.js
+import React, { createContext, useContext, useEffect, useState } from "react";
+import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import SHOP_ITEMS from "../data/shopData.json";
 
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
-  const [unlocked, setUnlocked] = useState({}); // z.B. {skin_sylas_exclusive: true, ...}
-  const STORAGE_KEY = "unlocked_items_v1";
+  const [unlockedSkins, setUnlockedSkins] = useState([]);
 
-  // Beim App-Start laden
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((str) => {
-      if (str) setUnlocked(JSON.parse(str));
-    });
+    restorePurchases();
   }, []);
 
-  // Nach jedem Unlock speichern
-  const persist = (next) =>
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  // Prüft RevenueCat und merkt alle aktiven Entitlements lokal
+  async function restorePurchases() {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitlements = customerInfo.entitlements.active || {};
+      const unlocked = SHOP_ITEMS.filter((skin) =>
+        Boolean(entitlements[skin.iapId])
+      ).map((skin) => skin.id);
+      setUnlockedSkins(unlocked);
 
-  // Item freischalten
-  const unlock = useCallback(
-    async (itemOrId) => {
-      const id = typeof itemOrId === "string" ? itemOrId : unlockKey(itemOrId);
-      const next = { ...unlocked, [id]: true };
-      setUnlocked(next);
-      await persist(next);
-    },
-    [unlocked]
-  );
+      // Optional: Lokal merken (z. B. für Offline-Check)
+      await AsyncStorage.setItem("@unlockedSkins", JSON.stringify(unlocked));
+    } catch (e) {
+      // Fallback: lokal laden
+      const raw = await AsyncStorage.getItem("@unlockedSkins");
+      if (raw) setUnlockedSkins(JSON.parse(raw));
+    }
+  }
 
-  // Check: Ist das Item freigeschaltet?
-  const isUnlocked = useCallback(
-    (itemOrId) => {
-      const id = typeof itemOrId === "string" ? itemOrId : unlockKey(itemOrId);
-      return !!unlocked[id];
-    },
-    [unlocked]
-  );
+  // Unlock nach Kauf (optional redundant, falls restorePurchases nach jedem Kauf ausgeführt wird)
+  function unlockSkin(skinId) {
+    setUnlockedSkins((prev) => Array.from(new Set([...prev, skinId])));
+    AsyncStorage.setItem(
+      "@unlockedSkins",
+      JSON.stringify(Array.from(new Set([...unlockedSkins, skinId])))
+    );
+  }
 
-  // Hilfsfunktion: Generiert einen eindeutigen Key für das Item
-  function unlockKey(item) {
-    if (typeof item === "string") return item;
-    if (item.category === "skin") return `skin_${item.id}`;
-    if (item.category === "character") return `character_${item.characterId}`;
-    // ... weitere Kategorien falls nötig
-    return item.id;
+  // Helper: ist Skin freigeschaltet?
+  function isUnlocked(skin) {
+    return unlockedSkins.includes(skin.id);
   }
 
   return (
-    <ShopContext.Provider value={{ unlocked, isUnlocked, unlock }}>
+    <ShopContext.Provider
+      value={{
+        unlockedSkins,
+        isUnlocked,
+        restorePurchases,
+        unlockSkin,
+      }}
+    >
       {children}
     </ShopContext.Provider>
   );
 }
 
-// Custom Hook für einfachen Zugriff
-export const useShop = () => useContext(ShopContext);
+export function useShop() {
+  return useContext(ShopContext);
+}
