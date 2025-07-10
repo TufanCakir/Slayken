@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import Purchases from "react-native-purchases";
-import Constants from "expo-constants";
 import ScreenLayout from "../components/ScreenLayout";
 import { useShop } from "../context/ShopContext";
 
@@ -31,16 +29,7 @@ export default function ShopScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const { unlockSkin, restorePurchases, isUnlocked } = useShop();
 
-  // RevenueCat einmal initialisieren + Käufe abfragen
-  useEffect(() => {
-    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
-    if (!apiKey) {
-      console.warn("RevenueCat API Key fehlt in app.config.js");
-      return;
-    }
-    Purchases.configure({ apiKey });
-    restorePurchases(); // <- holt alle freigeschalteten Skins direkt aus dem Kontext
-  }, []);
+  // Kein configure hier mehr nötig!
 
   const handleBuy = async (item) => {
     setIsLoading(true);
@@ -83,8 +72,26 @@ export default function ShopScreen() {
       >
         Shop
       </Text>
+
+      {/* Restore Button (optional) */}
+      <TouchableOpacity
+        onPress={restorePurchases}
+        style={{
+          alignSelf: "flex-end",
+          marginBottom: 12,
+          backgroundColor: "#444",
+          borderRadius: 12,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "bold" }}>
+          Käufe wiederherstellen
+        </Text>
+      </TouchableOpacity>
+
       {SHOP_ITEMS.map((item) => {
-        const purchased = isUnlocked(item); // <- aus dem Context: immer aktuell!
+        const purchased = isUnlocked(item);
         return (
           <View
             key={item.id}

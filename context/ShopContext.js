@@ -1,19 +1,33 @@
-// context/ShopContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import SHOP_ITEMS from "../data/shopData.json";
 
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
   const [unlockedSkins, setUnlockedSkins] = useState([]);
+  const [ready, setReady] = useState(false);
 
+  // RevenueCat EINMAL initialisieren
   useEffect(() => {
-    restorePurchases();
+    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
+    if (!apiKey) {
+      console.warn("RevenueCat API Key fehlt in app.config.js");
+      return;
+    }
+    Purchases.configure({ apiKey });
+    setReady(true);
   }, []);
 
-  // Prüft RevenueCat und merkt alle aktiven Entitlements lokal
+  // Käufe erst abfragen, wenn configure() fertig ist!
+  useEffect(() => {
+    if (ready) {
+      restorePurchases();
+    }
+  }, [ready]);
+
   async function restorePurchases() {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
@@ -22,8 +36,6 @@ export function ShopProvider({ children }) {
         Boolean(entitlements[skin.iapId])
       ).map((skin) => skin.id);
       setUnlockedSkins(unlocked);
-
-      // Optional: Lokal merken (z. B. für Offline-Check)
       await AsyncStorage.setItem("@unlockedSkins", JSON.stringify(unlocked));
     } catch (e) {
       // Fallback: lokal laden
@@ -32,19 +44,19 @@ export function ShopProvider({ children }) {
     }
   }
 
-  // Unlock nach Kauf (optional redundant, falls restorePurchases nach jedem Kauf ausgeführt wird)
   function unlockSkin(skinId) {
-    setUnlockedSkins((prev) => Array.from(new Set([...prev, skinId])));
-    AsyncStorage.setItem(
-      "@unlockedSkins",
-      JSON.stringify(Array.from(new Set([...unlockedSkins, skinId])))
-    );
+    setUnlockedSkins((prev) => {
+      const updated = Array.from(new Set([...prev, skinId]));
+      AsyncStorage.setItem("@unlockedSkins", JSON.stringify(updated));
+      return updated;
+    });
   }
 
-  // Helper: ist Skin freigeschaltet?
   function isUnlocked(skin) {
     return unlockedSkins.includes(skin.id);
   }
+
+  if (!ready) return null;
 
   return (
     <ShopContext.Provider
