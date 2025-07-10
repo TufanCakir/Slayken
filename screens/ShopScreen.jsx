@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,70 +6,76 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
+  DeviceEventEmitter,
   ActivityIndicator,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { Image } from "expo-image";
-import * as InAppPurchases from "expo-in-app-purchases";
+import Purchases from "react-native-purchases";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
-import { useShop } from "../context/ShopContext";
 import ScreenLayout from "../components/ScreenLayout";
 import SHOP_ITEMS from "../data/shopData.json";
+import Constants from "expo-constants";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-// --- Helper ---
-const getImageSource = (item, imageMap) =>
-  item.skinImage ||
-  item.charImage ||
-  (item.characterId && imageMap?.[`class_${item.characterId}`]) ||
-  require("../assets/logo.png");
-
-const getLabels = (item, iapProducts, isBuying) => {
+const getPriceAndButtonLabel = (item, rcProducts, isBuying) => {
   if (item.currency.includes("iap") && item.iapId) {
-    const prod = iapProducts?.find((p) => p.productId === item.iapId);
-    const price = prod?.price ?? "Echtgeld";
+    const product = rcProducts.find((p) => p.identifier === item.iapId);
+    const priceString = product ? product.product.priceString : "Echtgeld";
     return {
-      priceLabel: price,
-      buttonLabel: isBuying ? "Wird gekauft..." : `Für ${price} kaufen`,
+      priceLabel: priceString,
+      buttonLabel: isBuying ? "Wird gekauft..." : `Für ${priceString} kaufen`,
     };
   }
   if (item.currency.includes("coin") && item.currency.includes("crystal")) {
     return {
-      priceLabel: `${item.price} Coins / Kristalle`,
-      buttonLabel: "Kaufen",
+      priceLabel: `${item.price} Coins/Kristalle`,
+      buttonLabel: isBuying ? "Wird gekauft..." : "Kaufen",
     };
   }
   if (item.currency.includes("coin")) {
-    return { priceLabel: `${item.price} Coins`, buttonLabel: "Kaufen" };
+    return {
+      priceLabel: `${item.price} Coins`,
+      buttonLabel: isBuying ? "Wird gekauft..." : "Kaufen",
+    };
   }
   if (item.currency.includes("crystal")) {
-    return { priceLabel: `${item.price} Kristalle`, buttonLabel: "Kaufen" };
+    return {
+      priceLabel: `${item.price} Kristalle`,
+      buttonLabel: isBuying ? "Wird gekauft..." : "Kaufen",
+    };
   }
-  return { priceLabel: "", buttonLabel: "Kaufen" };
+  return {
+    priceLabel: "",
+    buttonLabel: isBuying ? "Wird gekauft..." : "Kaufen",
+  };
 };
 
-// --- ShopItemCard ---
-function ShopItemCard({
+const getImageSource = (item, imageMap) =>
+  item.skinImage ||
+  item.charImage ||
+  imageMap?.[`class_${item.characterId}`] ||
+  require("../assets/logo.png");
+
+const ShopItemCard = ({
   item,
-  iapProducts,
+  onBuy,
+  styles,
+  rcProducts,
   imageMap,
   isBuying,
-  onBuy,
-  isUnlocked,
-  styles,
-  buyingItemId,
-}) {
-  const { priceLabel, buttonLabel } = getLabels(
+}) => {
+  const { priceLabel, buttonLabel } = getPriceAndButtonLabel(
     item,
-    iapProducts,
-    isBuying && buyingItemId === item.id
+    rcProducts,
+    isBuying
   );
-  const unlocked = isUnlocked(item);
 
   return (
     <View style={styles.cardRow}>
@@ -84,231 +90,223 @@ function ShopItemCard({
           <Text style={styles.skinFor}>Skin für: {item.characterId}</Text>
         )}
         <Text style={styles.price}>{priceLabel}</Text>
-        {unlocked ? (
-          <Text style={[styles.price, { color: "#62dc59" }]}>
-            Freigeschaltet
-          </Text>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              isBuying && buyingItemId === item.id && { opacity: 0.7 },
-            ]}
-            onPress={() => onBuy(item, iapProducts)}
-            disabled={isBuying && buyingItemId === item.id}
-          >
-            {isBuying && buyingItemId === item.id ? (
-              <ActivityIndicator color={styles.buttonText.color} />
-            ) : (
-              <Text style={styles.buttonText}>{buttonLabel}</Text>
-            )}
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => onBuy(item)}
+          disabled={isBuying}
+        >
+          {isBuying ? (
+            <ActivityIndicator color={styles.buttonText.color} />
+          ) : (
+            <Text style={styles.buttonText}>{buttonLabel}</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
-}
+};
 
-// --- Kauf-Flow Hook ---
-function usePurchaseFlow({
-  coins,
-  crystals,
-  spendCoins,
-  spendCrystals,
-  unlock,
-}) {
-  const [isBuying, setIsBuying] = useState(false);
-  const [buyingItemId, setBuyingItemId] = useState(null);
-
-  const finalize = useCallback(() => {
-    setIsBuying(false);
-    setBuyingItemId(null);
-  }, []);
-
-  const handleInternal = useCallback(
-    async (item, method) => {
-      if (method === "Coins") await spendCoins(item.price);
-      else if (method === "Kristalle") await spendCrystals(item.price);
-      await unlock(item);
-      Alert.alert(
-        "Kauf erfolgreich!",
-        `Du hast ${item.name} für ${item.price} ${method} gekauft.`
-      );
-    },
-    [spendCoins, spendCrystals, unlock]
-  );
-
-  const handleBuy = useCallback(
-    async (item, iapProducts) => {
-      if (isBuying) return;
-      setIsBuying(true);
-      setBuyingItemId(item.id);
-
-      const can = {
-        coin: item.currency.includes("coin") && coins >= item.price,
-        crystal: item.currency.includes("crystal") && crystals >= item.price,
-        iap: item.currency.includes("iap") && item.iapId,
-      };
-
-      try {
-        if (can.coin) {
-          await handleInternal(item, "Coins");
-          finalize();
-        } else if (can.crystal) {
-          await handleInternal(item, "Kristalle");
-          finalize();
-        } else if (can.iap) {
-          await InAppPurchases.purchaseItemAsync(item.iapId);
-          // finalize erst im IAP Listener!
-        } else {
-          const deficit =
-            can.coin === false && item.currency.includes("coin")
-              ? `Du brauchst ${item.price - coins} weitere Coins.`
-              : can.crystal === false && item.currency.includes("crystal")
-              ? `Du brauchst ${item.price - crystals} weitere Kristalle.`
-              : "Keine gültige Zahlungsmethode verfügbar.";
-          throw new Error(deficit);
-        }
-      } catch (err) {
-        Alert.alert("Kauf-Fehler", err.message || "Unbekannt");
-        finalize();
-      }
-    },
-    [coins, crystals, handleInternal, isBuying, finalize]
-  );
-
-  return { isBuying, buyingItemId, handleBuy, finalize };
-}
-
-// --- Hauptkomponente ---
 export default function ShopScreen() {
   const { coins, spendCoins } = useCoins();
   const { crystals, spendCrystals } = useCrystals();
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const { isUnlocked, unlock } = useShop();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { isBuying, buyingItemId, handleBuy, finalize } = usePurchaseFlow({
-    coins,
-    crystals,
-    spendCoins,
-    spendCrystals,
-    unlock,
-  });
+  const [index, setIndex] = useState(0);
+  const [rcProducts, setRcProducts] = useState([]);
+  const [isBuying, setIsBuying] = useState(false);
+  const [buyingItemId, setBuyingItemId] = useState(null);
 
-  const [iapProducts, setIapProducts] = useState([]);
-  const [iapLoading, setIapLoading] = useState(false);
-  const hasIAP = useMemo(
-    () => SHOP_ITEMS.some((i) => i.currency.includes("iap")),
+  const hasIAPItems = useMemo(
+    () => SHOP_ITEMS.some((item) => item.currency.includes("iap")),
     []
   );
 
-  // IAP Listener
   useEffect(() => {
-    const subscription = InAppPurchases.setPurchaseListener(
-      async ({ responseCode, results, errorCode, errorText }) => {
-        if (responseCode === InAppPurchases.IAPResponseCode.OK) {
-          for (const purchase of results) {
-            if (!purchase.acknowledged) {
-              const item = SHOP_ITEMS.find(
-                (s) => s.iapId === purchase.productId
-              );
-              if (item) {
-                await unlock(item);
-                Alert.alert("Kauf erfolgreich", `${item.name} freigeschaltet!`);
-              }
-              await InAppPurchases.finishTransactionAsync(purchase, false);
-            }
-          }
-          finalize();
-        } else if (
-          responseCode === InAppPurchases.IAPResponseCode.USER_CANCELED
-        ) {
-          Alert.alert("Kauf abgebrochen", "Du hast den Kauf abgebrochen.");
-          finalize();
-        } else if (errorCode) {
-          Alert.alert("Kauf-Fehler", errorText || errorCode.toString());
-          finalize();
-        } else {
-          finalize();
-        }
-      }
-    );
-    return () => {
-      subscription.remove?.();
-      InAppPurchases.disconnectAsync();
-    };
-  }, [finalize, unlock]);
+    if (!hasIAPItems) return;
 
-  useEffect(() => {
-    if (!hasIAP) return;
-    setIapLoading(true);
-    InAppPurchases.connectAsync()
-      .then(() => {
-        const ids = SHOP_ITEMS.filter((i) => i.iapId).map((i) => i.iapId);
-        return InAppPurchases.getProductsAsync(ids);
-      })
-      .then(({ responseCode, results }) => {
-        if (responseCode === InAppPurchases.IAPResponseCode.OK)
-          setIapProducts(results);
-      })
-      .catch(() =>
-        Alert.alert("Shop-Fehler", "IAP-Produkte konnten nicht geladen werden.")
-      )
-      .finally(() => setIapLoading(false));
-  }, [hasIAP]);
+    const apiKey = Constants.expoConfig?.extra?.revenueCatApiKey;
+    if (!apiKey) {
+      console.warn("RevenueCat API Key fehlt");
+      return;
+    }
+
+    Purchases.configure({ apiKey });
+
+    const fetchProducts = async () => {
+      try {
+        const offerings = await Purchases.getOfferings();
+        const exclusiveOffering = offerings.all["exclusive_skins"];
+        if (
+          exclusiveOffering &&
+          exclusiveOffering.availablePackages.length > 0
+        ) {
+          setRcProducts(exclusiveOffering.availablePackages);
+        } else {
+          Alert.alert(
+            "Shop nicht verfügbar",
+            "Exklusive Skins konnten nicht geladen werden. Bitte später erneut versuchen."
+          );
+        }
+      } catch (error) {
+        console.error("Fehler beim Abrufen der Offerings:", error);
+        Alert.alert(
+          "Fehler",
+          "Konnte In-App-Produkte nicht laden. Bitte überprüfe deine Verbindung."
+        );
+      }
+    };
+    fetchProducts();
+  }, [hasIAPItems]);
 
   const categories = useMemo(
-    () => [...new Set(SHOP_ITEMS.map((i) => i.category))],
+    () => [...new Set(SHOP_ITEMS.map((item) => item.category))],
     []
   );
-  const [tabIndex, setTabIndex] = useState(0);
+
   const routes = useMemo(
     () =>
-      categories.map((c) => ({
-        key: c,
-        title: c.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      categories.map((key) => ({
+        key,
+        title: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       })),
     [categories]
   );
 
-  const renderScene = SceneMap(
-    Object.fromEntries(
-      routes.map((r) => [
-        r.key,
-        () => (
-          <FlatList
-            data={SHOP_ITEMS.filter((i) => i.category === r.key)}
-            keyExtractor={(i) => i.id}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <ShopItemCard
-                item={item}
-                iapProducts={iapProducts}
-                imageMap={imageMap}
-                isBuying={isBuying}
-                onBuy={handleBuy}
-                isUnlocked={isUnlocked}
-                styles={styles}
-                buyingItemId={buyingItemId}
-              />
-            )}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>Noch keine Angebote.</Text>
-            }
-          />
-        ),
-      ])
-    )
+  const getVisibleShopItems = useCallback(
+    (category) => SHOP_ITEMS.filter((item) => item.category === category),
+    []
+  );
+
+  const executePurchase = useCallback(
+    async (item, payWith) => {
+      if (payWith === "Coins") spendCoins(item.price);
+      else if (payWith === "Kristalle") spendCrystals(item.price);
+
+      await AsyncStorage.setItem(
+        item.category === "skin"
+          ? `unlock_skin_${item.id}`
+          : `unlock_character_${item.characterId}`,
+        "true"
+      );
+      DeviceEventEmitter.emit("skin:updated");
+
+      Alert.alert(
+        "Kauf erfolgreich!",
+        `Du hast ${item.name} für ${item.price} ${payWith} gekauft.`
+      );
+    },
+    [spendCoins, spendCrystals]
+  );
+
+  const handleBuy = useCallback(
+    async (item) => {
+      if (isBuying) return;
+
+      setIsBuying(true);
+      setBuyingItemId(item.id);
+
+      const { price, currency, iapId } = item;
+      const canPayCoins = currency.includes("coin");
+      const canPayCrystals = currency.includes("crystal");
+      const canBuyIAP = currency.includes("iap") && iapId;
+
+      try {
+        if (canPayCoins && coins >= price) {
+          await executePurchase(item, "Coins");
+        } else if (canPayCrystals && crystals >= price) {
+          await executePurchase(item, "Kristalle");
+        } else if (canBuyIAP) {
+          const pkg = rcProducts.find((p) => p.identifier === iapId);
+          if (!pkg) throw new Error("Produkt konnte nicht gefunden werden.");
+          await Purchases.purchasePackage(pkg);
+          await executePurchase(item, "Echtgeld");
+        } else {
+          if (canPayCoins && coins < price) {
+            Alert.alert(
+              "Nicht genug Coins",
+              `Du benötigst ${price - coins} weitere Coins.`
+            );
+          } else if (canPayCrystals && crystals < price) {
+            Alert.alert(
+              "Nicht genug Kristalle",
+              `Du benötigst ${price - crystals} weitere Kristalle.`
+            );
+          } else {
+            Alert.alert(
+              "Kauf nicht möglich",
+              "Nicht genügend Währung oder falscher Kaufweg."
+            );
+          }
+        }
+      } catch (err) {
+        if (err.userCancelled) {
+          Alert.alert("Abgebrochen", "Du hast den Kauf abgebrochen.");
+        } else {
+          console.error("Fehler beim Kauf:", err);
+          Alert.alert(
+            "Fehler",
+            `Beim Kauf ist ein Fehler aufgetreten: ${
+              err.message || "Unbekannt"
+            }`
+          );
+        }
+      } finally {
+        setIsBuying(false);
+        setBuyingItemId(null);
+      }
+    },
+    [coins, crystals, executePurchase, rcProducts, isBuying]
+  );
+
+  const renderScene = useMemo(
+    () =>
+      SceneMap(
+        routes.reduce((scenes, route) => {
+          scenes[route.key] = () => (
+            <FlatList
+              data={getVisibleShopItems(route.key)}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+              renderItem={({ item }) => (
+                <ShopItemCard
+                  item={item}
+                  onBuy={handleBuy}
+                  styles={styles}
+                  rcProducts={rcProducts}
+                  imageMap={imageMap}
+                  isBuying={isBuying && buyingItemId === item.id}
+                />
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>
+                  Noch keine Angebote in dieser Kategorie.
+                </Text>
+              }
+            />
+          );
+          return scenes;
+        }, {})
+      ),
+    [
+      routes,
+      getVisibleShopItems,
+      handleBuy,
+      styles,
+      rcProducts,
+      imageMap,
+      isBuying,
+      buyingItemId,
+    ]
   );
 
   return (
     <ScreenLayout style={styles.container}>
       <TabView
-        navigationState={{ index: tabIndex, routes }}
+        navigationState={{ index, routes }}
         renderScene={renderScene}
-        onIndexChange={setTabIndex}
+        onIndexChange={setIndex}
         initialLayout={{ width: screenWidth }}
         renderTabBar={(props) => (
           <TabBar
@@ -329,20 +327,12 @@ export default function ShopScreen() {
           />
         )}
       />
-      {(isBuying || iapLoading) && (
-        <View style={styles.buyingOverlay}>
-          <ActivityIndicator size="large" color={theme.textColor} />
-          <Text style={{ color: theme.textColor, marginTop: 12 }}>
-            {iapLoading ? "Produkte werden geladen..." : "Wird verarbeitet ..."}
-          </Text>
-        </View>
-      )}
     </ScreenLayout>
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+function createStyles(theme) {
+  return StyleSheet.create({
     container: { flex: 1 },
     list: { padding: 20, paddingBottom: 40 },
     cardRow: {
@@ -353,11 +343,6 @@ const createStyles = (theme) =>
       paddingVertical: 16,
       paddingHorizontal: 20,
       marginBottom: 16,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 6,
-      elevation: 5,
     },
     iconImage: { width: 100, height: 100, borderRadius: 22, marginRight: 18 },
     cardContent: { flex: 1, justifyContent: "center" },
@@ -367,12 +352,6 @@ const createStyles = (theme) =>
       color: theme.textColor,
       textAlign: "center",
       marginBottom: 4,
-    },
-    skinFor: {
-      fontSize: 13,
-      color: theme.borderGlowColor,
-      marginBottom: 2,
-      textAlign: "center",
     },
     price: {
       fontSize: 14,
@@ -388,12 +367,10 @@ const createStyles = (theme) =>
       paddingHorizontal: 24,
       alignSelf: "center",
       marginTop: 10,
-      backgroundColor: theme.buttonColor || "transparent",
       shadowColor: theme.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.16,
       shadowRadius: 4,
-      elevation: 2,
     },
     buttonText: {
       color: theme.textColor,
@@ -407,15 +384,11 @@ const createStyles = (theme) =>
       color: theme.textColor,
       opacity: 0.7,
     },
-    buyingOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "#000C",
-      zIndex: 1000,
+    skinFor: {
+      fontSize: 13,
+      color: theme.borderGlowColor,
+      marginBottom: 2,
+      textAlign: "center",
     },
   });
+}
