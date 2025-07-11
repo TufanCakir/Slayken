@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function LoginScreen() {
   const { theme } = useThemeContext();
@@ -54,7 +55,20 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t("loginTitle")}</Text>
+      {/* Gradient-Header */}
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.07, 0]}
+        end={[1, 1]}
+        style={styles.headerGradient}
+      >
+        <Text style={styles.title}>{t("loginTitle")}</Text>
+      </LinearGradient>
+
       <TextInput
         placeholder={t("playerNameLabels.newNamePlaceholder")}
         placeholderTextColor={
@@ -67,15 +81,27 @@ export default function LoginScreen() {
         autoCorrect={false}
         maxLength={24}
       />
+      {/* Button mit Gradient */}
       <TouchableOpacity
-        style={[styles.button, isDisabled && styles.buttonDisabled]}
+        style={[styles.buttonOuter, isDisabled && styles.buttonDisabled]}
         onPress={handleLogin}
         disabled={isDisabled}
         activeOpacity={0.85}
       >
-        <Text style={styles.buttonText}>
-          {t("playerNameLabels.saveButton")}
-        </Text>
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0.1, 0]}
+          end={[1, 1]}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>
+            {t("playerNameLabels.saveButton")}
+          </Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -90,12 +116,28 @@ function createStyles(theme) {
       alignItems: "center",
       paddingHorizontal: 28,
     },
+    headerGradient: {
+      borderRadius: 16,
+      marginBottom: 30,
+      paddingVertical: 16,
+      paddingHorizontal: 38,
+      alignSelf: "center",
+      shadowColor: theme.glowColor,
+      shadowRadius: 16,
+      shadowOpacity: 0.33,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 6,
+    },
     title: {
       fontSize: 26,
       color: theme.textColor,
       textAlign: "center",
-      marginBottom: 30,
-      letterSpacing: 0.3,
+      letterSpacing: 0.7,
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 10,
+      textShadowOffset: { width: 0, height: 2 },
+      textTransform: "uppercase",
     },
     input: {
       width: "100%",
@@ -106,22 +148,39 @@ function createStyles(theme) {
       paddingVertical: 12,
       paddingHorizontal: 18,
       marginBottom: 24,
+      borderWidth: 1.2,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.09,
+      shadowRadius: 7,
+      elevation: 3,
+    },
+    buttonOuter: {
+      width: "100%",
+      borderRadius: 14,
+      overflow: "hidden",
+      shadowColor: theme.glowColor,
+      shadowRadius: 10,
+      shadowOpacity: 0.3,
+      elevation: 5,
     },
     button: {
-      backgroundColor: theme.accentColor,
       borderRadius: 14,
       paddingVertical: 15,
-      width: "100%",
       alignItems: "center",
+      width: "100%",
+      justifyContent: "center",
     },
     buttonDisabled: {
-      opacity: 0.48,
+      opacity: 0.45,
     },
     buttonText: {
       color: theme.textColor,
       fontWeight: "bold",
       fontSize: 18,
-      letterSpacing: 0.15,
+      letterSpacing: 0.18,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 6,
     },
   });
 }

@@ -186,6 +186,36 @@ export const ClassProvider = ({ children }) => {
     await AsyncStorage.removeItem(ACTIVE_CLASS_ID_KEY);
   }, []);
 
+  // Gibt XP an einen Charakter und updated das Level falls nötig
+  const addXpToCharacter = useCallback(async (charId, amount) => {
+    setClassList((prevList) => {
+      const updatedList = prevList.map((char) => {
+        if (char.id === charId) {
+          // XP aufaddieren
+          let newExp = (char.exp || 0) + amount;
+          let newLevel = char.level || 1;
+          let expToNext = char.expToNextLevel || 100;
+          // Level Up Loop (wenn XP überschritten)
+          while (newExp >= expToNext) {
+            newExp -= expToNext;
+            newLevel += 1;
+            // Optional: Dynamisches Level-System
+            expToNext = Math.floor(expToNext * 1.2); // 20% teurer pro Level
+          }
+          return {
+            ...char,
+            exp: newExp,
+            level: newLevel,
+            expToNextLevel: expToNext,
+          };
+        }
+        return char;
+      });
+      saveClassList(updatedList);
+      return updatedList;
+    });
+  }, []);
+
   // Context Value
   const value = {
     activeClassId,
@@ -198,6 +228,7 @@ export const ClassProvider = ({ children }) => {
     resetCharacterList,
     deleteClass,
     clearAllClasses,
+    addXpToCharacter,
   };
 
   return (

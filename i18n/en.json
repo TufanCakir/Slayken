@@ -28,6 +28,7 @@
   "homeLabel": "Home",
   "teaserLabel": "Preview",
   "equipmentLabel": "Equipment",
+  "valuablesLabel": "Valuables",
   "createLabel": "Create",
   "overviewLabel": "Overview",
   "summonLabel": "Summon",
@@ -106,6 +107,17 @@
   "loginFailed": "Login failed.",
   "confirmLogin": "Do you want to log in as \"{{name}}\"?",
   "cancel": "No",
+  "valuablesNameLabels": {
+    "valuablesTitle": "Valuables",
+    "specialItems": "Special Items",
+    "youOwn": "You own:",
+    "expPotion": "EXP Potion",
+    "expPotionPlural": "EXP Potions",
+    "useExpPotion": "Use EXP Potion",
+    "selectCharacter": "Select a character",
+    "levelShort": "Lv.",
+    "cancel": "Cancel"
+  },
   "playerNameLabels": {
     "playerNameTitle": "Change Player Name",
     "currentNameLabel": "Current Name:",

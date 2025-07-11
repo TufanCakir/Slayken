@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 
-// Elementfarben zentral und einheitlich
-const ELEMENT_COLORS = {
-  fire: "#ff5500",
-  ice: "#3399ff",
-  void: "#aa00ff",
-  nature: "#00bb66",
-  default: "#38bdf8",
-};
-
-// Countdown-Hook
+// Countdown-Hook wie gehabt
 function useCountdown(targetDateString) {
   const [timeLeft, setTimeLeft] = useState(() =>
     calcTimeLeft(targetDateString)
@@ -43,7 +35,6 @@ function calcTimeLeft(targetDateString) {
   };
 }
 
-// Countdown-Text ausgeben
 function formatCountdown(countdown) {
   if (!countdown) return "✅ Jetzt verfügbar";
   const { days, hours, minutes } = countdown;
@@ -57,7 +48,14 @@ export default function TeaserCard({ item }) {
   const { imageMap } = useAssets();
   if (!item) return null;
 
-  const color = ELEMENT_COLORS[item.element] || ELEMENT_COLORS.default;
+  // Nimm überall dein zentrales Gradient aus dem Theme!
+  const gradient = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+    "#000000",
+  ];
+
   const countdown = useCountdown(item.unlockDate);
   const countdownText = formatCountdown(countdown);
 
@@ -66,67 +64,86 @@ export default function TeaserCard({ item }) {
   const fallbackUri = `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`;
   const imageSource = imageMap[assetKey] || { uri: fallbackUri };
 
-  const styles = createStyles(color, theme);
+  const styles = createStyles(theme);
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.label}>{item.label}</Text>
-        <Text style={styles.date}>{countdownText}</Text>
+    <LinearGradient
+      colors={gradient}
+      start={[0, 0]}
+      end={[1, 0]}
+      style={styles.cardOuter}
+    >
+      <View style={styles.card}>
+        <LinearGradient
+          colors={gradient}
+          start={[0, 0]}
+          end={[1, 0]}
+          style={styles.header}
+        >
+          <Text style={styles.label}>{item.label}</Text>
+          <Text style={styles.date}>{countdownText}</Text>
+        </LinearGradient>
+
+        <LinearGradient colors={gradient} style={styles.iconGlow}>
+          <Image
+            source={imageSource}
+            style={styles.image}
+            contentFit="contain"
+            transition={300}
+          />
+        </LinearGradient>
+        <Text style={styles.name}>
+          {item.id.replace(/-/g, " ").toUpperCase()}
+        </Text>
+        <Text style={styles.description}>{item.description}</Text>
       </View>
-      <View style={styles.icon}>
-        <Image
-          source={imageSource}
-          style={styles.image}
-          contentFit="contain"
-          transition={300}
-        />
-      </View>
-      <Text style={styles.name}>
-        {item.id.replace(/-/g, " ").toUpperCase()}
-      </Text>
-      <Text style={styles.description}>{item.description}</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
-function createStyles(color, theme) {
+function createStyles(theme) {
   return StyleSheet.create({
+    cardOuter: {
+      borderRadius: 22,
+      marginBottom: 22,
+      padding: 2.5,
+    },
     card: {
-      backgroundColor: theme.accentColor || "#1e293b",
       borderRadius: 18,
       padding: 18,
-      marginBottom: 20,
-      borderWidth: 2,
-      borderColor: color + "99",
-      shadowColor: color,
-      shadowOpacity: 0.25,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 4,
+      overflow: "hidden",
     },
     header: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 7,
+      borderRadius: 12,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
     },
     label: {
       fontSize: 15,
       fontWeight: "bold",
       letterSpacing: 0.5,
-      color,
+      color: theme.textColor,
     },
     date: {
       fontSize: 13,
       fontWeight: "bold",
-      color: color === ELEMENT_COLORS.default ? "#facc15" : color,
+      color: theme.textColor,
       marginLeft: 8,
       flexShrink: 1,
     },
-    icon: {
+    iconGlow: {
       alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 22,
       marginVertical: 10,
+      padding: 6,
+      alignSelf: "center",
+      width: 210,
+      height: 210,
     },
     image: {
       width: 200,
@@ -136,14 +153,14 @@ function createStyles(color, theme) {
     },
     name: {
       fontSize: 17,
-      color: theme.textColor || "#f8fafc",
+      color: theme.textColor,
       textAlign: "center",
       marginVertical: 7,
       fontWeight: "700",
       letterSpacing: 1.1,
     },
     description: {
-      color: (theme.textColor || "#cbd5e1") + "cc",
+      color: theme.textColor,
       fontSize: 14,
       textAlign: "center",
       lineHeight: 20,

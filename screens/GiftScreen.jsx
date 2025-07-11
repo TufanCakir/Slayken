@@ -17,6 +17,8 @@ import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useAssets } from "../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
+import { useInventory } from "../context/InventoryContext";
 
 export default function GiftScreen() {
   const { theme } = useThemeContext();
@@ -26,23 +28,24 @@ export default function GiftScreen() {
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
   const { addXp } = useAccountLevel();
+  const { addPotion } = useInventory();
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
-  // Gifts vorbereiten und Memoisieren
+  // Typen-Mapping, damit alles eindeutig ist!
+  const ICON_TYPE_MAP = {
+    coins: "coin1",
+    crystals: "crystal1",
+    "exp-potion": "exp-potion",
+    exp: "exp",
+    // weitere Typen einfach ergänzen!
+  };
+
+  // Gifts vorbereiten und Memoisieren (nutzt das Mapping!)
   const gifts = useMemo(
     () =>
       giftData.map((gift) => ({
         ...gift,
-        imageUrl:
-          gift.type === "box"
-            ? getItemImageUrl("box") // Optional: Fallback-Bild oder Icon für Box
-            : getItemImageUrl(
-                gift.type === "coins"
-                  ? "coin"
-                  : gift.type === "crystals"
-                  ? "crystal"
-                  : gift.type
-              ),
+        imageUrl: getItemImageUrl(ICON_TYPE_MAP[gift.type] || gift.type),
       })),
     []
   );
@@ -60,6 +63,8 @@ export default function GiftScreen() {
       if (gift.type === "coins") addCoins(gift.amount || 0);
       if (gift.type === "crystals") addCrystals(gift.amount || 0);
       if (gift.type === "exp") addXp(gift.amount || 0);
+      if (gift.type === "exp-potion") addPotion(gift.amount || 1);
+      // weitere Typen bei Bedarf ergänzen!
     },
     [addCoins, addCrystals, addXp]
   );
@@ -109,7 +114,13 @@ export default function GiftScreen() {
             style={[
               styles.giftName,
               isCollected && styles.giftNameCollected,
-              { color: isCollected ? theme.borderGlowColor : theme.textColor },
+              {
+                color: isCollected ? theme.borderGlowColor : theme.textColor,
+                textShadowColor: isCollected
+                  ? theme.glowColor
+                  : theme.borderGlowColor,
+                textShadowRadius: 7,
+              },
             ]}
           >
             {isCollected ? "✓ " : ""}
@@ -135,7 +146,20 @@ export default function GiftScreen() {
           blurRadius={theme.bgBlur || 0}
         />
       )}
-      <Text style={styles.header}>{t("giftsTitle")}</Text>
+      {/* Gradient-Header */}
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0, 0]}
+        end={[1, 0]}
+        style={styles.headerGradient}
+      >
+        <Text style={styles.header}>{t("giftsTitle")}</Text>
+      </LinearGradient>
+
       <FlatList
         data={remainingGifts}
         keyExtractor={(item) => item.id}
@@ -143,14 +167,26 @@ export default function GiftScreen() {
         ListEmptyComponent={<Text style={styles.empty}>{t("noGifts")}</Text>}
         contentContainerStyle={styles.listContainer}
       />
+
       {!allCollected && (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
-            style={styles.glowButton}
+            style={styles.glowButtonOuter}
             onPress={collectAll}
             activeOpacity={0.88}
           >
-            <Text style={styles.glowButtonText}>{t("collectAll")}</Text>
+            <LinearGradient
+              colors={[
+                theme.accentColorSecondary,
+                theme.accentColor,
+                theme.accentColorDark,
+              ]}
+              start={[0.1, 0]}
+              end={[1, 1]}
+              style={styles.glowButton}
+            >
+              <Text style={styles.glowButtonText}>{t("collectAll")}</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       )}
@@ -161,25 +197,30 @@ export default function GiftScreen() {
 function createStyles(theme) {
   return StyleSheet.create({
     flex: { flex: 1 },
+    headerGradient: {
+      borderRadius: 16,
+      marginTop: 20,
+      marginBottom: 16,
+      alignSelf: "center",
+      width: "83%",
+      paddingVertical: 13,
+      paddingHorizontal: 8,
+      shadowColor: theme.glowColor,
+      shadowRadius: 14,
+      shadowOpacity: 0.33,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 5,
+    },
     header: {
       fontSize: 26,
-      marginBottom: 16,
       textAlign: "center",
-      letterSpacing: 0.6,
-      marginTop: 20,
-      paddingBottom: 9,
-      alignSelf: "center",
-      width: "81%",
-      backgroundColor: theme.accentColor,
-      borderRadius: 18,
+      letterSpacing: 0.9,
       color: theme.textColor,
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.16,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 3,
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 10,
+      textShadowOffset: { width: 0, height: 3 },
+      textTransform: "uppercase",
     },
     listContainer: {
       paddingBottom: 80,
@@ -200,7 +241,7 @@ function createStyles(theme) {
       elevation: 2,
     },
     giftItemCollected: {
-      opacity: 0.4,
+      opacity: 0.47,
     },
     iconWrapper: {
       width: 54,
@@ -222,7 +263,9 @@ function createStyles(theme) {
       fontSize: 18,
       flex: 1,
       letterSpacing: 0.28,
-      fontWeight: "600",
+      fontWeight: "700",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 7,
     },
     giftNameCollected: {
       opacity: 0.7,
@@ -235,24 +278,30 @@ function createStyles(theme) {
       width: "100%",
       alignItems: "center",
     },
+    glowButtonOuter: {
+      borderRadius: 16,
+      overflow: "hidden",
+      width: "70%",
+      alignSelf: "center",
+      shadowColor: theme.glowColor,
+      shadowRadius: 12,
+      shadowOpacity: 0.23,
+      elevation: 5,
+    },
     glowButton: {
-      backgroundColor: theme.accentColor,
       borderRadius: 16,
       paddingVertical: 15,
-      paddingHorizontal: 40,
       alignItems: "center",
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.18,
-      shadowRadius: 12,
-      elevation: 3,
+      width: "100%",
+      justifyContent: "center",
     },
     glowButtonText: {
       fontSize: 18,
-      letterSpacing: 0.28,
+      letterSpacing: 0.36,
       color: theme.textColor,
-      fontWeight: "700",
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 7,
     },
     empty: {
       textAlign: "center",
@@ -260,7 +309,9 @@ function createStyles(theme) {
       fontSize: 19,
       color: theme.textColor,
       opacity: 0.85,
-      fontWeight: "600",
+      fontWeight: "700",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 5,
     },
   });
 }

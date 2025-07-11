@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
 
 const TOS_SECTIONS = [
@@ -48,13 +49,18 @@ const TOS_SECTIONS = [
   },
 ];
 
-// Einzelne Section als Subkomponente – kein Duplikat im Render
-function TosSection({ title, content, styles }) {
+// Einzelne Section als Subkomponente – mit LinearGradient
+function TosSection({ title, content, styles, theme }) {
   return (
-    <View style={styles.sectionContainer}>
+    <LinearGradient
+      colors={theme.linearGradient}
+      start={{ x: 0.12, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.sectionContainer}
+    >
       <Text style={styles.sectionTitle}>{title}</Text>
       <Text style={styles.paragraph}>{content}</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -63,24 +69,29 @@ export default function ToSScreen() {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
 
-  // Konstante für halbtransparenten Shadow
+  // Halbtransparenter Shadow für Hintergrund bleibt
   const overlayColor = theme.shadowColor + "cc";
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Halbtransparenter Overlay */}
+      {/* Overlay bleibt erhalten */}
       <View
         style={[styles.overlay, { backgroundColor: overlayColor }]}
         pointerEvents="none"
       />
 
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header mit Gradient */}
+      <LinearGradient
+        colors={theme.linearGradient}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 1, y: 0.9 }}
+        style={styles.header}
+      >
         <TouchableOpacity onPress={navigation.goBack} style={styles.backButton}>
           <Text style={styles.backText}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Nutzungsbedingungen</Text>
-      </View>
+      </LinearGradient>
 
       {/* Content */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -91,6 +102,7 @@ export default function ToSScreen() {
             title={title}
             content={content}
             styles={styles}
+            theme={theme}
           />
         ))}
       </ScrollView>
@@ -100,14 +112,11 @@ export default function ToSScreen() {
 
 function createStyles(theme) {
   const text = theme.textColor;
-  const accent = theme.accentColor;
-  const shadow = theme.shadowColor + "cc";
   const border = theme.borderColor;
 
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: accent,
     },
     overlay: {
       ...StyleSheet.absoluteFillObject,
@@ -119,8 +128,8 @@ function createStyles(theme) {
       paddingHorizontal: 18,
       paddingTop: 52,
       paddingBottom: 14,
-      backgroundColor: accent + "cc",
       zIndex: 2,
+      // Kein backgroundColor, weil Gradient
     },
     backButton: {
       paddingRight: 10,
@@ -155,9 +164,14 @@ function createStyles(theme) {
     },
     sectionContainer: {
       marginBottom: 20,
-      backgroundColor: shadow,
       borderRadius: 12,
       padding: 15,
+      // kein backgroundColor, weil Gradient!
+      shadowColor: theme.accentColorDark,
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
     },
     sectionTitle: {
       fontSize: 17,

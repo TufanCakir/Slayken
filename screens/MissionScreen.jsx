@@ -1,4 +1,5 @@
-import { Text, FlatList, StyleSheet } from "react-native";
+import { Text, FlatList, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import ScreenLayout from "../components/ScreenLayout";
 import { useCrystals } from "../context/CrystalContext";
 import { useCoins } from "../context/CoinContext";
@@ -36,7 +37,20 @@ export default function MissionScreen() {
 
   return (
     <ScreenLayout style={styles.container}>
-      <Text style={styles.header}>Missionen</Text>
+      {/* Header mit Gradient */}
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.05, 0]}
+        end={[1, 1]}
+        style={styles.headerGradient}
+      >
+        <Text style={styles.header}>Missionen</Text>
+      </LinearGradient>
+
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
@@ -61,19 +75,30 @@ function createStyles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.accentColor,
+    },
+    headerGradient: {
+      borderRadius: 16,
+      marginHorizontal: 16,
+      marginTop: 26,
+      marginBottom: 16,
+      paddingVertical: 14,
+      alignItems: "center",
+      shadowColor: theme.glowColor,
+      shadowRadius: 14,
+      shadowOpacity: 0.33,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 5,
     },
     header: {
       fontSize: 26,
       fontWeight: "bold",
-      letterSpacing: 0.9,
+      letterSpacing: 1.0,
       color: theme.textColor,
       textAlign: "center",
-      marginTop: 26,
-      marginBottom: 16,
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 4,
+      textShadowColor: theme.glowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 10,
+      textTransform: "uppercase",
     },
     listContainer: {
       paddingBottom: 80,
@@ -88,6 +113,8 @@ function createStyles(theme) {
       fontStyle: "italic",
       opacity: 0.7,
       letterSpacing: 0.3,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 4,
     },
   });
 }

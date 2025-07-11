@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import ActionBar from "../components/ActionBar";
 import BattleButton from "../components/BattleButton";
 import ScreenLayout from "../components/ScreenLayout";
@@ -40,6 +42,7 @@ const battleButtonsConfig = [
   { screen: "StoryScreen", labelKey: "storyLabel" },
   { screen: "TeaserScreen", labelKey: "teaserLabel" },
   { screen: "InventoryScreen", labelKey: "equipmentLabel" },
+  { screen: "ValuablesScreen", labelKey: "valuablesLabel" },
 ];
 
 export default function HomeScreen() {
@@ -62,39 +65,75 @@ export default function HomeScreen() {
     completeMissionOnce("2");
   }, []);
 
+  // 1. Neues: Slayken-Action-Tutorial-Block mit Gradient und Glow!
   const renderTutorial = () => {
     if (tutorialStep < 3) {
       const step = tutorialSteps.find((s) => s.key === tutorialStep);
       if (!step) return null;
       return (
-        <View
-          style={[styles.tutorialBlock, { backgroundColor: theme.accentColor }]}
+        <LinearGradient
+          colors={theme.linearGradient}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={localStyles.tutorialBlock}
         >
-          <Text style={[styles.tutorialText, { color: theme.textColor }]}>
+          <Text
+            style={[
+              localStyles.tutorialText,
+              {
+                color: theme.textColor,
+                textShadowColor: theme.glowColor,
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 8,
+              },
+            ]}
+          >
             {step.text}
           </Text>
           <TouchableOpacity
             style={[
-              styles.tutorialButton,
+              localStyles.tutorialButton,
               {
-                borderColor: theme.textColor,
-                backgroundColor: theme.accentColor,
+                borderColor: theme.borderGlowColor,
+                shadowColor: theme.shadowColor,
+                backgroundColor: "transparent",
               },
             ]}
+            activeOpacity={0.93}
             onPress={() => navigateTo(navigation, step.target)}
           >
-            <Text
-              style={[styles.tutorialButtonText, { color: theme.textColor }]}
+            <LinearGradient
+              colors={[
+                theme.accentColorSecondary,
+                theme.accentColor,
+                theme.accentColorDark,
+              ]}
+              start={[0.2, 0]}
+              end={[1, 1]}
+              style={localStyles.buttonGradient}
             >
-              {step.buttonLabel}
-            </Text>
+              <Text
+                style={[
+                  localStyles.tutorialButtonText,
+                  {
+                    color: theme.textColor,
+                    textShadowColor: theme.glowColor,
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 6,
+                  },
+                ]}
+              >
+                {step.buttonLabel}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
       );
     }
     return null;
   };
 
+  // 2. BattleButtons als feurige Buttons!
   const renderBattleButtons = () => (
     <View style={localStyles.battleButtonContainer}>
       {battleButtonsConfig.map((btn) => (
@@ -102,6 +141,28 @@ export default function HomeScreen() {
           key={btn.screen}
           onPress={() => navigateTo(navigation, btn.screen)}
           label={t(btn.labelKey)}
+          style={{
+            margin: 5,
+            ...Platform.select({
+              ios: {
+                shadowColor: theme.glowColor,
+                shadowRadius: 7,
+                shadowOpacity: 0.9,
+                shadowOffset: { width: 0, height: 2 },
+              },
+              android: { elevation: 7 },
+            }),
+            borderColor: theme.borderColor,
+            borderWidth: 2,
+            backgroundColor: "transparent",
+          }}
+          gradientColors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          textColor={theme.textColor}
+          glowColor={theme.glowColor}
         />
       ))}
     </View>
@@ -111,7 +172,7 @@ export default function HomeScreen() {
     <ScreenLayout style={styles.container}>
       <View style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.buttonList}>
-        <View style={styles.tutorialWrapper}>{renderTutorial()}</View>
+        <View style={localStyles.tutorialWrapper}>{renderTutorial()}</View>
         {tutorialStep === 3 && renderBattleButtons()}
       </ScrollView>
       <ActionBar navigation={navigation} t={t} />
@@ -120,6 +181,51 @@ export default function HomeScreen() {
 }
 
 const localStyles = StyleSheet.create({
+  tutorialWrapper: {
+    marginVertical: 18,
+    marginHorizontal: 0,
+    alignItems: "center",
+  },
+  tutorialBlock: {
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 16,
+    alignItems: "center",
+    width: "96%",
+    alignSelf: "center",
+    shadowColor: "#FF7A00",
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  tutorialText: {
+    fontSize: 17,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 16,
+    letterSpacing: 0.5,
+  },
+  tutorialButton: {
+    borderRadius: 18,
+    borderWidth: 2,
+    overflow: "hidden",
+    shadowRadius: 12,
+    shadowOpacity: 0.9,
+    marginTop: 2,
+  },
+  buttonGradient: {
+    paddingVertical: 11,
+    paddingHorizontal: 28,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tutorialButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    letterSpacing: 1.1,
+    textAlign: "center",
+  },
   battleButtonContainer: {
     flexDirection: "row",
     flexWrap: "wrap",

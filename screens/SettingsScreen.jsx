@@ -43,7 +43,6 @@ function createStyles(theme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme?.background ?? "transparent",
     },
     scroll: {
       paddingBottom: 100,

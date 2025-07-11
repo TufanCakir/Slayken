@@ -1,11 +1,20 @@
 [
   {
+    "id": "sylas_classic",
+    "name": "Skin: Fire Warrior (Classic)",
+    "price": 0,
+    "category": "skin",
+    "currency": ["coin"],
+    "characterId": "sylas",
+    "baseId": "sylas",
+    "skinImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/skins/sylas-skin1.png"
+  },
+  {
     "id": "sylas_exclusive",
     "name": "Skin: Reon Dragonheart (Exclusive)",
-    "price": 3.99,
-    "iapId": "skin_reon_dragonheart_exclusive2",
-    "category": "Skin",
-    "currency": ["iap"],
+    "price": 0,
+    "category": "skin",
+    "currency": ["crystal"],
     "characterId": "sylas",
     "baseId": "sylas",
     "skinImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/reon-dragonheart.png"

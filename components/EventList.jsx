@@ -10,8 +10,8 @@ import { Image } from "expo-image";
 import ScreenLayout from "./ScreenLayout";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
 
-// Hilfsfunktion: schönes Datum
 function formatEndDate(iso) {
   const date = new Date(iso);
   return `Endet am: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
@@ -25,7 +25,6 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
   const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // Nur aktive Events (einmal berechnen)
   const activeEvents = useMemo(
     () =>
       availableEvents.filter(
@@ -36,7 +35,6 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
     [availableEvents]
   );
 
-  // Kein aktives Event
   if (activeEvents.length === 0) {
     return (
       <ScreenLayout style={styles.container}>
@@ -47,7 +45,6 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
     );
   }
 
-  // Einzelnes Event Card-Rendering
   const renderItem = ({ item }) => {
     const imageKey = `event_${item.id}`;
     const imageSource = imageMap[imageKey] || { uri: item.image };
@@ -58,6 +55,12 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
         onPress={() => onSelectEvent(item)}
         activeOpacity={0.92}
       >
+        <LinearGradient
+          colors={theme.linearGradient || ["#000", "#FF2D00"]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.bannerContainer}>
           <Image
             source={imageSource}
@@ -88,11 +91,20 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
             <Text style={styles.dateText}>{formatEndDate(item.activeTo)}</Text>
           </View>
 
-          {/* Text-Overlay */}
-          <View style={styles.textOverlay}>
+          {/* Text-Overlay mit Gradient */}
+          <LinearGradient
+            colors={[
+              theme.accentColor + "d0",
+              theme.accentColorDark + "e0",
+              "#000000cc",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.textOverlay}
+          >
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.description}>{item.description}</Text>
-          </View>
+          </LinearGradient>
         </View>
       </TouchableOpacity>
     );
@@ -131,11 +143,12 @@ function createStyles(theme) {
       marginVertical: 6,
       overflow: "hidden",
       backgroundColor: accent,
+      position: "relative",
     },
     bannerContainer: {
       flex: 1,
       borderRadius: 16,
-      backgroundColor: accent,
+      backgroundColor: "transparent",
       justifyContent: "center",
     },
     imageBackground: {
@@ -197,20 +210,25 @@ function createStyles(theme) {
       color: "#ff8a00",
       fontWeight: "bold",
       fontSize: 15,
+      textShadowColor: "#000",
+      textShadowRadius: 2,
+      textShadowOffset: { width: 0, height: 1 },
     },
     textOverlay: {
-      backgroundColor: accent,
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomLeftRadius: 16,
       borderBottomRightRadius: 16,
       zIndex: 3,
+      marginTop: -6,
+      flexDirection: "column",
     },
     title: {
       fontSize: 19,
       marginBottom: 2,
       letterSpacing: 0.3,
       color: text,
+      fontWeight: "bold",
     },
     description: {
       fontSize: 13.5,

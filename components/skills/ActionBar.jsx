@@ -12,8 +12,9 @@ import CircularCooldown from "../effects/CircularCooldown";
 import useCooldownTimer from "../../hooks/useCooldownTimer";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useAssets } from "../../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
 
-function TooltipModal({ skill, visible, onClose, styles }) {
+function TooltipModal({ skill, visible, onClose, styles, gradientColors }) {
   if (!skill || !visible) return null;
   return (
     <Modal transparent animationType="fade" visible>
@@ -22,22 +23,39 @@ function TooltipModal({ skill, visible, onClose, styles }) {
         onPress={onClose}
         activeOpacity={1}
       >
-        <View style={styles.tooltipBottomBox}>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0.25, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.tooltipBottomBox}
+        >
           <Text style={styles.tooltipTitle}>{skill.name}</Text>
           <Text style={styles.tooltipDescription}>{skill.description}</Text>
           <Text style={styles.tooltipPower}>Power: {skill.power}</Text>
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
     </Modal>
   );
 }
 
-function UnlockModal({ skill, visible, onClose, getSkillImage, styles }) {
+function UnlockModal({
+  skill,
+  visible,
+  onClose,
+  getSkillImage,
+  styles,
+  gradientColors,
+}) {
   if (!skill || !visible) return null;
   return (
     <Modal transparent animationType="fade" visible>
       <View style={styles.unlockOverlay}>
-        <View style={styles.unlockBox}>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.unlockBox}
+        >
           <Text style={styles.unlockTitle}>Neue Fähigkeit freigeschaltet!</Text>
           <Image
             source={getSkillImage(skill)}
@@ -48,7 +66,7 @@ function UnlockModal({ skill, visible, onClose, getSkillImage, styles }) {
           <TouchableOpacity onPress={onClose} style={styles.unlockButton}>
             <Text style={styles.unlockButtonText}>Schließen</Text>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -69,6 +87,11 @@ export default function ActionBar({
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
 
   // Status-Check für Skills (einmalig definiert)
   const isUnlocked = (skill) => {
@@ -149,7 +172,12 @@ export default function ActionBar({
 
   return (
     <>
-      <View style={styles.barContainer}>
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.barContainer}
+      >
         {skillStatuses.map(
           ({ skill, unlocked, isCoolingDown, cooldownEnd }, index) => {
             const seconds = useCooldownTimer(cooldownEnd, 100, () =>
@@ -158,44 +186,55 @@ export default function ActionBar({
             const skillImage = getSkillImage(skill);
 
             return (
-              <TouchableOpacity
+              <LinearGradient
                 key={skill.id || index}
-                disabled={!unlocked || isCoolingDown}
+                colors={gradientColors}
+                start={{ x: 0.1, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={[
                   styles.skillButton,
                   !unlocked && { opacity: 0.3 },
                   isCoolingDown && { opacity: 0.5 },
                   pressedIndex === index && styles.skillButtonPressed,
                 ]}
-                onPress={() => handlePress(skill, unlocked, isCoolingDown)}
-                onLongPress={() => handleLongPress(skill, index)}
-                delayLongPress={150}
-                onPressOut={() => setPressedIndex(null)}
-                activeOpacity={0.8}
               >
-                <Image
-                  source={skillImage}
-                  style={styles.skillIcon}
-                  contentFit="contain"
-                  transition={300}
-                />
-                {isCoolingDown && unlocked && (
-                  <View style={styles.cooldownOverlay}>
-                    <CircularCooldown
-                      duration={skill.cooldown}
-                      size={36}
-                      strokeWidth={3}
-                    />
-                    <Text style={styles.cooldownTextOverlay}>
-                      {seconds.toFixed(1)}s
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  disabled={!unlocked || isCoolingDown}
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onPress={() => handlePress(skill, unlocked, isCoolingDown)}
+                  onLongPress={() => handleLongPress(skill, index)}
+                  delayLongPress={150}
+                  onPressOut={() => setPressedIndex(null)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={skillImage}
+                    style={styles.skillIcon}
+                    contentFit="contain"
+                    transition={300}
+                  />
+                  {isCoolingDown && unlocked && (
+                    <View style={styles.cooldownOverlay}>
+                      <CircularCooldown
+                        duration={skill.cooldown}
+                        size={36}
+                        strokeWidth={3}
+                      />
+                      <Text style={styles.cooldownTextOverlay}>
+                        {seconds.toFixed(1)}s
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </LinearGradient>
             );
           }
         )}
-      </View>
+      </LinearGradient>
 
       <TooltipModal
         skill={tooltipSkill}
@@ -205,6 +244,7 @@ export default function ActionBar({
           setPressedIndex(null);
         }}
         styles={styles}
+        gradientColors={gradientColors}
       />
 
       <UnlockModal
@@ -213,6 +253,7 @@ export default function ActionBar({
         onClose={() => setUnlockedSkill(null)}
         getSkillImage={getSkillImage}
         styles={styles}
+        gradientColors={gradientColors}
       />
     </>
   );
@@ -235,7 +276,8 @@ function createStyles(theme) {
       margin: 12,
       maxWidth: 512,
       alignSelf: "center",
-      backgroundColor: accent,
+      // backgroundColor wird durch Gradient ersetzt!
+      overflow: "hidden",
     },
     skillButton: {
       alignItems: "center",
@@ -247,7 +289,8 @@ function createStyles(theme) {
       margin: 4,
       borderWidth: 2.5,
       borderColor: borderGlow,
-      backgroundColor: accent,
+      // backgroundColor wird durch Gradient ersetzt!
+      overflow: "hidden",
     },
     skillIcon: {
       width: 44,
@@ -277,7 +320,6 @@ function createStyles(theme) {
       backgroundColor: "rgba(15,23,42,0.87)",
     },
     tooltipBottomBox: {
-      backgroundColor: accent,
       padding: 22,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
@@ -307,13 +349,14 @@ function createStyles(theme) {
       backgroundColor: "rgba(15,23,42,0.88)",
     },
     unlockBox: {
-      backgroundColor: accent,
       padding: 28,
       borderRadius: 20,
       alignItems: "center",
       borderWidth: 3,
       borderColor: borderGlow,
       width: 270,
+      // backgroundColor durch LinearGradient ersetzt
+      overflow: "hidden",
     },
     unlockTitle: {
       color: text,

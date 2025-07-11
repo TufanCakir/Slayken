@@ -9,8 +9,9 @@ import { t } from "../i18n";
 import { Image } from "expo-image";
 import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
+import { LinearGradient } from "expo-linear-gradient"; // <--- Wichtig!
 
-export default function Header() {
+export default function Header({ gradientColors }) {
   const { coins } = useCoins();
   const { crystals } = useCrystals();
   const { level, xp, xpToNextLevel } = useAccountLevel();
@@ -44,21 +45,36 @@ export default function Header() {
 
   const styles = createStyles(theme);
 
+  // Farben aus Theme oder per Prop
+  const colors = gradientColors ||
+    theme.linearGradient || [
+      theme.accentColorSecondary,
+      theme.accentColor,
+      theme.accentColorDark,
+    ];
+
   const currencyList = [
     {
       key: "coins",
-      image: imageMap.coinIcon || getItemImageUrl("coin"),
+      image: imageMap.coinIcon || getItemImageUrl("coin1"),
       value: coins,
     },
     {
       key: "crystals",
-      image: imageMap.crystalIcon || getItemImageUrl("crystal"),
+      image: imageMap.crystalIcon || getItemImageUrl("crystal1"),
       value: crystals,
     },
   ];
 
   return (
     <View style={styles.headerContainer}>
+      {/* Gradient als Background, unter allen anderen Elementen */}
+      <LinearGradient
+        colors={colors}
+        start={[0, 0]}
+        end={[1, 0]}
+        style={StyleSheet.absoluteFill}
+      />
       {/* USER + LEVEL */}
       <View style={styles.leftBlock}>
         <Text style={styles.username}>{username}</Text>
@@ -66,7 +82,6 @@ export default function Header() {
           {t("levelPrefix")} {level}
         </Text>
       </View>
-
       {/* XP BAR */}
       <View style={styles.centerBlock}>
         <Animated.View
@@ -86,7 +101,6 @@ export default function Header() {
           {t("xpPrefix")} {xp} / {xpToNextLevel}
         </Text>
       </View>
-
       {/* CURRENCY */}
       <View style={styles.rightBlock}>
         {currencyList.map(({ key, image, value }) => (
@@ -123,14 +137,9 @@ function createStyles(theme) {
       paddingHorizontal: 16,
       paddingVertical: 12,
       height: 88,
-      backgroundColor: theme.accentColor,
-      borderBottomWidth: 1.5,
-      borderBottomColor: theme.borderGlowColor || "#333",
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 5,
+      backgroundColor: "transparent", // <<--- Wichtig: damit der Gradient sichtbar bleibt!
+      position: "relative", // <<--- Wichtig für absoluteFill
+      overflow: "hidden",
     },
     leftBlock: {
       justifyContent: "center",
@@ -138,25 +147,19 @@ function createStyles(theme) {
     },
     username: {
       fontSize: 16,
-      fontWeight: "bold",
       color: theme.textColor,
       letterSpacing: 0.2,
       marginBottom: 2,
-      textShadowColor: theme.shadowColor + "55",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
     },
     level: {
       fontSize: 13,
       color: theme.textColor,
       opacity: 0.74,
-      fontWeight: "700",
       letterSpacing: 0.2,
     },
     centerBlock: {
       flex: 1,
       height: 22,
-      backgroundColor: theme.accentColor,
       marginHorizontal: 20,
       borderRadius: 12,
       overflow: "hidden",
@@ -164,11 +167,6 @@ function createStyles(theme) {
       position: "relative",
       borderWidth: 1.8,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 6,
-      elevation: 2,
     },
     xpBarFill: {
       position: "absolute",
@@ -180,12 +178,8 @@ function createStyles(theme) {
     xpText: {
       fontSize: 11,
       textAlign: "center",
-      fontWeight: "bold",
       color: theme.textColor,
       zIndex: 1,
-      textShadowColor: theme.shadowColor + "99",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
     },
     rightBlock: {
       flexDirection: "row",
@@ -195,30 +189,21 @@ function createStyles(theme) {
     currencyItem: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.accentColor,
       paddingHorizontal: 9,
       paddingVertical: 6,
       borderRadius: 12,
       marginLeft: 7,
-      borderWidth: 1.2,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.18,
-      shadowRadius: 7,
       elevation: 6,
     },
     currencyText: {
       fontSize: 14,
-      fontWeight: "bold",
       marginLeft: 4,
       letterSpacing: 0.2,
       color: theme.textColor,
-      textShadowColor: theme.shadowColor + "88",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
     },
     icon: {
-      width: 21,
-      height: 21,
+      width: 50,
+      height: 50,
       marginRight: 2,
     },
   });

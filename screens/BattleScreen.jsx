@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
@@ -25,165 +26,62 @@ import { equipmentPool } from "../data/equipmentPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useStage } from "../context/StageContext";
 
+// ----------- Hilfsfunktionen ---------- //
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-const getBackgroundKey = (url) => {
-  if (!url) return null;
-  const match = /\/([\w-]+)\.png$/i.exec(url);
-  return match ? "bg_" + match[1].toLowerCase() : null;
-};
+const getBackgroundKey = (url) =>
+  url
+    ? /\/([\w-]+)\.png$/i.exec(url)?.[1] &&
+      "bg_" + /\/([\w-]+)\.png$/i.exec(url)[1].toLowerCase()
+    : null;
 
-const getEventBossKey = (url, fallback) => {
-  if (typeof url === "string" && url.endsWith(".png")) {
-    const match = /\/([\w-]+)\.png$/i.exec(url);
-    return match ? "eventboss_" + match[1].toLowerCase() : null;
-  }
-  return fallback ? "eventboss_" + fallback.toLowerCase() : null;
-};
+const getEventBossKey = (url, fallback) =>
+  typeof url === "string" && url.endsWith(".png")
+    ? /\/([\w-]+)\.png$/i.exec(url)?.[1] &&
+      "eventboss_" + /\/([\w-]+)\.png$/i.exec(url)[1].toLowerCase()
+    : fallback
+    ? "eventboss_" + fallback.toLowerCase()
+    : null;
 
-export default function BattleScreen() {
-  const { theme } = useThemeContext();
-  const { imageMap } = useAssets();
-  const navigation = useNavigation();
-  const { addXp } = useAccountLevel();
-  const { addCoins } = useCoins();
-  const { addCrystals } = useCrystals();
-  const { classList, activeClassId, updateCharacter } = useClass();
-  const { gainExp } = useLevelSystem();
-  const completeMissionOnce = useCompleteMissionOnce();
-  const { stageProgress, updateStage, stagesData } = useStage();
-
-  const [selectedStage, setSelectedStage] = useState(null);
-  const [battleActive, setBattleActive] = useState(false);
-  const [newDrop, setNewDrop] = useState(null);
-  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
-
-  const baseCharacter = useMemo(
-    () => classList.find((c) => c.id === activeClassId),
-    [classList, activeClassId]
+// ----------- Generische Modal-Komponente ---------- //
+function InfoModal({ visible, children, onClose, styles, theme }) {
+  if (!visible) return null;
+  return (
+    <Modal transparent visible={!!visible} animationType="fade">
+      <View style={styles.modalOverlay}>
+        <LinearGradient
+          colors={theme.linearGradient}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        <View style={styles.skillModal}>
+          {children}
+          <Pressable style={styles.okButton} onPress={onClose}>
+            <Text style={styles.okText}>OK</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
   );
+}
 
-  const { stats: charStats, percentBonuses } = useMemo(() => {
-    if (!baseCharacter) return { stats: {}, percentBonuses: {} };
-    return getCharacterStatsWithEquipment(baseCharacter);
-  }, [baseCharacter]);
+// ----------- StageNode Komponente ---------- //
+function StageNode({ stage, progress, onPress, theme, imageMap, styles }) {
+  const isBoss = stage.type === "boss";
+  const isUnlocked = progress.unlocked;
+  const isCompleted = progress.completed;
+  const boss = bossData[stage.bossId];
+  const bossImageUrl = boss ? getBossImageUrl(boss.id) : null;
 
-  const boss = useMemo(
-    () =>
-      selectedStage && bossData[selectedStage.bossId]
-        ? {
-            ...bossData[selectedStage.bossId],
-            image:
-              imageMap[
-                getEventBossKey(
-                  bossData[selectedStage.bossId].image,
-                  bossData[selectedStage.bossId].name
-                )
-              ] || bossData[selectedStage.bossId].image,
-          }
-        : null,
-    [selectedStage, bossData, imageMap]
-  );
-
-  const scaledBoss = useMemo(() => {
-    if (!boss || !baseCharacter) return null;
-    return scaleBossStats(boss, baseCharacter.level || 1);
-  }, [boss, baseCharacter]);
-
-  const [bossHp, setBossHp] = useState(scaledBoss?.hp || 100);
-  const [bossMaxHp, setBossMaxHp] = useState(scaledBoss?.hp || 100);
-
-  useEffect(() => {
-    setBossHp(scaledBoss?.hp || 100);
-    setBossMaxHp(scaledBoss?.hp || 100);
-  }, [scaledBoss, battleActive]);
-
-  const handleFight = useCallback(
-    (skill = {}) => {
-      if (!baseCharacter || !scaledBoss) return;
-      const skillPower = skill?.power ?? charStats.attack ?? 30;
-      const damage = calculateSkillDamage({
-        charStats,
-        percentBonuses,
-        skill: { skillDmg: skillPower },
-        enemyDefense: scaledBoss.defense || 0,
-      });
-
-      setBossHp((prev) => {
-        const nextHp = Math.max(prev - damage, 0);
-        if (nextHp === 0) {
-          setTimeout(() => {
-            // Stage als abgeschlossen markieren
-            updateStage(selectedStage.id, { completed: true, stars: 3 });
-
-            // Nächste Stage freischalten
-            const nextStage = stagesData.find(
-              (s) => s.id === selectedStage.id + 1
-            );
-            if (nextStage) {
-              updateStage(nextStage.id, { unlocked: true });
-            }
-
-            // Belohnungen
-            addCoins(COIN_REWARD);
-            addCrystals(CRYSTAL_REWARD);
-            addXp(100);
-            completeMissionOnce("1");
-
-            const leveled = gainExp(baseCharacter, 120);
-            updateCharacter(leveled);
-
-            // Neue Skills oder Drops
-            const oldNames = baseCharacter.skills?.map((s) => s.name) || [];
-            const newSkills = leveled.skills?.filter(
-              (s) => !oldNames.includes(s.name)
-            );
-            if (newSkills?.length) {
-              setNewUnlockedSkills(newSkills);
-            } else if (Math.random() < 0.5) {
-              const drop =
-                equipmentPool[Math.floor(Math.random() * equipmentPool.length)];
-              const nextInventory = [
-                ...(baseCharacter.inventory || []),
-                drop.id,
-              ];
-              updateCharacter({ ...baseCharacter, inventory: nextInventory });
-              setNewDrop(drop);
-            }
-
-            setBattleActive(false);
-            setSelectedStage(null);
-          }, 300);
-        }
-        return nextHp;
-      });
-    },
-    [
-      baseCharacter,
-      scaledBoss,
-      charStats,
-      percentBonuses,
-      addCoins,
-      addCrystals,
-      addXp,
-      gainExp,
-      updateCharacter,
-      completeMissionOnce,
-      updateStage,
-      selectedStage,
-      stagesData,
-    ]
-  );
-
-  const StageNode = ({ stage, progress, onPress }) => {
-    const isBoss = stage.type === "boss";
-    const isUnlocked = progress.unlocked;
-    const isCompleted = progress.completed;
-    const boss = bossData[stage.bossId];
-    const bossImageUrl = boss ? getBossImageUrl(boss.id) : null;
-
-    return (
+  return (
+    <LinearGradient
+      colors={theme.linearGradient}
+      style={styles.stageNodeGradient}
+      start={{ x: 0.12, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
       <Pressable
         style={[
           styles.stageNode,
@@ -220,77 +118,167 @@ export default function BattleScreen() {
         </Text>
         <View style={styles.starsRow}>
           {isUnlocked ? (
-            <>
-              {[...Array(3)].map((_, i) => (
-                <Text
-                  key={i}
-                  style={[
-                    styles.star,
-                    i < progress.stars ? styles.starFilled : styles.starEmpty,
-                  ]}
-                >
-                  ★
-                </Text>
-              ))}
-            </>
+            [...Array(3)].map((_, i) => (
+              <Text
+                key={i}
+                style={[
+                  styles.star,
+                  i < progress.stars ? styles.starFilled : styles.starEmpty,
+                ]}
+              >
+                ★
+              </Text>
+            ))
           ) : (
             <Text style={styles.stageLock}>🔒</Text>
           )}
         </View>
       </Pressable>
-    );
-  };
+    </LinearGradient>
+  );
+}
+
+// ----------- Hauptkomponente ---------- //
+export default function BattleScreen() {
+  const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
+  const navigation = useNavigation();
+  const { addXp } = useAccountLevel();
+  const { addCoins } = useCoins();
+  const { addCrystals } = useCrystals();
+  const { classList, activeClassId, updateCharacter } = useClass();
+  const { gainExp } = useLevelSystem();
+  const completeMissionOnce = useCompleteMissionOnce();
+  const { stageProgress, updateStage, stagesData } = useStage();
+
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [battleActive, setBattleActive] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
+
+  const baseCharacter = useMemo(
+    () => classList.find((c) => c.id === activeClassId),
+    [classList, activeClassId]
+  );
+
+  const { stats: charStats, percentBonuses } = useMemo(
+    () =>
+      baseCharacter
+        ? getCharacterStatsWithEquipment(baseCharacter)
+        : { stats: {}, percentBonuses: {} },
+    [baseCharacter]
+  );
+
+  const boss = useMemo(
+    () =>
+      selectedStage && bossData[selectedStage.bossId]
+        ? {
+            ...bossData[selectedStage.bossId],
+            image:
+              imageMap[
+                getEventBossKey(
+                  bossData[selectedStage.bossId].image,
+                  bossData[selectedStage.bossId].name
+                )
+              ] || bossData[selectedStage.bossId].image,
+          }
+        : null,
+    [selectedStage, bossData, imageMap]
+  );
+
+  const scaledBoss = useMemo(
+    () =>
+      boss && baseCharacter
+        ? scaleBossStats(boss, baseCharacter.level || 1)
+        : null,
+    [boss, baseCharacter]
+  );
+
+  const [bossHp, setBossHp] = useState(scaledBoss?.hp || 100);
+
+  useEffect(() => {
+    setBossHp(scaledBoss?.hp || 100);
+  }, [scaledBoss, battleActive]);
+
+  const handleFight = useCallback(
+    (skill = {}) => {
+      if (!baseCharacter || !scaledBoss) return;
+      const skillPower = skill?.power ?? charStats.attack ?? 30;
+      const damage = calculateSkillDamage({
+        charStats,
+        percentBonuses,
+        skill: { skillDmg: skillPower },
+        enemyDefense: scaledBoss.defense || 0,
+      });
+
+      setBossHp((prev) => {
+        const nextHp = Math.max(prev - damage, 0);
+        if (nextHp === 0) {
+          setTimeout(() => {
+            updateStage(selectedStage.id, { completed: true, stars: 3 });
+            const nextStage = stagesData.find(
+              (s) => s.id === selectedStage.id + 1
+            );
+            if (nextStage) updateStage(nextStage.id, { unlocked: true });
+            addCoins(COIN_REWARD);
+            addCrystals(CRYSTAL_REWARD);
+            addXp(100);
+            completeMissionOnce("1");
+
+            const leveled = gainExp(baseCharacter, 120);
+            updateCharacter(leveled);
+
+            // Neue Skills oder Drops
+            const oldNames = baseCharacter.skills?.map((s) => s.name) || [];
+            const newSkills = leveled.skills?.filter(
+              (s) => !oldNames.includes(s.name)
+            );
+            if (newSkills?.length) {
+              setModalContent({
+                type: "skills",
+                skills: newSkills,
+              });
+            } else if (Math.random() < 0.5) {
+              const drop =
+                equipmentPool[Math.floor(Math.random() * equipmentPool.length)];
+              updateCharacter({
+                ...baseCharacter,
+                inventory: [...(baseCharacter.inventory || []), drop.id],
+              });
+              setModalContent({
+                type: "drop",
+                drop,
+              });
+            }
+
+            setBattleActive(false);
+            setSelectedStage(null);
+          }, 300);
+        }
+        return nextHp;
+      });
+    },
+    [
+      baseCharacter,
+      scaledBoss,
+      charStats,
+      percentBonuses,
+      addCoins,
+      addCrystals,
+      addXp,
+      gainExp,
+      updateCharacter,
+      completeMissionOnce,
+      updateStage,
+      selectedStage,
+      stagesData,
+    ]
+  );
 
   const bossBgKey = getBackgroundKey(scaledBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || scaledBoss?.background;
 
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  const DropModal = ({ visible, drop, onClose }) => (
-    <Modal transparent visible={!!visible} animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
-          <Image
-            source={imageMap["equipment_" + drop.id]}
-            style={{ width: 60, height: 60, margin: 12 }}
-          />
-          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
-            {drop.label}
-          </Text>
-          <Text style={{ color: theme.textColor, fontSize: 14 }}>
-            {drop.description}
-          </Text>
-          <Pressable onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const SkillUnlockModal = ({ visible, skills, onClose }) => (
-    <Modal transparent animationType="fade" visible={!!visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>
-            🎉 Neue Skills freigeschaltet!
-          </Text>
-          {skills.map((s, i) => (
-            <View key={i} style={styles.skillItem}>
-              <Text style={styles.skillName}>{s.name}</Text>
-              <Text style={styles.skillDescription}>{s.description}</Text>
-              <Text style={styles.skillPower}>Power: {s.power}</Text>
-            </View>
-          ))}
-          <Pressable style={styles.okButton} onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
 
   return (
     <View style={styles.container}>
@@ -309,33 +297,46 @@ export default function BattleScreen() {
         <Text style={styles.backText}>← Zurück</Text>
       </Pressable>
 
+      {/* ---------- Stage-Map mit Gradient ---------- */}
       {!battleActive && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.stageMapRow}
+        <LinearGradient
+          colors={theme.linearGradient}
+          start={{ x: 0.12, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.stageMapRowOuter}
         >
-          {stagesData.map((stage, idx) => (
-            <React.Fragment key={stage.id}>
-              <StageNode
-                stage={stage}
-                progress={stageProgress.find((p) => p.id === stage.id)}
-                onPress={() => {
-                  setSelectedStage(stage);
-                  setBattleActive(true);
-                }}
-              />
-              {idx < stagesData.length - 1 && <View style={styles.stageLine} />}
-            </React.Fragment>
-          ))}
-        </ScrollView>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.stageMapRow}
+          >
+            {stagesData.map((stage, idx) => (
+              <React.Fragment key={stage.id}>
+                <StageNode
+                  styles={styles}
+                  stage={stage}
+                  progress={stageProgress.find((p) => p.id === stage.id)}
+                  onPress={() => {
+                    setSelectedStage(stage);
+                    setBattleActive(true);
+                  }}
+                  theme={theme}
+                  imageMap={imageMap}
+                />
+                {idx < stagesData.length - 1 && (
+                  <View style={styles.stageLine} />
+                )}
+              </React.Fragment>
+            ))}
+          </ScrollView>
+        </LinearGradient>
       )}
 
       {battleActive && boss && (
         <BattleScene
           boss={boss}
           bossHp={bossHp}
-          bossMaxHp={bossMaxHp}
+          bossMaxHp={scaledBoss?.hp || 100}
           bossDefeated={bossHp === 0}
           handleFight={handleFight}
           bossBackground={bossBgSrc}
@@ -344,24 +345,47 @@ export default function BattleScreen() {
         />
       )}
 
-      {newDrop && (
-        <DropModal
-          visible={!!newDrop}
-          drop={newDrop}
-          onClose={() => setNewDrop(null)}
+      {/* ----- Modals ------ */}
+      <InfoModal
+        styles={styles}
+        theme={theme}
+        visible={modalContent?.type === "drop"}
+        onClose={() => setModalContent(null)}
+      >
+        <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
+        <Image
+          source={imageMap["equipment_" + modalContent?.drop?.id]}
+          style={{ width: 60, height: 60, margin: 12 }}
         />
-      )}
-      {newUnlockedSkills && (
-        <SkillUnlockModal
-          visible={!!newUnlockedSkills}
-          skills={newUnlockedSkills}
-          onClose={() => setNewUnlockedSkills(null)}
-        />
-      )}
+        <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+          {modalContent?.drop?.label}
+        </Text>
+        <Text style={{ color: theme.textColor, fontSize: 14 }}>
+          {modalContent?.drop?.description}
+        </Text>
+      </InfoModal>
+      <InfoModal
+        styles={styles}
+        theme={theme}
+        visible={modalContent?.type === "skills"}
+        onClose={() => setModalContent(null)}
+      >
+        <Text style={styles.skillModalTitle}>
+          🎉 Neue Skills freigeschaltet!
+        </Text>
+        {(modalContent?.skills || []).map((s, i) => (
+          <View key={i} style={styles.skillItem}>
+            <Text style={styles.skillName}>{s.name}</Text>
+            <Text style={styles.skillDescription}>{s.description}</Text>
+            <Text style={styles.skillPower}>Power: {s.power}</Text>
+          </View>
+        ))}
+      </InfoModal>
     </View>
   );
 }
 
+// ------- Styles ---------
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
@@ -381,34 +405,52 @@ function createStyles(theme) {
       shadowRadius: 8,
       elevation: 2,
     },
-    backText: {
-      color: theme.textColor,
-      fontSize: 16,
-      letterSpacing: 0.12,
+    backText: { color: theme.textColor, fontSize: 16, letterSpacing: 0.12 },
+    stageMapRowOuter: {
+      borderRadius: 20,
+      marginHorizontal: 6,
+      marginBottom: 12,
+      minHeight: 130,
+      padding: 2,
+      // Border-Glow über Gradient
+      shadowColor: theme.accentColorDark,
+      shadowOpacity: 0.17,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 5,
     },
     stageMapRow: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 10,
       paddingVertical: 16,
-      marginBottom: 18,
       minHeight: 130,
+    },
+    stageNodeGradient: {
+      borderRadius: 24,
+      marginHorizontal: 4,
     },
     stageNode: {
       alignItems: "center",
-      marginHorizontal: 12,
+      marginHorizontal: 8,
       width: 92,
       minHeight: 120,
       position: "relative",
+      borderRadius: 18,
+      overflow: "hidden",
+      shadowColor: theme.accentColorDark,
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 4,
     },
+    bossNode: { borderColor: "#e8413c" },
+    completedNode: { borderColor: "#ffd700" },
     iconWrapper: {
       width: 74,
       height: 74,
       borderRadius: 37,
       overflow: "hidden",
-      borderWidth: 3,
-      borderColor: "#f6e27a",
-      backgroundColor: "#222",
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 4,
@@ -419,8 +461,6 @@ function createStyles(theme) {
       shadowOffset: { width: 0, height: 2 },
       elevation: 3,
     },
-    bossNode: { borderColor: "#e8413c" },
-    completedNode: { borderColor: "#ffd700" },
     bossImage: { width: "100%", height: "100%", borderRadius: 37 },
     lockOverlay: {
       ...StyleSheet.absoluteFillObject,

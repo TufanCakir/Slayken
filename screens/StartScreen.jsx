@@ -8,6 +8,7 @@ import {
   Modal,
   SafeAreaView,
   Linking,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -19,9 +20,8 @@ import {
 } from "@expo/vector-icons";
 import { t } from "../i18n";
 import { Image } from "expo-image";
-import { useClass } from "../context/ClassContext";
+import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
-import { useAssets } from "../context/AssetsContext";
 
 const { width } = Dimensions.get("window");
 
@@ -71,39 +71,72 @@ const SOCIALS = [
 export default function StartScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const { classList, activeClassId } = useClass();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const activeCharacter = classList.find((char) => char.id === activeClassId);
+  // Lokales Bild per require
+  const localImage = require("../assets/slayken-font.png");
+
   const styles = createStyles(theme);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centerContent}>
-        {activeCharacter?.classUrl ? (
-          <Image
-            source={{ uri: activeCharacter.classUrl }}
-            style={styles.characterImage}
-            contentFit="contain"
-            transition={300}
-          />
-        ) : (
-          <Text style={styles.noCharText}>Kein Charakter aktiv</Text>
-        )}
+        <Image
+          source={localImage}
+          style={styles.characterImage}
+          contentFit="contain"
+          transition={300}
+        />
       </View>
 
+      {/* START BUTTON mit Gradient & Glow */}
       <TouchableOpacity
         onPress={() => navigation.navigate("LoginScreen")}
-        style={styles.startButton}
         activeOpacity={0.88}
+        style={styles.startButtonOuter}
       >
-        <Text style={styles.startText}>{t("startPrompt")}</Text>
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0.1, 0]}
+          end={[1, 1]}
+          style={styles.startButton}
+        >
+          <Text
+            style={[
+              styles.startText,
+              {
+                textShadowColor: theme.glowColor,
+                textShadowRadius: 8,
+                textShadowOffset: { width: 0, height: 3 },
+              },
+            ]}
+          >
+            {t("startPrompt")}
+          </Text>
+        </LinearGradient>
       </TouchableOpacity>
 
+      {/* Copyright-Block mit Action-Color */}
       <View style={styles.copyright}>
-        <Text style={styles.copyrightText}>{t("copyright")}</Text>
+        <Text
+          style={[
+            styles.copyrightText,
+            {
+              textShadowColor: theme.shadowColor + "77",
+              textShadowRadius: 3,
+              textShadowOffset: { width: 0, height: 2 },
+            },
+          ]}
+        >
+          {t("copyright")}
+        </Text>
       </View>
 
+      {/* Settings-Icon, leicht transparent */}
       <TouchableOpacity
         style={styles.settingsIcon}
         onPress={() => setModalVisible(true)}
@@ -111,10 +144,31 @@ export default function StartScreen() {
         <Ionicons name="settings-sharp" size={28} color={theme.textColor} />
       </TouchableOpacity>
 
+      {/* Modal mit Gradient */}
       <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t("settingsTitle")}</Text>
+          <LinearGradient
+            colors={[
+              theme.accentColorSecondary + "f0",
+              theme.accentColor + "e0",
+              theme.accentColorDark + "e0",
+            ]}
+            start={[0.1, 0]}
+            end={[1, 1]}
+            style={styles.modalContent}
+          >
+            <Text
+              style={[
+                styles.modalTitle,
+                {
+                  textShadowColor: theme.glowColor,
+                  textShadowRadius: 6,
+                  textShadowOffset: { width: 0, height: 2 },
+                },
+              ]}
+            >
+              {t("settingsTitle")}
+            </Text>
 
             <TouchableOpacity
               style={styles.modalItem}
@@ -143,13 +197,14 @@ export default function StartScreen() {
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Text style={styles.closeText}>{t("close")}</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
         </View>
       </Modal>
     </SafeAreaView>
   );
 }
 
+// -- ACTION STYLES --
 function createStyles(theme) {
   const accentBg = theme.accentColor + "f0";
   return StyleSheet.create({
@@ -164,38 +219,57 @@ function createStyles(theme) {
       height: 500,
       marginBottom: 100,
     },
-    noCharText: {
-      color: theme.textColor,
-      fontSize: 22,
-    },
-    startButton: {
+    startButtonOuter: {
       position: "absolute",
       bottom: 140,
       alignSelf: "center",
-      paddingVertical: 16,
-      paddingHorizontal: 44,
-      borderRadius: 20,
-      backgroundColor: theme.accentColor,
       width: width * 0.8,
+      borderRadius: 24,
+      overflow: "hidden",
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.glowColor,
+          shadowRadius: 13,
+          shadowOpacity: 0.8,
+          shadowOffset: { width: 0, height: 8 },
+        },
+        android: {
+          elevation: 13,
+        },
+      }),
+    },
+    startButton: {
+      paddingVertical: 18,
+      paddingHorizontal: 48,
+      borderRadius: 22,
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
     },
     startText: {
-      fontSize: 22,
+      fontSize: 26,
       letterSpacing: 1.3,
       textAlign: "center",
       color: theme.textColor,
-      fontWeight: "700",
+      fontWeight: "800",
+      textTransform: "uppercase",
+      // Starke Lesbarkeit auf Flammen
     },
     copyright: {
       width: "100%",
       alignItems: "center",
       paddingVertical: 8,
-      backgroundColor: theme.accentColor,
+      backgroundColor: theme.accentColor + "d9",
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
+      position: "absolute",
+      bottom: 0,
+      left: 0,
     },
     copyrightText: {
       color: theme.textColor,
       fontSize: 14,
+      fontWeight: "500",
     },
     settingsIcon: {
       position: "absolute",
@@ -204,19 +278,30 @@ function createStyles(theme) {
       padding: 12,
       borderRadius: 24,
       backgroundColor: accentBg,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.glowColor,
+          shadowRadius: 8,
+          shadowOpacity: 0.55,
+          shadowOffset: { width: 0, height: 2 },
+        },
+        android: {
+          elevation: 7,
+        },
+      }),
     },
     modalOverlay: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(16,16,24,0.7)",
+      backgroundColor: "rgba(16,16,24,0.77)",
     },
     modalContent: {
       width: "88%",
       borderRadius: 24,
       padding: 28,
       alignItems: "center",
-      backgroundColor: theme.accentColor,
+      // Gradient als Hintergrund!
     },
     modalTitle: {
       fontSize: 24,
@@ -224,24 +309,25 @@ function createStyles(theme) {
       marginBottom: 20,
       fontWeight: "bold",
       letterSpacing: 0.3,
+      textTransform: "uppercase",
     },
     modalItem: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
       marginBottom: 18,
       marginTop: 7,
     },
     modalItemText: {
       fontSize: 17,
       color: theme.textColor,
+      marginLeft: 12,
+      fontWeight: "600",
     },
     socialIcons: {
       flexDirection: "row",
-      gap: 30,
-      marginVertical: 28,
       flexWrap: "wrap",
       justifyContent: "center",
+      marginVertical: 28,
     },
     socialIcon: {
       alignItems: "center",

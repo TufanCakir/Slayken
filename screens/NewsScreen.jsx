@@ -16,8 +16,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useThemeContext } from "../context/ThemeContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useAssets } from "../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
 
-// Bild-Key-Helfer
 function getEventBossKey(imageUrl) {
   const match = /\/([\w-]+)\.png$/.exec(imageUrl);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
@@ -31,7 +31,7 @@ export default function NewsScreen() {
   const [claimedNews, setClaimedNews] = useState({});
   const styles = createStyles(theme);
 
-  // Belohnung einlösen
+  // Reward einlösen
   const handleLongPress = async (item) => {
     const key = `claimed_news_${item.id}`;
     if (await AsyncStorage.getItem(key)) return;
@@ -41,7 +41,6 @@ export default function NewsScreen() {
     setClaimedNews((prev) => ({ ...prev, [item.id]: true }));
   };
 
-  // Bereits eingelöste News laden
   useEffect(() => {
     (async () => {
       const claims = {};
@@ -54,20 +53,35 @@ export default function NewsScreen() {
     })();
   }, []);
 
-  // News-Eintrag-Render
   const renderItem = ({ item }) => {
     const claimed = claimedNews[item.id];
     const bossKey = getEventBossKey(item.image);
     const imageSource =
       bossKey && imageMap[bossKey] ? imageMap[bossKey] : item.image;
 
+    // Farben aus Theme (oder eigene)
+    const gradientColors = theme.linearGradient || [
+      theme.accentColorSecondary,
+      theme.accentColor,
+      theme.accentColorDark,
+    ];
+
     return (
       <TouchableOpacity
         onLongPress={() => handleLongPress(item)}
-        activeOpacity={0.9}
+        activeOpacity={0.91}
         style={claimed ? styles.itemClaimedWrap : undefined}
+        disabled={claimed}
       >
         <View style={[styles.item, claimed && styles.itemClaimed]}>
+          {/* LinearGradient als Hintergrund */}
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+
           <Image
             source={imageSource}
             style={styles.image}
@@ -79,7 +93,11 @@ export default function NewsScreen() {
             <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
           ) : (
             <View style={styles.tooltip}>
-              <RewardDisplay />
+              <RewardChip icon="coin" text="+100" theme={theme} />
+              <RewardChip icon="crystal" text="+10" theme={theme} />
+              <Text style={styles.longpressHint}>
+                Long-Press für Belohnung!
+              </Text>
             </View>
           )}
           {item.description && (
@@ -98,38 +116,48 @@ export default function NewsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
     </ScreenLayout>
   );
 }
 
-// Hilfs-Komponente für die Belohnungsanzeige (verhindert Duplikate)
-function RewardDisplay() {
+// Stylischer Reward-Chip für Coin/Crystal
+function RewardChip({ icon, text, theme }) {
   return (
-    <>
-      <Text style={{ fontSize: 13 }}>Halten für Belohnung:</Text>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: theme.borderGlowColor + "bb",
+        borderRadius: 8,
+        paddingVertical: 3,
+        paddingHorizontal: 8,
+        marginHorizontal: 3,
+        shadowColor: theme.borderGlowColor,
+        shadowRadius: 5,
+        shadowOpacity: 0.17,
+        shadowOffset: { width: 0, height: 1 },
+      }}
+    >
       <Image
-        source={getItemImageUrl("coin")}
-        style={rewardIconStyle}
+        source={getItemImageUrl(icon)}
+        style={{ width: 18, height: 18, marginRight: 4 }}
         contentFit="contain"
       />
-      <Text style={{ fontSize: 13, color: "white" }}>+100</Text>
-      <Image
-        source={getItemImageUrl("crystal")}
-        style={rewardIconStyle}
-        contentFit="contain"
-      />
-      <Text style={{ fontSize: 13, color: "white" }}>+10</Text>
-    </>
+      <Text
+        style={{
+          fontWeight: "bold",
+          color: theme.accentColor,
+          fontSize: 14,
+          letterSpacing: 0.11,
+        }}
+      >
+        {text}
+      </Text>
+    </View>
   );
 }
-
-const rewardIconStyle = {
-  width: 18,
-  height: 18,
-  marginHorizontal: 2,
-  marginBottom: -1,
-};
 
 function createStyles(theme) {
   return StyleSheet.create({
@@ -137,69 +165,91 @@ function createStyles(theme) {
     header: {
       textAlign: "center",
       padding: 16,
-      borderRadius: 14,
-      marginBottom: 12,
-      fontSize: 25,
+      borderRadius: 15,
+      marginBottom: 14,
+      fontSize: 26,
       color: theme.textColor,
       backgroundColor: theme.accentColor,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
       shadowColor: theme.glowColor,
-      shadowOpacity: 0.16,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 3,
+      shadowOpacity: 0.19,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 4,
+      fontWeight: "bold",
+      letterSpacing: 0.3,
     },
     listContainer: {
-      paddingHorizontal: 18,
+      paddingHorizontal: 16,
       paddingBottom: 80,
     },
     item: {
       backgroundColor: theme.accentColor,
-      borderRadius: 18,
-      marginBottom: 18,
-      padding: 10,
-      borderWidth: 1,
+      borderRadius: 19,
+      marginBottom: 22,
+      padding: 11,
+      borderWidth: 2,
       borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.11,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+      alignItems: "center",
     },
-    itemClaimed: { opacity: 0.5 },
+    itemClaimed: { opacity: 0.42 },
     itemText: {
-      fontSize: 17,
+      fontSize: 18,
       color: theme.textColor,
       marginTop: 12,
-      letterSpacing: 0.12,
+      letterSpacing: 0.14,
       textAlign: "center",
       fontWeight: "bold",
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 3,
     },
     image: {
       width: "100%",
-      height: 165,
-      borderRadius: 12,
+      height: 170,
+      borderRadius: 13,
+      marginBottom: 6,
+      backgroundColor: theme.shadowColor,
     },
     tooltip: {
-      marginTop: 8,
+      marginTop: 9,
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       flexWrap: "wrap",
-      gap: 4,
+      gap: 6,
     },
     claimed: {
-      marginTop: 8,
-      color: theme.textColor,
-      fontSize: 13,
+      marginTop: 10,
+      color: theme.borderGlowColor,
+      fontSize: 15,
       textAlign: "center",
+      fontWeight: "700",
       fontStyle: "italic",
-      fontWeight: "500",
+      letterSpacing: 0.12,
     },
     description: {
       color: theme.textColor,
-      fontSize: 13,
+      fontSize: 13.5,
       textAlign: "center",
-      marginTop: 6,
+      marginTop: 8,
+      opacity: 0.86,
     },
-    itemClaimedWrap: {
-      // Falls du einen zusätzlichen Stil für geklickte News brauchst
+    longpressHint: {
+      fontSize: 12.5,
+      color: theme.textColor,
+      marginLeft: 7,
+      fontStyle: "italic",
+      fontWeight: "500",
+      letterSpacing: 0.08,
+      opacity: 0.8,
     },
+    itemClaimedWrap: {},
   });
 }

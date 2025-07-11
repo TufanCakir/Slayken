@@ -12,6 +12,7 @@ import elementData from "../data/elementData.json";
 import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function CharacterSelectScreen() {
   const navigation = useNavigation();
@@ -35,7 +36,6 @@ export default function CharacterSelectScreen() {
     }
   };
 
-  // Render-Helper für Card und EmptySlot, damit FlatList nicht dupliziert
   const renderItem = ({ item }) =>
     item ? (
       <CharacterCard
@@ -54,7 +54,19 @@ export default function CharacterSelectScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Wähle deinen Kämpfer</Text>
+      {/* Gradient Header */}
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.headerGradient}
+      >
+        <Text style={styles.title}>Wähle deinen Kämpfer</Text>
+      </LinearGradient>
       <FlatList
         data={fullCharacterList}
         keyExtractor={(_, idx) => idx.toString()}
@@ -62,8 +74,23 @@ export default function CharacterSelectScreen() {
         renderItem={renderItem}
       />
       {selectedId && (
-        <TouchableOpacity style={styles.startButton} onPress={handleStart}>
-          <Text style={styles.startText}>Starten</Text>
+        <TouchableOpacity
+          style={styles.startButton}
+          onPress={handleStart}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={[
+              theme.accentColorSecondary,
+              theme.accentColor,
+              theme.accentColorDark,
+            ]}
+            start={[0.1, 0]}
+            end={[1, 1]}
+            style={styles.startButtonInner}
+          >
+            <Text style={styles.startText}>Starten</Text>
+          </LinearGradient>
         </TouchableOpacity>
       )}
     </View>
@@ -76,22 +103,33 @@ function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
   const styles = createStyles(theme);
   return (
     <TouchableOpacity
-      style={[styles.card, isSelected && styles.selectedCard]}
+      style={[styles.cardOuter, isSelected && styles.selectedCardOuter]}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.87}
     >
-      <Image
-        source={imageMap[`class_${item.baseId}`] || { uri: item.classUrl }}
-        style={styles.avatar}
-        contentFit="contain"
-        transition={300}
-      />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.level}>Level {item.level}</Text>
-      <Text style={styles.element}>
-        {elementData[item.element]?.icon} {elementData[item.element]?.label}
-      </Text>
-      <Text style={styles.classText}>{item.type}</Text>
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.05, 0]}
+        end={[1, 1]}
+        style={styles.card}
+      >
+        <Image
+          source={imageMap[`class_${item.baseId}`] || { uri: item.classUrl }}
+          style={styles.avatar}
+          contentFit="contain"
+          transition={300}
+        />
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.level}>Level {item.level}</Text>
+        <Text style={styles.element}>
+          {elementData[item.element]?.icon} {elementData[item.element]?.label}
+        </Text>
+        <Text style={styles.classText}>{item.type}</Text>
+      </LinearGradient>
     </TouchableOpacity>
   );
 }
@@ -99,8 +137,23 @@ function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
 function EmptySlot({ theme, onPress }) {
   const styles = createStyles(theme);
   return (
-    <TouchableOpacity style={styles.emptySlot} onPress={onPress}>
-      <Text style={styles.emptyText}>+ Charakter erstellen</Text>
+    <TouchableOpacity
+      style={styles.emptySlotOuter}
+      onPress={onPress}
+      activeOpacity={0.82}
+    >
+      <LinearGradient
+        colors={[
+          theme.shadowColor,
+          theme.accentColor,
+          theme.accentColorSecondary,
+        ]}
+        start={[0, 0]}
+        end={[1, 0]}
+        style={styles.emptySlot}
+      >
+        <Text style={styles.emptyText}>+ Charakter erstellen</Text>
+      </LinearGradient>
     </TouchableOpacity>
   );
 }
@@ -110,46 +163,65 @@ function createStyles(theme) {
   const accent = theme.accentColor;
   const text = theme.textColor;
   const shadow = theme.shadowColor;
-
+  const highlight = theme.borderGlowColor;
   return StyleSheet.create({
     container: {
       flex: 1,
       paddingTop: 22,
       paddingHorizontal: 14,
-      backgroundColor: theme.background,
+      backgroundColor: theme.background || accent,
+    },
+    headerGradient: {
+      borderRadius: 16,
+      marginBottom: 15,
+      alignSelf: "center",
+      width: "90%",
+      paddingVertical: 13,
+      paddingHorizontal: 10,
+      shadowColor: theme.glowColor,
+      shadowRadius: 13,
+      shadowOpacity: 0.34,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 7,
     },
     title: {
       fontSize: 26,
       fontWeight: "bold",
       color: text,
-      marginBottom: 18,
       textAlign: "center",
-      letterSpacing: 0.4,
-      textShadowColor: shadow,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 5,
+      letterSpacing: 0.7,
     },
     list: {
       paddingBottom: 30,
     },
-    card: {
-      backgroundColor: accent,
-      borderRadius: 17,
-      padding: 18,
+    cardOuter: {
+      borderRadius: 20,
       marginBottom: 18,
       alignItems: "center",
       borderWidth: 2,
       borderColor: "transparent",
+      shadowColor: theme.glowColor,
+      shadowRadius: 9,
+      shadowOpacity: 0.11,
+      elevation: 3,
     },
-    selectedCard: {
-      borderColor: text,
+    selectedCardOuter: {
+      borderColor: highlight,
+      shadowOpacity: 0.22,
+      elevation: 5,
+    },
+    card: {
+      borderRadius: 17,
+      padding: 18,
+      alignItems: "center",
+      width: "100%",
     },
     avatar: {
       width: 160,
       height: 160,
       borderRadius: 14,
       marginBottom: 10,
-      backgroundColor: accent,
+      shadowRadius: 8,
     },
     name: {
       fontSize: 19,
@@ -158,12 +230,16 @@ function createStyles(theme) {
       marginBottom: 2,
       textAlign: "center",
       letterSpacing: 0.17,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 6,
     },
     level: {
       fontSize: 15,
-      color: text,
+      color: highlight,
       fontWeight: "700",
       marginBottom: 2,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 5,
     },
     element: {
       fontSize: 14,
@@ -171,6 +247,8 @@ function createStyles(theme) {
       marginBottom: 4,
       letterSpacing: 0.1,
       color: text,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 3,
     },
     classText: {
       fontSize: 13,
@@ -179,41 +257,63 @@ function createStyles(theme) {
       fontWeight: "bold",
       letterSpacing: 0.12,
     },
+    emptySlotOuter: {
+      borderRadius: 15,
+      marginBottom: 16,
+      borderWidth: 1.5,
+      borderColor: highlight,
+      opacity: 0.93,
+      shadowColor: theme.glowColor,
+      shadowRadius: 7,
+      shadowOpacity: 0.09,
+      elevation: 2,
+    },
     emptySlot: {
-      backgroundColor: accent,
       borderRadius: 15,
       paddingVertical: 42,
       paddingHorizontal: 12,
       alignItems: "center",
-      marginBottom: 16,
-      borderWidth: 1.5,
-      borderColor: accent,
-      opacity: 0.7,
+      width: 235,
+      backgroundColor: accent,
+      justifyContent: "center",
     },
     emptyText: {
       color: text,
       fontSize: 16,
       fontWeight: "bold",
       letterSpacing: 0.16,
-      opacity: 0.8,
+      opacity: 0.82,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 4,
     },
     startButton: {
-      backgroundColor: accent,
-      borderRadius: 20,
-      paddingVertical: 16,
       marginTop: 10,
-      marginBottom: 12,
+      marginBottom: 15,
       alignSelf: "center",
-      width: "80%",
-      alignItems: "center",
+      width: "81%",
+      borderRadius: 21,
+      overflow: "hidden",
+      shadowColor: theme.glowColor,
+      shadowRadius: 14,
+      shadowOpacity: 0.17,
+      elevation: 6,
       borderWidth: 2,
-      borderColor: text,
+      borderColor: highlight,
+    },
+    startButtonInner: {
+      borderRadius: 21,
+      paddingVertical: 16,
+      alignItems: "center",
+      width: "100%",
+      justifyContent: "center",
     },
     startText: {
       color: text,
       fontSize: 21,
       fontWeight: "bold",
       letterSpacing: 0.2,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 7,
     },
   });
 }

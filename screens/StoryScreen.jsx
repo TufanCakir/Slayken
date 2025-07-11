@@ -15,12 +15,12 @@ import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import BattleScene from "../components/BattleScene";
-import { useMissions } from "../context/MissionContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import bossData from "../data/bossData.json";
 import chapterData from "../data/chapterData.json";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
@@ -40,12 +40,21 @@ const getAssetKey = (url, prefix, fallback) => {
   return name ? `${prefix}${name.toLowerCase()}` : null;
 };
 
-function SkillUnlockModal({ visible, skills, onClose, styles }) {
+function SkillUnlockModal({ visible, skills, onClose, styles, theme }) {
   if (!visible) return null;
   return (
     <Modal transparent animationType="fade" visible>
       <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0.2, 0]}
+          end={[1, 1]}
+          style={styles.skillModal}
+        >
           <Text style={styles.skillModalTitle}>
             🎉 Neue Skills freigeschaltet!
           </Text>
@@ -59,7 +68,7 @@ function SkillUnlockModal({ visible, skills, onClose, styles }) {
           <Pressable style={styles.okButton} onPress={onClose}>
             <Text style={styles.okText}>OK</Text>
           </Pressable>
-        </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -208,18 +217,30 @@ export default function StoryScreen() {
             const bossImage = boss ? imageMap[bossImgKey] || boss.image : null;
             return (
               <TouchableOpacity
-                style={styles.chapterCard}
+                style={styles.chapterCardOuter}
                 onPress={() => setSelectedChapter(item)}
+                activeOpacity={0.89}
               >
-                <Image
-                  source={bossImage}
-                  style={styles.chapterImage}
-                  contentFit="contain"
-                />
-                <View style={styles.chapterOverlay}>
-                  <Text style={styles.chapterTitle}>{item.label}</Text>
-                  <Text style={styles.chapterDesc}>{item.description}</Text>
-                </View>
+                <LinearGradient
+                  colors={[
+                    theme.accentColorSecondary,
+                    theme.accentColor,
+                    theme.accentColorDark,
+                  ]}
+                  start={[0.2, 0]}
+                  end={[1, 1]}
+                  style={styles.chapterCard}
+                >
+                  <Image
+                    source={bossImage}
+                    style={styles.chapterImage}
+                    contentFit="cover"
+                  />
+                  <View style={styles.chapterOverlay}>
+                    <Text style={styles.chapterTitle}>{item.label}</Text>
+                    <Text style={styles.chapterDesc}>{item.description}</Text>
+                  </View>
+                </LinearGradient>
               </TouchableOpacity>
             );
           }}
@@ -264,6 +285,7 @@ export default function StoryScreen() {
         skills={newUnlockedSkills || []}
         onClose={handleCloseSkillModal}
         styles={styles}
+        theme={theme}
       />
     </View>
   );
@@ -280,97 +302,137 @@ function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
     header: {
-      fontSize: 24,
+      fontSize: 26,
       color: highlight,
       marginBottom: 12,
       textAlign: "center",
-      letterSpacing: 0.4,
+      letterSpacing: 0.7,
       fontWeight: "bold",
+      textShadowColor: glow,
+      textShadowRadius: 12,
+      textShadowOffset: { width: 0, height: 3 },
     },
     chapterList: { padding: 12, gap: 12 },
-    chapterCard: {
-      backgroundColor: cardBg,
-      borderRadius: 18,
-      height: 200,
+    chapterCardOuter: {
       marginVertical: 6,
+      borderRadius: 22,
       overflow: "hidden",
+      shadowColor: highlight,
+      shadowOpacity: 0.16,
+      shadowRadius: 18,
+      elevation: 6,
     },
-    chapterImage: { flex: 1, borderRadius: 18, width: "100%" },
+    chapterCard: {
+      borderRadius: 22,
+      height: 300,
+      justifyContent: "center",
+      overflow: "hidden",
+      flex: 1,
+    },
+    chapterImage: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: 22,
+      opacity: 0.61,
+    },
     chapterOverlay: {
       position: "absolute",
       bottom: 0,
       width: "100%",
-      backgroundColor: accent,
-      padding: 9,
-      borderBottomLeftRadius: 18,
-      borderBottomRightRadius: 18,
+      padding: 11,
+      borderBottomLeftRadius: 22,
+      borderBottomRightRadius: 22,
+      backgroundColor: accent + "ec",
+      alignItems: "center",
     },
     chapterTitle: {
       color: highlight,
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: "bold",
-      letterSpacing: 0.1,
+      letterSpacing: 0.22,
+      textShadowColor: glow,
+      textShadowRadius: 7,
+      textShadowOffset: { width: 0, height: 2 },
     },
     chapterDesc: {
       color: text,
-      fontSize: 14,
-      marginTop: 3,
+      fontSize: 15,
+      marginTop: 4,
       fontWeight: "500",
+      textAlign: "center",
+      textShadowColor: accent + "d0",
+      textShadowRadius: 5,
+      textShadowOffset: { width: 0, height: 1 },
     },
     backButton: {
-      marginVertical: 10,
-      padding: 4,
+      marginVertical: 12,
+      padding: 5,
       alignSelf: "flex-start",
+      marginLeft: 5,
+      backgroundColor: accent + "a4",
+      borderRadius: 12,
     },
     backText: {
-      fontSize: 16,
+      fontSize: 17,
       color: highlight,
       fontWeight: "bold",
+      textShadowColor: glow,
+      textShadowRadius: 7,
+      textShadowOffset: { width: 0, height: 2 },
     },
     chapterTitleFight: {
       color: highlight,
-      fontSize: 22,
-      marginBottom: 12,
+      fontSize: 23,
+      marginBottom: 13,
       textAlign: "center",
-      letterSpacing: 0.5,
+      letterSpacing: 0.7,
       fontWeight: "bold",
+      textShadowColor: glow,
+      textShadowRadius: 13,
+      textShadowOffset: { width: 0, height: 4 },
     },
     modalOverlay: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.7)",
+      backgroundColor: "rgba(0,0,0,0.77)",
     },
     skillModal: {
-      backgroundColor: accent + "f5",
-      padding: 20,
-      margin: 32,
-      borderRadius: 16,
+      borderRadius: 18,
+      padding: 26,
+      width: "85%",
+      alignItems: "center",
     },
     skillModalTitle: {
       color: highlight,
       fontWeight: "bold",
-      fontSize: 18,
-      marginBottom: 12,
+      fontSize: 19,
+      marginBottom: 14,
       textAlign: "center",
       textShadowColor: glow,
-      textShadowRadius: 8,
+      textShadowRadius: 9,
     },
-    skillItem: { marginBottom: 13 },
+    skillItem: { marginBottom: 15 },
     skillName: {
-      fontSize: 16,
+      fontSize: 17,
       color: highlight,
       fontWeight: "bold",
+      textShadowColor: glow,
+      textShadowRadius: 7,
     },
-    skillDescription: { fontSize: 14, color: text },
+    skillDescription: { fontSize: 14, color: text, textAlign: "center" },
     skillPower: { fontSize: 12, color: text, fontStyle: "italic" },
     okButton: {
       backgroundColor: highlight,
-      padding: 10,
-      borderRadius: 10,
+      paddingVertical: 11,
+      paddingHorizontal: 27,
+      borderRadius: 12,
       alignSelf: "center",
-      marginTop: 16,
+      marginTop: 19,
+      shadowColor: glow,
+      shadowOpacity: 0.6,
+      shadowRadius: 7,
+      elevation: 6,
     },
-    okText: { color: accent, fontWeight: "bold" },
+    okText: { color: accent, fontWeight: "bold", fontSize: 16 },
   });
 }

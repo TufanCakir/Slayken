@@ -16,6 +16,7 @@ import { useAssets } from "../context/AssetsContext";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import skinData from "../data/skinData.json";
 import { scaleBossStats } from "../utils/combatUtils";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Effekt Mapping
 const EFFECT_MAP = {
@@ -46,6 +47,12 @@ export default function BattleScene({
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const styles = createStyles(theme);
+
+  const gradientColors = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
 
   // Aktiver Charakter + Stats
   const activeCharacter = classList.find((c) => c.id === activeClassId);
@@ -145,26 +152,39 @@ export default function BattleScene({
     <View style={styles.wrapper}>
       {/* Boss-Anzeige */}
       <View style={styles.bossContainer}>
-        <BlurView intensity={55} tint="dark" style={styles.bossInfo}>
-          <Text style={styles.title}>
-            {bossName} (Lvl {activeCharacter.level || 1})
-          </Text>
-          <Text style={styles.hpLabel}>
-            HP: <Text style={styles.hpValue}>{bossHp}</Text> / {maxHp}
-          </Text>
-          <View style={styles.barContainer}>
-            <View
-              style={[
-                styles.hpBar,
-                { width: `${bossHpPercent}%` },
-                bossHpPercent < 10 && { minWidth: 8 },
-              ]}
-            />
-          </View>
-          {bossDefeated && (
-            <Text style={styles.victory}>✅ Du hast {bossName} besiegt!</Text>
-          )}
-        </BlurView>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.bossInfoGradient}
+        >
+          <BlurView intensity={55} tint="dark" style={styles.bossInfoBlur}>
+            <Text style={styles.title}>
+              {bossName} (Lvl {activeCharacter.level || 1})
+            </Text>
+            <Text style={styles.hpLabel}>
+              HP: <Text style={styles.hpValue}>{bossHp}</Text> / {maxHp}
+            </Text>
+            <View style={styles.barContainer}>
+              <LinearGradient
+                colors={[
+                  theme.hpBarStart || "#ef2222",
+                  theme.hpBarEnd || "#b90000",
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.hpBar,
+                  { width: `${bossHpPercent}%` },
+                  bossHpPercent < 10 && { minWidth: 8 },
+                ]}
+              />
+            </View>
+            {bossDefeated && (
+              <Text style={styles.victory}>✅ Du hast {bossName} besiegt!</Text>
+            )}
+          </BlurView>
+        </LinearGradient>
         <Image
           source={bossImgSrc}
           style={styles.bossImage}
@@ -185,15 +205,26 @@ export default function BattleScene({
           }
         }}
       >
-        <View style={styles.avatarWrapper}>
-          <BlurView intensity={50} tint="dark" style={styles.characterInfo}>
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.characterInfoGradient}
+        >
+          <BlurView intensity={50} tint="dark" style={styles.characterInfoBlur}>
             <Text style={styles.charName}>{name}</Text>
             <Text style={styles.charLevel}>Level {level}</Text>
             <Text style={styles.charXp}>
               XP {exp} / {expToNextLevel}
             </Text>
             <View style={styles.xpBarContainer}>
-              <View
+              <LinearGradient
+                colors={[
+                  theme.xpBarStart || "#2175ff",
+                  theme.xpBarEnd || "#15e3ff",
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
                 style={[
                   styles.xpBar,
                   { width: `${expPercent}%` },
@@ -202,12 +233,12 @@ export default function BattleScene({
               />
             </View>
           </BlurView>
-          <Image
-            source={classImgSrc}
-            style={styles.avatar}
-            contentFit="contain"
-          />
-        </View>
+        </LinearGradient>
+        <Image
+          source={classImgSrc}
+          style={styles.avatar}
+          contentFit="contain"
+        />
       </Pressable>
 
       {/* Effekte */}
@@ -239,14 +270,18 @@ function createStyles(theme) {
       paddingVertical: 24,
       gap: 16,
     },
-    bossInfo: {
+    bossInfoGradient: {
       flex: 1,
-      marginRight: 12,
       borderRadius: 14,
-      padding: 16,
-      backgroundColor: theme.accentColor,
+      marginRight: 12,
       minWidth: 180,
       maxWidth: 300,
+      overflow: "hidden",
+    },
+    bossInfoBlur: {
+      borderRadius: 14,
+      padding: 16,
+      backgroundColor: "transparent",
     },
     title: {
       fontSize: 18,
@@ -279,7 +314,6 @@ function createStyles(theme) {
     },
     hpBar: {
       height: "100%",
-      backgroundColor: "#ef2222",
       borderRadius: 8,
     },
     xpBarContainer: {
@@ -292,12 +326,11 @@ function createStyles(theme) {
     },
     xpBar: {
       height: "100%",
-      backgroundColor: "#2175ff",
       borderRadius: 6,
     },
     bossImage: {
-      width: 90,
-      height: 90,
+      width: 200,
+      height: 200,
       borderRadius: 12,
     },
     victory: {
@@ -306,20 +339,21 @@ function createStyles(theme) {
       color: text,
       letterSpacing: 0.2,
     },
-    playerArea: { flex: 1, alignItems: "center", justifyContent: "center" },
-    avatarWrapper: {
+    playerArea: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 12,
-      gap: 12,
+      justifyContent: "center",
     },
-    characterInfo: {
-      flex: 1,
+    characterInfoGradient: {
+      borderRadius: 13,
+      marginRight: 10,
+      minWidth: 160,
+      overflow: "hidden",
+    },
+    characterInfoBlur: {
       borderRadius: 13,
       padding: 15,
-      backgroundColor: theme.accentColor,
-      minWidth: 160,
-      marginRight: 10,
+      backgroundColor: "transparent",
     },
     charName: {
       fontSize: 15,
@@ -338,8 +372,8 @@ function createStyles(theme) {
       marginBottom: 5,
     },
     avatar: {
-      width: 90,
-      height: 90,
+      width: 200,
+      height: 200,
       borderRadius: 12,
     },
     textLight: {

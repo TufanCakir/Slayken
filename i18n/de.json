@@ -29,6 +29,7 @@
   "homeLabel": "Startseite",
   "teaserLabel": "Vorschau",
   "equipmentLabel": "Ausrüstung",
+  "valuablesLabel": "Wertsachen",
   "createLabel": "Erstellen",
   "overviewLabel": "Übersicht",
   "summonLabel": "Beschwören",
@@ -112,6 +113,18 @@
   "loginFailed": "Login fehlgeschlagen.",
   "confirmLogin": "Möchtest du dich als \"{{name}}\" einloggen?",
   "cancel": "Nein",
+  "valuablesNameLabels": {
+    "valuablesTitle": "Besondere Items",
+    "specialItems": "Besondere Items",
+    "youOwn": "Du besitzt:",
+    "expPotion": "EXP-Potion",
+    "expPotionPlural": "EXP-Potions",
+    "useExpPotion": "EXP-Potion verwenden",
+
+    "selectCharacter": "Wähle einen Charakter",
+    "levelShort": "Lv.",
+    "cancel": "Abbrechen"
+  },
   "playerNameLabels": {
     "playerNameTitle": "Spielername ändern",
     "currentNameLabel": "Aktueller Name:",

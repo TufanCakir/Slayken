@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useThemeContext } from "../context/ThemeContext";
 
@@ -16,9 +17,17 @@ function RewardIcon({ type, style }) {
   return <Image source={imgSrc} style={style} contentFit="contain" />;
 }
 
-export default function MissionItem({ item, onCollect }) {
+export default function MissionItem({ item, onCollect, gradientColors }) {
   const { theme } = useThemeContext();
   const styles = createStyles(theme);
+
+  // Gradientfarben: Von Prop oder aus Theme
+  const colors = gradientColors ||
+    theme.linearGradient || [
+      theme.accentColorSecondary,
+      theme.accentColor,
+      theme.accentColorDark,
+    ];
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -53,6 +62,13 @@ export default function MissionItem({ item, onCollect }) {
         { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
       ]}
     >
+      {/* Gradient Hintergrund */}
+      <LinearGradient
+        colors={colors}
+        start={[0, 0]}
+        end={[1, 0]}
+        style={StyleSheet.absoluteFill}
+      />
       <Text
         style={[styles.missionText, isCollected && styles.missionTextCollected]}
       >
@@ -90,7 +106,6 @@ function createStyles(theme) {
   return StyleSheet.create({
     missionItem: {
       marginBottom: 16,
-      backgroundColor: theme.accentColor,
       borderRadius: 14,
       padding: 18,
       borderWidth: 2,
@@ -100,9 +115,12 @@ function createStyles(theme) {
       shadowOpacity: 0.12,
       shadowRadius: 10,
       elevation: 3,
+      position: "relative", // Für Gradient-Layer!
+      overflow: "hidden", // Damit Gradient keine runden Ecken verlässt
+      backgroundColor: "transparent", // Wichtig!
     },
     collectedItem: {
-      backgroundColor: theme.shadowColor,
+      backgroundColor: theme.shadowColor + "BB",
       opacity: 0.82,
     },
     missionText: {

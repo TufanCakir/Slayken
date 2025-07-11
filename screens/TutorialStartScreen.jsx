@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import tutorialData from "../data/tutorialData.json";
 import { useThemeContext } from "../context/ThemeContext";
 
@@ -48,7 +49,12 @@ export default function TutorialStartScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.overlay}>
+      <LinearGradient
+        colors={theme.linearGradient}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.overlay}
+      >
         <Text style={styles.text}>{currentStep.text}</Text>
         <TouchableOpacity
           style={styles.button}
@@ -59,7 +65,7 @@ export default function TutorialStartScreen() {
             {isLast ? "Los geht’s" : "Weiter"}
           </Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -69,15 +75,14 @@ function createStyles(theme) {
     container: {
       flex: 1,
       justifyContent: "center",
-      backgroundColor: theme.bgImage ? "transparent" : theme.accentColor,
     },
     overlay: {
-      backgroundColor: theme.accentColor,
       padding: 28,
       borderRadius: 16,
       marginHorizontal: 16,
       maxWidth: width * 0.92,
       alignSelf: "center",
+      // Kein backgroundColor mehr, das macht jetzt der LinearGradient
     },
     text: {
       fontSize: 19,

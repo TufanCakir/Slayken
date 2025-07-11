@@ -10,6 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function PlayerNameSection() {
   const { theme } = useThemeContext();
@@ -54,11 +55,21 @@ export default function PlayerNameSection() {
       />
       <Pressable
         onPress={handleSave}
-        style={({ pressed }) => ({
-          ...styles.button,
-          opacity: pressed ? 0.8 : 1,
-        })}
+        style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
       >
+        {/* Gradient-Hintergrund */}
+        <LinearGradient
+          colors={
+            theme.linearGradient || [
+              theme.accentColorSecondary,
+              theme.accentColor,
+              theme.accentColorDark,
+            ]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
         <Text style={styles.buttonText}>
           {t("playerNameLabels.saveButton")}
         </Text>
@@ -99,10 +110,12 @@ const createStyles = (theme) =>
     button: {
       padding: 14,
       borderRadius: 10,
-      backgroundColor: theme.accentColor,
       alignItems: "center",
       marginTop: 6,
+      overflow: "hidden", // Gradient bleibt im Button!
+      position: "relative", // Für absoluteFill
     },
+
     buttonText: {
       fontSize: 16,
       color: theme.textColor,

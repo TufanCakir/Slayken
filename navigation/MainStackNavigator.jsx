@@ -24,6 +24,7 @@ import PreBattleInfoScreen from "../screens/PreBattleInfoScreen";
 import TeaserScreen from "../screens/TeaserScreen";
 import InventoryScreen from "../screens/InventoryScreen";
 import CharacterOverviewScreen from "../screens/CharacterOverviewScreen";
+import ValuablesScreen from "../screens/ValuablesScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -59,6 +60,7 @@ export default function MainStackNavigator() {
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="TeaserScreen" component={TeaserScreen} />
       <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
+      <Stack.Screen name="ValuablesScreen" component={ValuablesScreen} />
       <Stack.Screen
         name="PreBattleInfoScreen"
         component={PreBattleInfoScreen}

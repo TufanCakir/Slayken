@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 const LANGUAGES = ["de", "en"];
 
@@ -10,6 +11,13 @@ export default function LanguageSection() {
   const { theme } = useThemeContext();
   const { language, setLanguage } = useLanguage();
   const styles = createStyles(theme);
+
+  // Farben für Gradient
+  const gradientColors = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
 
   return (
     <View style={styles.section}>
@@ -24,17 +32,26 @@ export default function LanguageSection() {
               disabled={isActive}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
-              style={({ pressed }) => ({
-                ...styles.langButton,
-                ...(isActive && styles.langButtonActive),
-                ...(pressed && !isActive && styles.langButtonPressed),
-              })}
+              style={({ pressed }) => [
+                styles.langButton,
+                isActive && styles.langButtonActive,
+                pressed && !isActive && styles.langButtonPressed,
+              ]}
             >
+              {/* Gradient nur für aktiven Button */}
+              {isActive && (
+                <LinearGradient
+                  colors={gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
               <Text
-                style={{
-                  ...styles.langButtonText,
-                  ...(isActive && styles.langButtonTextActive),
-                }}
+                style={[
+                  styles.langButtonText,
+                  isActive && styles.langButtonTextActive,
+                ]}
               >
                 {t(`languageLabels.${code}`)}
               </Text>
@@ -78,9 +95,11 @@ function createStyles(theme) {
       marginRight: 8,
       marginBottom: 5,
       opacity: 1,
+      position: "relative", // Wichtig für absoluteFill des Gradients!
+      overflow: "hidden", // Gradient bleibt im Button!
     },
     langButtonActive: {
-      backgroundColor: text,
+      // Keine separate BG, Gradient übernimmt
     },
     langButtonPressed: {
       opacity: 0.7,
@@ -91,9 +110,10 @@ function createStyles(theme) {
       letterSpacing: 0.5,
       textAlign: "center",
       color: text,
+      zIndex: 1, // Immer über Gradient
     },
     langButtonTextActive: {
-      color: accent,
+      color: accent, // Text hebt sich von Gradient ab
     },
   });
 }
