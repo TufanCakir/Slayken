@@ -24,7 +24,6 @@ import classData from "../data/classData.json";
 import EventList from "../components/EventList";
 import BattleView from "../components/BattleView";
 import { Image } from "expo-image";
-
 import { getClassImageUrl } from "../utils/classUtils";
 import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
@@ -35,7 +34,6 @@ const getEventBossKey = (url) => {
   const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "eventboss_" + match[1].toLowerCase() : null;
 };
-
 const getBackgroundKey = (url) => {
   if (!url) return null;
   const match = /\/([\w-]+)\.png$/i.exec(url);
@@ -60,18 +58,20 @@ export default function EventScreen() {
     useClass();
   const { gainExp } = useLevelSystem();
 
-  const activeCharacter = classList.find((c) => c.id === activeClassId);
+  const activeCharacter = useMemo(
+    () => classList.find((c) => c.id === activeClassId),
+    [classList, activeClassId]
+  );
 
-  const [activeTab, setActiveTab] = useState("special");
+  const [activeTab, setActiveTab] = useState(tabOptions[0].key);
   const [unlockedItemIds, setUnlockedItemIds] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [bossHp, setBossHp] = useState(null);
-  const [bossMaxHp, setBossMaxHp] = useState(null); // WICHTIG!
+  const [bossMaxHp, setBossMaxHp] = useState(null);
   const [bossDefeated, setBossDefeated] = useState(false);
 
-  // Modal states (kannst du später für Rewards weiterverwenden)
+  // Modal states für Zukunft (Rewards, etc.)
   const [reward, setReward] = useState(null);
-  const [modalStep, setModalStep] = useState(null);
 
   // Unlocked Items
   const loadUnlocked = useCallback(async () => {
@@ -89,17 +89,22 @@ export default function EventScreen() {
   );
 
   // Events filtern + Image-Map
-  const availableEvents = eventData
-    .filter((e) => e.tag === activeTab)
-    .map((e) => {
-      const bossKey = getEventBossKey(e.image);
-      const bgKey = getBackgroundKey(e.background);
-      return {
-        ...e,
-        image: bossKey && imageMap[bossKey] ? imageMap[bossKey] : e.image,
-        background: bgKey && imageMap[bgKey] ? imageMap[bgKey] : e.background,
-      };
-    });
+  const availableEvents = useMemo(
+    () =>
+      eventData
+        .filter((e) => e.tag === activeTab)
+        .map((e) => {
+          const bossKey = getEventBossKey(e.image);
+          const bgKey = getBackgroundKey(e.background);
+          return {
+            ...e,
+            image: bossKey && imageMap[bossKey] ? imageMap[bossKey] : e.image,
+            background:
+              bgKey && imageMap[bgKey] ? imageMap[bgKey] : e.background,
+          };
+        }),
+    [activeTab, imageMap]
+  );
 
   // Skalierter Event-Boss – und MaxHP holen!
   const scaledEvent = useMemo(() => {
@@ -107,7 +112,7 @@ export default function EventScreen() {
     return scaleBossStats(selectedEvent, activeCharacter.level || 1);
   }, [selectedEvent, activeCharacter]);
 
-  // Jedes Mal, wenn Event oder Char wechselt: MaxHP und Hp setzen
+  // Bei Event/Char-Wechsel: MaxHP und HP setzen
   useEffect(() => {
     if (scaledEvent) {
       setBossMaxHp(scaledEvent.hp ?? 200);
@@ -117,26 +122,29 @@ export default function EventScreen() {
   }, [scaledEvent]);
 
   // Event-Auswahl-Handler
-  const handleSelectEvent = (event) => setSelectedEvent(event);
+  const handleSelectEvent = useCallback((event) => setSelectedEvent(event), []);
 
   // Kampf-Handler: Damage-Berechnung und HP reduzieren
-  function handleFight(skill) {
-    if (!activeCharacter || bossDefeated || !scaledEvent) return;
-    const { stats: charStats, percentBonuses } =
-      getCharacterStatsWithEquipment(activeCharacter);
-    const skillPower = skill?.power ?? scaledEvent.skillDmg ?? 30;
-    const damage = calculateSkillDamage({
-      charStats,
-      percentBonuses,
-      skill: { skillDmg: skillPower },
-      enemyDefense: scaledEvent.defense || 0,
-    });
-    setBossHp((prev) => {
-      const newHp = Math.max(prev - damage, 0);
-      if (newHp === 0) setBossDefeated(true);
-      return newHp;
-    });
-  }
+  const handleFight = useCallback(
+    (skill) => {
+      if (!activeCharacter || bossDefeated || !scaledEvent) return;
+      const { stats: charStats, percentBonuses } =
+        getCharacterStatsWithEquipment(activeCharacter);
+      const skillPower = skill?.power ?? scaledEvent.skillDmg ?? 30;
+      const damage = calculateSkillDamage({
+        charStats,
+        percentBonuses,
+        skill: { skillDmg: skillPower },
+        enemyDefense: scaledEvent.defense || 0,
+      });
+      setBossHp((prev) => {
+        const newHp = Math.max(prev - damage, 0);
+        if (newHp === 0) setBossDefeated(true);
+        return newHp;
+      });
+    },
+    [activeCharacter, bossDefeated, scaledEvent]
+  );
 
   // On Boss Defeated: Belohnungen, Rewards, VictoryScreen etc.
   useEffect(() => {
@@ -197,9 +205,21 @@ export default function EventScreen() {
         });
       })();
     }
-  }, [bossDefeated]);
+  }, [
+    bossDefeated,
+    scaledEvent,
+    activeCharacter,
+    classList,
+    addCharacter,
+    gainExp,
+    updateCharacter,
+    addCoins,
+    addCrystals,
+    addXp,
+    navigation,
+  ]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>
@@ -262,7 +282,7 @@ export default function EventScreen() {
         <BattleView
           selectedEvent={scaledEvent}
           bossHp={bossHp}
-          bossMaxHp={bossMaxHp} // WICHTIG!
+          bossMaxHp={bossMaxHp}
           bossDefeated={bossDefeated}
           handleFight={handleFight}
           onBack={() => setSelectedEvent(null)}
@@ -277,6 +297,9 @@ export default function EventScreen() {
           imageMap={imageMap}
         />
       )}
+
+      {/* Optional: Reward-Modal zentral hier einbinden */}
+      {/* {reward && <EventRewardModal reward={reward} onClose={() => setReward(null)} />} */}
     </View>
   );
 }

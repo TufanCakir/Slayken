@@ -12,15 +12,21 @@ export default function useNavigationLoading({ delay = 1000, onLoaded } = {}) {
   const { setLoading } = useLoading();
   const timeoutRef = useRef(null);
 
-  // Loader wirklich beenden & Timeout löschen
+  // Memoisiere Callback und sorge für immer aktuelle Referenz auf onLoaded
+  const onLoadedRef = useRef(onLoaded);
+  useEffect(() => {
+    onLoadedRef.current = onLoaded;
+  }, [onLoaded]);
+
+  // Loader beenden & Timeout aufräumen
   const stopLoading = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
     setLoading(false);
-    if (typeof onLoaded === "function") onLoaded();
-  }, [setLoading, onLoaded]);
+    if (typeof onLoadedRef.current === "function") onLoadedRef.current();
+  }, [setLoading]);
 
   // Hauptfunktion für onStateChange
   const onNavigationStateChange = useCallback(() => {
@@ -29,10 +35,14 @@ export default function useNavigationLoading({ delay = 1000, onLoaded } = {}) {
     timeoutRef.current = setTimeout(stopLoading, delay);
   }, [delay, setLoading, stopLoading]);
 
-  // Cleanup beim Unmount: Ladeanzeige IMMER beenden
+  // Cleanup beim Unmount: Ladeanzeige sicher beenden & Timeout clearen
   useEffect(() => {
-    return stopLoading;
-  }, [stopLoading]);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setLoading(false);
+    };
+    // setLoading NICHT aus den deps entfernen, sonst gibt es Linter-Warnung
+  }, [setLoading]);
 
   return onNavigationStateChange;
 }

@@ -43,18 +43,16 @@ export default function CreateCharacterScreen({ navigation }) {
     navigation.replace("CharacterSelectScreen");
   };
 
-  // ---------- Render-Logik ----------
   return (
     <View style={styles.container}>
-      {step === 1 && (
+      {step === 1 ? (
         <NameStep
           name={name}
           setName={setName}
           onNext={goToNext}
           theme={theme}
         />
-      )}
-      {step === 2 && (
+      ) : (
         <ClassSelectStep
           name={name}
           classes={classes}
@@ -63,34 +61,22 @@ export default function CreateCharacterScreen({ navigation }) {
           theme={theme}
         />
       )}
-      <TouchableOpacity
+      <BackButton
         onPress={() => (step === 1 ? navigation.goBack() : setStep(1))}
-        style={styles.backButton}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.backText}>Zurück</Text>
-      </TouchableOpacity>
+        label="Zurück"
+        theme={theme}
+      />
     </View>
   );
 }
 
 // ---------- Step-Komponenten ----------
+
 function NameStep({ name, setName, onNext, theme }) {
   const styles = createStyles(theme);
   return (
     <>
-      <LinearGradient
-        colors={[
-          theme.accentColorSecondary,
-          theme.accentColor,
-          theme.accentColorDark,
-        ]}
-        start={[0.12, 0]}
-        end={[1, 1]}
-        style={styles.headerGradient}
-      >
-        <Text style={styles.title}>Wie soll dein Held heißen?</Text>
-      </LinearGradient>
+      <GradientHeader theme={theme} title="Wie soll dein Held heißen?" />
       <TextInput
         value={name}
         onChangeText={setName}
@@ -98,26 +84,15 @@ function NameStep({ name, setName, onNext, theme }) {
         placeholderTextColor={theme.textColor + "99"}
         style={styles.input}
         maxLength={20}
+        autoFocus
+        returnKeyType="done"
       />
-      <TouchableOpacity
+      <NextButton
         onPress={onNext}
-        style={[styles.nextButton, !name && styles.nextButtonDisabled]}
         disabled={!name}
-        activeOpacity={0.84}
-      >
-        <LinearGradient
-          colors={[
-            theme.accentColorSecondary,
-            theme.accentColor,
-            theme.accentColorDark,
-          ]}
-          start={[0.1, 0]}
-          end={[1, 1]}
-          style={styles.nextButtonInner}
-        >
-          <Text style={styles.buttonText}>Weiter</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+        theme={theme}
+        label="Weiter"
+      />
     </>
   );
 }
@@ -126,18 +101,7 @@ function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
   const styles = createStyles(theme);
   return (
     <>
-      <LinearGradient
-        colors={[
-          theme.accentColorSecondary,
-          theme.accentColor,
-          theme.accentColorDark,
-        ]}
-        start={[0.12, 0]}
-        end={[1, 1]}
-        style={styles.headerGradient}
-      >
-        <Text style={styles.title}>Wähle eine Klasse</Text>
-      </LinearGradient>
+      <GradientHeader theme={theme} title="Wähle eine Klasse" />
       <FlatList
         data={classes.filter((cls) => !cls.eventReward)}
         keyExtractor={(item) => item.id}
@@ -146,7 +110,9 @@ function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
           <TouchableOpacity
             onPress={() => onSelect(item)}
             style={styles.classCardOuter}
-            activeOpacity={0.85}
+            activeOpacity={0.87}
+            accessibilityRole="button"
+            accessibilityLabel={`Klasse auswählen: ${item.label}`}
           >
             <LinearGradient
               colors={[
@@ -183,8 +149,75 @@ function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
             </LinearGradient>
           </TouchableOpacity>
         )}
+        getItemLayout={(_, index) => ({
+          length: 138,
+          offset: 138 * index,
+          index,
+        })}
       />
     </>
+  );
+}
+
+// ---------- Mini-Komponenten ----------
+
+function GradientHeader({ theme, title }) {
+  const styles = createStyles(theme);
+  return (
+    <LinearGradient
+      colors={[
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ]}
+      start={[0.12, 0]}
+      end={[1, 1]}
+      style={styles.headerGradient}
+    >
+      <Text style={styles.title}>{title}</Text>
+    </LinearGradient>
+  );
+}
+
+function BackButton({ onPress, label, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.backButton}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Text style={styles.backText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function NextButton({ onPress, label, disabled, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      style={[styles.nextButton, disabled && styles.nextButtonDisabled]}
+      activeOpacity={disabled ? 1 : 0.84}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.nextButtonInner}
+      >
+        <Text style={styles.buttonText}>{label}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 

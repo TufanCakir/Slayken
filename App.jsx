@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
   Text,
   View,
   StatusBar,
-  SafeAreaView as RNSafeAreaView,
   ActivityIndicator,
 } from "react-native";
 import { enableScreens } from "react-native-screens";
@@ -32,6 +31,13 @@ import useNavigationLoading from "./hooks/useNavigationLoading";
 import OnlineGuard from "./components/OnlineGuard";
 import UpdateOverlay from "./components/UpdateOverlay";
 import useImagePreloader from "./hooks/useImagePreloader";
+
+// ProgressBar als eigene Komponente, damit sie nicht bei jedem Render neu erzeugt wird
+const ProgressBar = ({ percent }) => (
+  <View style={styles.progressBarBackground}>
+    <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
+  </View>
+);
 
 function AppContent() {
   const [updateVisible, setUpdateVisible] = useState(false);
@@ -74,27 +80,21 @@ function AppContent() {
   // Progressbar für Ladeanzeige
   const progressPercent = Math.min(Math.round(progress * 100), 100);
 
-  // Kleine Hilfskomponente für Progressbar
-  const ProgressBar = ({ percent }) => (
-    <View style={styles.progressBarBackground}>
-      <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
-    </View>
-  );
-
-  // Lade- und Fehler-Layout kompakt
+  // --- Lade- und Fehler-Layout ---
   if (!loaded || error) {
     return (
-      <RNSafeAreaView
+      <SafeAreaView
         style={error ? styles.errorContainer : styles.loadingContainer}
+        edges={["top", "right", "left"]}
       >
-        {localBgImage && (
+        {localBgImage ? (
           <Image
             source={localBgImage}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={300}
           />
-        )}
+        ) : null}
         <StatusBar
           translucent
           backgroundColor="transparent"
@@ -115,11 +115,11 @@ function AppContent() {
             </>
           )}
         </View>
-      </RNSafeAreaView>
+      </SafeAreaView>
     );
   }
 
-  // Main-App
+  // --- Main-App ---
   return (
     <OnlineGuard>
       <SafeAreaView style={styles.safeArea}>

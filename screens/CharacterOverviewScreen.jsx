@@ -5,9 +5,9 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   Alert,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import elementData from "../data/elementData.json";
@@ -30,10 +30,9 @@ export default function CharacterOverviewScreen() {
     updateCharacter,
   } = useClass();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
   const { isUnlocked } = useShop();
+  const styles = createStyles(theme);
 
-  // Nur für Skins, bleibt gleich
   function getUnlockedSkinsForChar(item) {
     const charId = item.baseId || item.id;
     return SHOP_ITEMS.filter(
@@ -73,10 +72,7 @@ export default function CharacterOverviewScreen() {
         style={[styles.card, isActive && styles.cardActive]}
       >
         {item.eventReward && (
-          <View style={styles.exclusiveBadge}>
-            <MaterialCommunityIcons name="crown" size={14} color="#111" />
-            <Text style={styles.exclusiveBadgeText}>Exklusiv</Text>
-          </View>
+          <Badge icon="crown" text="Exklusiv" theme={theme} />
         )}
         <Image
           source={{ uri: avatarSrc }}
@@ -92,70 +88,28 @@ export default function CharacterOverviewScreen() {
         </View>
         <Text style={styles.classText}>{item.type}</Text>
 
-        {availableSkins.length > 0 && (
-          <View style={styles.skinsWrapper}>
-            <Text style={styles.skinsTitle}>Skins:</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.skinsScrollView}
-              style={styles.skinsScrollStyle}
-            >
-              <SkinButton
-                key="default"
-                active={!item.activeSkin}
-                onPress={() => handleEquipSkin(item, undefined)}
-                label="Standard"
-                icon={
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={24}
-                    color={
-                      !item.activeSkin
-                        ? theme.borderGlowColor || "gold"
-                        : theme.textColor
-                    }
-                  />
-                }
-              />
-              {availableSkins.map((skin) => (
-                <SkinButton
-                  key={skin.id}
-                  active={skin.id === item.activeSkin}
-                  onPress={() => handleEquipSkin(item, skin.id)}
-                  label={skin.name || "Skin"}
-                  icon={
-                    <Image
-                      source={{ uri: skin.skinImage }}
-                      style={styles.skinImg}
-                      contentFit="contain"
-                    />
-                  }
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        <SkinsRow
+          availableSkins={availableSkins}
+          activeSkin={item.activeSkin}
+          onEquipSkin={(skinId) => handleEquipSkin(item, skinId)}
+          theme={theme}
+        />
 
         <Text style={styles.skillTitle}>Skills:</Text>
         {item.skills.map((skill, i) => (
-          <View key={i} style={styles.skillItem}>
-            <Text style={styles.skillName}>{skill.name}</Text>
-            <Text style={styles.skillDesc}>{skill.description}</Text>
-            <Text style={styles.skillPower}>Power: {skill.power}</Text>
-          </View>
+          <SkillInfo key={i} skill={skill} theme={theme} />
         ))}
 
         {!isActive ? (
           <>
             <ActionButton
-              style={styles.activateButton}
               label="Als Klasse aktivieren"
               onPress={() => setActiveClassId(item.id)}
-              textStyle={styles.activateText}
+              style={styles.buttonPrimary}
+              textStyle={styles.buttonTextPrimary}
+              testID="activate-class"
             />
             <ActionButton
-              style={styles.deleteButton}
               label="Löschen"
               onPress={() =>
                 Alert.alert(
@@ -171,7 +125,9 @@ export default function CharacterOverviewScreen() {
                   ]
                 )
               }
-              textStyle={styles.deleteText}
+              style={styles.buttonDanger}
+              textStyle={styles.buttonTextDanger}
+              testID="delete-class"
             />
           </>
         ) : (
@@ -189,38 +145,115 @@ export default function CharacterOverviewScreen() {
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.grid}
+        ListEmptyComponent={
+          <Text style={styles.empty}>Keine Charaktere vorhanden.</Text>
+        }
       />
     </ScreenLayout>
   );
 }
 
-// --- Helper Buttons ---
-function SkinButton({ active, onPress, icon, label }) {
-  const { theme } = useThemeContext();
+// --- UI Helper Components ---
+
+function Badge({ icon, text, theme }) {
+  return (
+    <View style={badgeStyles.badge}>
+      <MaterialCommunityIcons name={icon} size={14} color="#111" />
+      <Text style={badgeStyles.text}>{text}</Text>
+    </View>
+  );
+}
+
+function SkinsRow({ availableSkins = [], activeSkin, onEquipSkin, theme }) {
+  if (availableSkins.length === 0) return null;
   const styles = createStyles(theme);
+  return (
+    <View style={styles.skinsWrapper}>
+      <Text style={styles.skinsTitle}>Skins:</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.skinsScrollView}
+        style={styles.skinsScrollStyle}
+      >
+        <SkinButton
+          key="default"
+          active={!activeSkin}
+          onPress={() => onEquipSkin(undefined)}
+          label="Standard"
+          icon={
+            <MaterialCommunityIcons
+              name="account"
+              size={24}
+              color={
+                !activeSkin ? theme.borderGlowColor || "gold" : theme.textColor
+              }
+            />
+          }
+        />
+        {availableSkins.map((skin) => (
+          <SkinButton
+            key={skin.id}
+            active={skin.id === activeSkin}
+            onPress={() => onEquipSkin(skin.id)}
+            label={skin.name || "Skin"}
+            icon={
+              <Image
+                source={{ uri: skin.skinImage }}
+                style={styles.skinImg}
+                contentFit="contain"
+              />
+            }
+          />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function SkinButton({ active, onPress, icon, label }) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.skinBtn, active && styles.skinBtnActive]}
-      activeOpacity={0.84}
+      style={[skinButtonStyles.btn, active && skinButtonStyles.btnActive]}
+      activeOpacity={0.85}
     >
       {icon}
-      <Text style={[styles.skinLabel, active && styles.skinLabelActive]}>
+      <Text
+        style={[skinButtonStyles.label, active && skinButtonStyles.labelActive]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
   );
 }
 
-function ActionButton({ style, label, onPress, textStyle }) {
+function SkillInfo({ skill, theme }) {
+  const styles = createStyles(theme);
   return (
-    <TouchableOpacity style={style} onPress={onPress} activeOpacity={0.84}>
+    <View style={styles.skillItem}>
+      <Text style={styles.skillName}>{skill.name}</Text>
+      <Text style={styles.skillDesc}>{skill.description}</Text>
+      <Text style={styles.skillPower}>Power: {skill.power}</Text>
+    </View>
+  );
+}
+
+function ActionButton({ label, onPress, style, textStyle, testID }) {
+  return (
+    <TouchableOpacity
+      style={style}
+      onPress={onPress}
+      activeOpacity={0.84}
+      testID={testID}
+    >
       <Text style={textStyle}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-// --- Styles ---
+// --- Styles (aufgeteilt für Klarheit) ---
+
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
@@ -328,40 +361,12 @@ function createStyles(theme) {
       marginTop: 2,
       marginBottom: 7,
     },
-    skinBtn: {
-      borderWidth: 1.3,
-      borderColor: "#555",
-      borderRadius: 10,
-      margin: 4,
-      padding: 3,
-      backgroundColor: "#232323",
-      justifyContent: "center",
-      alignItems: "center",
-      width: 50,
-      minHeight: 50,
-    },
-    skinBtnActive: {
-      borderWidth: 2.5,
-      borderColor: theme.borderGlowColor || "gold",
-      backgroundColor: theme.shadowColor,
-    },
     skinImg: {
       width: 36,
       height: 36,
       borderRadius: 7,
       marginBottom: 1,
       backgroundColor: theme.shadowColor,
-    },
-    skinLabel: {
-      fontSize: 10,
-      textAlign: "center",
-      color: theme.textColor,
-      marginTop: -2,
-      fontWeight: "600",
-    },
-    skinLabelActive: {
-      color: theme.borderGlowColor || "gold",
-      fontWeight: "bold",
     },
     skillTitle: {
       fontSize: 15,
@@ -396,10 +401,9 @@ function createStyles(theme) {
       color: theme.accentColorSecondary,
       fontWeight: "bold",
     },
-    activateButton: {
+    buttonPrimary: {
       marginTop: 10,
       borderRadius: 12,
-      overflow: "hidden",
       alignSelf: "stretch",
       alignItems: "center",
       borderWidth: 2,
@@ -410,14 +414,14 @@ function createStyles(theme) {
       shadowRadius: 8,
       shadowOpacity: 0.14,
     },
-    activateText: {
+    buttonTextPrimary: {
       color: theme.textColor,
       fontWeight: "bold",
       fontSize: 15,
       letterSpacing: 0.14,
       paddingVertical: 8,
     },
-    deleteButton: {
+    buttonDanger: {
       marginTop: 8,
       backgroundColor: "#1a1a1a",
       borderColor: "#c00",
@@ -431,7 +435,7 @@ function createStyles(theme) {
       shadowRadius: 8,
       shadowOpacity: 0.07,
     },
-    deleteText: {
+    buttonTextDanger: {
       color: "#FF5252",
       fontWeight: "bold",
       fontSize: 13.5,
@@ -451,28 +455,70 @@ function createStyles(theme) {
       overflow: "hidden",
       alignSelf: "center",
     },
-    exclusiveBadge: {
-      position: "absolute",
-      top: 11,
-      left: 12,
-      backgroundColor: "#FFD700",
-      borderRadius: 9,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      zIndex: 10,
-      flexDirection: "row",
-      alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.16,
-      shadowRadius: 3,
-    },
-    exclusiveBadgeText: {
-      fontWeight: "bold",
-      fontSize: 12,
-      color: "#111",
-      letterSpacing: 0.15,
-      marginLeft: 2,
+    empty: {
+      color: theme.textColor + "99",
+      fontSize: 16,
+      textAlign: "center",
+      marginTop: 32,
+      fontStyle: "italic",
     },
   });
 }
+
+// Separat für Badge/SkinButton
+const badgeStyles = StyleSheet.create({
+  badge: {
+    position: "absolute",
+    top: 11,
+    left: 12,
+    backgroundColor: "#FFD700",
+    borderRadius: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
+  },
+  text: {
+    fontWeight: "bold",
+    fontSize: 12,
+    color: "#111",
+    letterSpacing: 0.15,
+    marginLeft: 2,
+  },
+});
+
+const skinButtonStyles = StyleSheet.create({
+  btn: {
+    borderWidth: 1.3,
+    borderColor: "#555",
+    borderRadius: 10,
+    margin: 4,
+    padding: 3,
+    backgroundColor: "#232323",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 50,
+    minHeight: 50,
+  },
+  btnActive: {
+    borderWidth: 2.5,
+    borderColor: "#FFD700",
+    backgroundColor: "#18181b",
+  },
+  label: {
+    fontSize: 10,
+    textAlign: "center",
+    color: "#fff",
+    marginTop: -2,
+    fontWeight: "600",
+  },
+  labelActive: {
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+});

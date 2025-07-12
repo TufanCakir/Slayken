@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system";
 
 /**
  * Lädt Bilder persistent in Chunks, cached sie, gibt Fortschritt + lokale URIs zurück.
+ * Entfernt doppelte Downloads, lässt die Reihenfolge/Länge der localUris wie imageUrls.
  * @param {string[]} imageUrls - Die Bild-URLs.
  * @param {number} chunkSize - Anzahl paralleler Downloads (Default: 5)
  * @returns {object} { loaded, progress, localUris }
@@ -27,12 +28,14 @@ export default function useImagePreloader(imageUrls = [], chunkSize = 5) {
     setLocalUris([]);
 
     const total = imageUrls.length;
-    const uris = new Array(total);
+    const uniqueUrls = Array.from(new Set(imageUrls.filter(Boolean))); // Nur einzigartige und nicht-leere URLs
+    const urlToLocal = {};
+    let loadedSoFar = 0;
 
-    // Chunked Download-Funktion
-    async function loadChunk(chunk, startIdx) {
+    // Chunked Download-Funktion für uniqueUrls
+    async function loadChunk(chunk) {
       await Promise.all(
-        chunk.map(async (url, idx) => {
+        chunk.map(async (url) => {
           let localUri = "";
           if (url) {
             const fileUri = FileSystem.cacheDirectory + encodeURIComponent(url);
@@ -44,20 +47,23 @@ export default function useImagePreloader(imageUrls = [], chunkSize = 5) {
               localUri = url; // Fallback auf Remote-URL
             }
           }
-          uris[startIdx + idx] = localUri;
-          if (!isCancelled.current) setLoadedCount((prev) => prev + 1);
+          urlToLocal[url] = localUri;
+          loadedSoFar++;
+          if (!isCancelled.current) setLoadedCount(loadedSoFar);
         })
       );
     }
 
     (async () => {
-      for (let i = 0; i < total; i += chunkSize) {
+      for (let i = 0; i < uniqueUrls.length; i += chunkSize) {
         if (isCancelled.current) break;
-        const chunk = imageUrls.slice(i, i + chunkSize);
-        await loadChunk(chunk, i);
+        const chunk = uniqueUrls.slice(i, i + chunkSize);
+        await loadChunk(chunk);
       }
+      // Baue das finale localUris-Array wieder in Reihenfolge des Inputs:
+      const result = imageUrls.map((url) => urlToLocal[url] || "");
       if (!isCancelled.current) {
-        setLocalUris([...uris]);
+        setLocalUris(result);
         setLoaded(true);
       }
     })();
@@ -67,9 +73,12 @@ export default function useImagePreloader(imageUrls = [], chunkSize = 5) {
     };
     // eslint-disable-next-line
   }, [JSON.stringify(imageUrls), chunkSize]);
-  // ^ JSON.stringify ist ok für Listen aus Props
 
-  const progress = imageUrls.length > 0 ? loadedCount / imageUrls.length : 1;
+  // Fortschritt an Gesamtzahl der Original-URLs ausrichten
+  const progress =
+    imageUrls.length > 0
+      ? Math.min(loadedCount, imageUrls.length) / imageUrls.length
+      : 1;
 
   return { loaded, progress, localUris };
 }

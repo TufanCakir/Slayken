@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { Image } from "expo-image";
@@ -22,20 +23,20 @@ import SHOP_ITEMS from "../data/shopData.json";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const getLabels = (item, isBuying) => {
+const getLabels = (item) => {
   if (item.currency.includes("coin") && item.currency.includes("crystal")) {
     return {
       priceLabel: `${item.price} Coins / Kristalle`,
-      buttonLabel: "Kaufen",
+      currency: "coinscrystals",
     };
   }
   if (item.currency.includes("coin")) {
-    return { priceLabel: `${item.price} Coins`, buttonLabel: "Kaufen" };
+    return { priceLabel: `${item.price} Coins`, currency: "coins" };
   }
   if (item.currency.includes("crystal")) {
-    return { priceLabel: `${item.price} Kristalle`, buttonLabel: "Kaufen" };
+    return { priceLabel: `${item.price} Kristalle`, currency: "crystals" };
   }
-  return { priceLabel: "", buttonLabel: "Kaufen" };
+  return { priceLabel: "", currency: "" };
 };
 
 const getImageSource = (item, imageMap) =>
@@ -55,10 +56,14 @@ const usePurchaseFlow = (coins, crystals, spendCoins, spendCrystals) => {
 
   const handleInternal = useCallback(
     async (item, method) => {
-      method === "Coins" ? spendCoins(item.price) : spendCrystals(item.price);
+      if (method === "coins") await spendCoins(item.price);
+      else await spendCrystals(item.price);
+
       Alert.alert(
         "Kauf erfolgreich!",
-        `Du hast ${item.name} für ${item.price} ${method} gekauft.`
+        `Du hast ${item.name} für ${item.price} ${
+          method === "coins" ? "Coins" : "Kristalle"
+        } gekauft.`
       );
     },
     [spendCoins, spendCrystals]
@@ -74,26 +79,24 @@ const usePurchaseFlow = (coins, crystals, spendCoins, spendCrystals) => {
       setIsBuying(true);
       setBuyingItemId(item.id);
 
-      const can = {
-        coin: item.currency.includes("coin") && coins >= item.price,
-        crystal: item.currency.includes("crystal") && crystals >= item.price,
-      };
+      const canBuyCoins = item.currency.includes("coin") && coins >= item.price;
+      const canBuyCrystals =
+        item.currency.includes("crystal") && crystals >= item.price;
 
       try {
-        if (can.coin) await handleInternal(item, "Coins");
-        else if (can.crystal) await handleInternal(item, "Kristalle");
+        if (canBuyCoins) await handleInternal(item, "coins");
+        else if (canBuyCrystals) await handleInternal(item, "crystals");
         else {
-          const deficit =
-            can.coin === false && item.currency.includes("coin")
-              ? `Du brauchst ${item.price - coins} weitere Coins.`
-              : can.crystal === false && item.currency.includes("crystal")
-              ? `Du brauchst ${item.price - crystals} weitere Kristalle.`
-              : null;
-          throw new Error(deficit || "Keine Zahlungsmethode verfügbar.");
+          let deficit = "";
+          if (item.currency.includes("coin") && coins < item.price)
+            deficit += `Du brauchst noch ${item.price - coins} Coins.\n`;
+          if (item.currency.includes("crystal") && crystals < item.price)
+            deficit += `Du brauchst noch ${item.price - crystals} Kristalle.\n`;
+          throw new Error(deficit.trim() || "Nicht genug Währung.");
         }
         if (typeof onUnlock === "function") await onUnlock(item);
       } catch (err) {
-        Alert.alert("Kauf-Fehler", err.message || "Unbekannt");
+        Alert.alert("Kauf-Fehler", err.message || "Unbekannter Fehler");
       }
       finalize();
     },
@@ -124,6 +127,7 @@ export default function ShopScreen() {
     spendCrystals
   );
 
+  // TabView index state MUSS gehalten werden!
   const categories = useMemo(
     () => Array.from(new Set(SHOP_ITEMS.map((i) => i.category))),
     []
@@ -136,6 +140,7 @@ export default function ShopScreen() {
       })),
     [categories]
   );
+  const [index, setIndex] = useState(0);
 
   if (loading) {
     return (
@@ -149,6 +154,7 @@ export default function ShopScreen() {
     );
   }
 
+  // Eine Szene pro Kategorie
   const renderScene = SceneMap(
     Object.fromEntries(
       routes.map((r) => [
@@ -160,16 +166,13 @@ export default function ShopScreen() {
             contentContainerStyle={styles.list}
             renderItem={({ item }) => {
               const unlocked = isUnlocked(item);
-              const { priceLabel, buttonLabel } = getLabels(
-                item,
-                isBuying && buyingItemId === item.id
-              );
+              const { priceLabel, currency } = getLabels(item);
               return (
                 <LinearGradient
                   colors={gradientColors}
                   start={{ x: 0.1, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={styles.cardRow}
+                  style={[styles.cardRow, unlocked && styles.cardRowUnlocked]}
                 >
                   <Image
                     source={getImageSource(item, imageMap)}
@@ -183,7 +186,22 @@ export default function ShopScreen() {
                         Skin für: {item.characterId}
                       </Text>
                     )}
-                    <Text style={styles.price}>{priceLabel}</Text>
+                    {/* Preis-Badge */}
+                    {!unlocked && !!priceLabel && (
+                      <View
+                        style={[
+                          styles.priceBadge,
+                          currency === "crystals"
+                            ? { backgroundColor: "#00b4d8cc" }
+                            : currency === "coins"
+                            ? { backgroundColor: "#e0a500cc" }
+                            : { backgroundColor: theme.borderGlowColor + "c0" },
+                        ]}
+                      >
+                        <Text style={styles.price}>{priceLabel}</Text>
+                      </View>
+                    )}
+                    {/* Kaufen-Button oder Freigeschaltet */}
                     {!unlocked ? (
                       <TouchableOpacity
                         style={styles.buttonOuter}
@@ -198,11 +216,9 @@ export default function ShopScreen() {
                           style={styles.button}
                         >
                           {isBuying && buyingItemId === item.id ? (
-                            <ActivityIndicator
-                              color={styles.buttonText.color}
-                            />
+                            <ActivityIndicator color={theme.textColor} />
                           ) : (
-                            <Text style={styles.buttonText}>{buttonLabel}</Text>
+                            <Text style={styles.buttonText}>Kaufen</Text>
                           )}
                         </LinearGradient>
                       </TouchableOpacity>
@@ -231,22 +247,33 @@ export default function ShopScreen() {
 
   return (
     <ScreenLayout style={styles.container}>
+      <View style={styles.balanceBar}>
+        <Text style={styles.balanceText}>
+          🪙 {coins} <Text style={{ color: "#00b4d8" }}>♦ {crystals}</Text>
+        </Text>
+      </View>
       <TabView
-        navigationState={{ index: 0, routes }}
+        navigationState={{ index, routes }}
         renderScene={renderScene}
-        onIndexChange={() => {}}
+        onIndexChange={setIndex}
         initialLayout={{ width: screenWidth }}
         renderTabBar={(props) => (
           <TabBar
             {...props}
             scrollEnabled
-            style={{ backgroundColor: theme.accentColor }}
-            indicatorStyle={{ backgroundColor: theme.textColor }}
+            style={{ backgroundColor: theme.accentColor, borderRadius: 11 }}
+            indicatorStyle={{
+              backgroundColor: theme.textColor,
+              height: 4,
+              borderRadius: 3,
+            }}
             renderLabel={({ route, focused }) => (
               <Text
                 style={{
                   color: focused ? theme.textColor : `${theme.textColor}99`,
-                  fontWeight: "bold",
+                  fontWeight: focused ? "bold" : "500",
+                  letterSpacing: 0.2,
+                  fontSize: 15,
                 }}
               >
                 {route.title}
@@ -262,6 +289,27 @@ export default function ShopScreen() {
 const createStyles = (theme) =>
   StyleSheet.create({
     container: { flex: 1 },
+    balanceBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      paddingVertical: 11,
+      paddingRight: 18,
+      paddingLeft: 8,
+      backgroundColor: theme.accentColorSecondary + "aa",
+      borderBottomWidth: 1,
+      borderBottomColor: theme.shadowColor + "33",
+      marginBottom: 2,
+      zIndex: 9,
+    },
+    balanceText: {
+      fontSize: 16,
+      color: theme.textColor,
+      fontWeight: "700",
+      letterSpacing: 0.1,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 4,
+    },
     list: { padding: 20, paddingBottom: 40 },
     cardRow: {
       flexDirection: "row",
@@ -277,6 +325,14 @@ const createStyles = (theme) =>
       elevation: 5,
       overflow: "hidden",
       minHeight: 120,
+      backgroundColor: theme.accentColor + "ee",
+      ...Platform.select({
+        ios: { marginHorizontal: 3 },
+        android: { marginHorizontal: 1 },
+      }),
+    },
+    cardRowUnlocked: {
+      opacity: 0.52,
     },
     iconImage: { width: 100, height: 100, borderRadius: 22, marginRight: 18 },
     cardContent: { flex: 1, justifyContent: "center" },
@@ -296,16 +352,28 @@ const createStyles = (theme) =>
       marginBottom: 2,
       textAlign: "center",
     },
+    priceBadge: {
+      alignSelf: "center",
+      marginBottom: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 7,
+      shadowColor: theme.glowColor,
+      shadowRadius: 6,
+      shadowOpacity: 0.12,
+      elevation: 2,
+    },
     price: {
       fontSize: 14,
-      color: theme.textColor,
+      color: "#fff",
+      fontWeight: "bold",
       textAlign: "center",
-      marginBottom: 12,
+      letterSpacing: 0.18,
     },
     buttonOuter: {
       borderRadius: 9,
       overflow: "hidden",
-      marginTop: 10,
+      marginTop: 3,
       alignSelf: "center",
       minWidth: 120,
       shadowColor: theme.glowColor,
@@ -339,6 +407,7 @@ const createStyles = (theme) =>
       shadowRadius: 8,
       shadowOpacity: 0.17,
       elevation: 1,
+      backgroundColor: theme.borderGlowColor + "22",
     },
     unlockedText: {
       color: theme.borderGlowColor,

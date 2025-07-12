@@ -9,18 +9,28 @@ const dataModules = {
   themeMap: () => import("../data/themeMap.json"),
 };
 
+// Optional: globaler Cache (wird pro App-Laufzeit nur einmal geladen)
+let globalCache = null;
+
 /**
  * Lädt alle relevanten App-Daten asynchron und zentralisiert.
  * Gibt { data, error } zurück.
  */
 export default function useDataLoader() {
   const { setLoading } = useLoading();
-  const [data, setData] = useState({});
+  const [data, setData] = useState(globalCache || {});
   const [error, setError] = useState(null);
   const isMounted = useRef(true);
 
   useEffect(() => {
     isMounted.current = true;
+
+    if (globalCache) {
+      setLoading(false);
+      setData(globalCache);
+      return;
+    }
+
     setLoading(true);
 
     const loadAllData = async () => {
@@ -31,21 +41,24 @@ export default function useDataLoader() {
 
         if (!isMounted.current) return;
 
-        // Mapping zu finalem Datenobjekt
-        const result = entries.reduce((acc, [key], idx) => {
-          acc[key] = loadedModules[idx]?.default ?? loadedModules[idx];
-          return acc;
-        }, {});
+        // Direktes Mapping zu Objekt
+        const result = Object.fromEntries(
+          entries.map(([key], idx) => [
+            key,
+            loadedModules[idx]?.default ?? loadedModules[idx],
+          ])
+        );
 
+        globalCache = result; // Einmal global speichern
         setData(result);
       } catch (err) {
         if (isMounted.current) {
           setError(err);
-          console.error("Fehler beim Laden der Daten:", err);
+          console.error("[useDataLoader] Fehler beim Laden der Daten:", err);
         }
       } finally {
         if (isMounted.current) {
-          setTimeout(() => setLoading(false), 200); // sanfteres UI
+          setTimeout(() => setLoading(false), 180); // sanfteres UI
         }
       }
     };

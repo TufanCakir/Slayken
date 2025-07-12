@@ -20,6 +20,58 @@ import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useInventory } from "../context/InventoryContext";
 
+const ICON_TYPE_MAP = {
+  coins: "coin1",
+  crystals: "crystal1",
+  "exp-potion": "exp-potion",
+  exp: "exp",
+  // mehr Typen bei Bedarf!
+};
+
+// --- Gift-Card Komponente ---
+function GiftCard({ item, collected, onCollect, theme, imageMap }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      style={[
+        styles.giftItem,
+        collected && styles.giftItemCollected,
+        { borderColor: theme.borderGlowColor, shadowColor: theme.glowColor },
+      ]}
+      activeOpacity={collected ? 1 : 0.86}
+      onPress={collected ? undefined : () => onCollect(item)}
+      disabled={collected}
+      accessibilityRole="button"
+      accessibilityLabel={collected ? t("collected") : t("collectGift")}
+    >
+      <View style={styles.iconWrapper}>
+        <Image
+          source={item.imageUrl}
+          style={styles.giftIcon}
+          contentFit="contain"
+          transition={220}
+        />
+      </View>
+      <Text
+        style={[
+          styles.giftName,
+          collected && styles.giftNameCollected,
+          {
+            color: collected ? theme.borderGlowColor : theme.textColor,
+            textShadowColor: collected
+              ? theme.glowColor
+              : theme.borderGlowColor,
+            textShadowRadius: 7,
+          },
+        ]}
+      >
+        {collected ? "✓ " : ""}
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function GiftScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
@@ -31,16 +83,7 @@ export default function GiftScreen() {
   const { addPotion } = useInventory();
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
-  // Typen-Mapping, damit alles eindeutig ist!
-  const ICON_TYPE_MAP = {
-    coins: "coin1",
-    crystals: "crystal1",
-    "exp-potion": "exp-potion",
-    exp: "exp",
-    // weitere Typen einfach ergänzen!
-  };
-
-  // Gifts vorbereiten und Memoisieren (nutzt das Mapping!)
+  // Gifts vorbereiten (memoisiert, inkl. Bild)
   const gifts = useMemo(
     () =>
       giftData.map((gift) => ({
@@ -54,21 +97,21 @@ export default function GiftScreen() {
     () => gifts.filter((gift) => !collectedGifts[gift.id]),
     [gifts, collectedGifts]
   );
-
   const allCollected = remainingGifts.length === 0;
 
-  // Hilfsfunktion für Belohnung
+  // Belohnung anwenden
   const applyReward = useCallback(
     (gift) => {
       if (gift.type === "coins") addCoins(gift.amount || 0);
       if (gift.type === "crystals") addCrystals(gift.amount || 0);
       if (gift.type === "exp") addXp(gift.amount || 0);
       if (gift.type === "exp-potion") addPotion(gift.amount || 1);
-      // weitere Typen bei Bedarf ergänzen!
+      // weitere Typen ergänzen!
     },
-    [addCoins, addCrystals, addXp]
+    [addCoins, addCrystals, addXp, addPotion]
   );
 
+  // Einzelnes Geschenk einsammeln
   const handleCollect = useCallback(
     async (gift) => {
       if (collectedGifts[gift.id]) return;
@@ -78,59 +121,13 @@ export default function GiftScreen() {
     [collectedGifts, collectGift, applyReward]
   );
 
+  // Alle einsammeln
   const collectAll = useCallback(async () => {
     const ids = remainingGifts.map((g) => g.id);
-    if (ids.length === 0) return;
+    if (!ids.length) return;
     await collectMultipleGifts(ids);
     remainingGifts.forEach(applyReward);
   }, [remainingGifts, collectMultipleGifts, applyReward]);
-
-  const renderItem = useCallback(
-    ({ item }) => {
-      const isCollected = collectedGifts[item.id];
-      return (
-        <TouchableOpacity
-          style={[
-            styles.giftItem,
-            isCollected && styles.giftItemCollected,
-            {
-              borderColor: theme.borderGlowColor,
-              shadowColor: theme.glowColor,
-            },
-          ]}
-          activeOpacity={isCollected ? 1 : 0.85}
-          onPress={() => !isCollected && handleCollect(item)}
-          disabled={isCollected}
-        >
-          <View style={styles.iconWrapper}>
-            <Image
-              source={item.imageUrl}
-              style={styles.giftIcon}
-              contentFit="contain"
-              transition={300}
-            />
-          </View>
-          <Text
-            style={[
-              styles.giftName,
-              isCollected && styles.giftNameCollected,
-              {
-                color: isCollected ? theme.borderGlowColor : theme.textColor,
-                textShadowColor: isCollected
-                  ? theme.glowColor
-                  : theme.borderGlowColor,
-                textShadowRadius: 7,
-              },
-            ]}
-          >
-            {isCollected ? "✓ " : ""}
-            {item.name}
-          </Text>
-        </TouchableOpacity>
-      );
-    },
-    [collectedGifts, handleCollect, styles, theme]
-  );
 
   const bgImage =
     typeof theme.bgImage === "string" ? { uri: theme.bgImage } : theme.bgImage;
@@ -142,11 +139,10 @@ export default function GiftScreen() {
           source={bgImage}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          transition={500}
+          transition={400}
           blurRadius={theme.bgBlur || 0}
         />
       )}
-      {/* Gradient-Header */}
       <LinearGradient
         colors={[
           theme.accentColorSecondary,
@@ -161,36 +157,56 @@ export default function GiftScreen() {
       </LinearGradient>
 
       <FlatList
-        data={remainingGifts}
+        data={gifts}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <GiftCard
+            item={item}
+            collected={!!collectedGifts[item.id]}
+            onCollect={handleCollect}
+            theme={theme}
+            imageMap={imageMap}
+          />
+        )}
         ListEmptyComponent={<Text style={styles.empty}>{t("noGifts")}</Text>}
         contentContainerStyle={styles.listContainer}
       />
 
       {!allCollected && (
         <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={styles.glowButtonOuter}
+          <GlowButton
             onPress={collectAll}
-            activeOpacity={0.88}
-          >
-            <LinearGradient
-              colors={[
-                theme.accentColorSecondary,
-                theme.accentColor,
-                theme.accentColorDark,
-              ]}
-              start={[0.1, 0]}
-              end={[1, 1]}
-              style={styles.glowButton}
-            >
-              <Text style={styles.glowButtonText}>{t("collectAll")}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            theme={theme}
+            label={t("collectAll")}
+          />
         </View>
       )}
     </ScreenLayout>
+  );
+}
+
+// --- GlowButton als eigene Komponente für Wiederverwendbarkeit ---
+function GlowButton({ onPress, label, theme }) {
+  const styles = createStyles(theme);
+  return (
+    <TouchableOpacity
+      style={styles.glowButtonOuter}
+      onPress={onPress}
+      activeOpacity={0.88}
+    >
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.glowButton}
+      >
+        <Text style={styles.glowButtonText}>{label}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 

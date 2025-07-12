@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import { View, Text, StyleSheet, Animated, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCoins } from "../context/CoinContext";
 import { useCrystals } from "../context/CrystalContext";
@@ -9,7 +9,7 @@ import { t } from "../i18n";
 import { Image } from "expo-image";
 import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
-import { LinearGradient } from "expo-linear-gradient"; // <--- Wichtig!
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Header({ gradientColors }) {
   const { coins } = useCoins();
@@ -20,9 +20,11 @@ export default function Header({ gradientColors }) {
 
   const [username, setUsername] = useState("Spieler");
 
-  const progress = xpToNextLevel > 0 ? xp / xpToNextLevel : 0;
+  // Progress als Wert zw. 0 und 1
+  const progress = xpToNextLevel > 0 ? Math.min(1, xp / xpToNextLevel) : 0;
   const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
+  // Username aus AsyncStorage holen
   useEffect(() => {
     let isMounted = true;
     AsyncStorage.getItem("user")
@@ -35,17 +37,19 @@ export default function Header({ gradientColors }) {
     };
   }, []);
 
+  // XP-Bar smooth animieren
   useEffect(() => {
     Animated.timing(animatedXpBar, {
       toValue: progress,
-      duration: 600,
+      duration: 660,
       useNativeDriver: false,
+      easing: (t) => t * (2 - t), // sanfte Ease-Out Animation
     }).start();
   }, [progress, animatedXpBar]);
 
   const styles = createStyles(theme);
 
-  // Farben aus Theme oder per Prop
+  // Farben aus Theme/Prop
   const colors = gradientColors ||
     theme.linearGradient || [
       theme.accentColorSecondary,
@@ -53,36 +57,53 @@ export default function Header({ gradientColors }) {
       theme.accentColorDark,
     ];
 
+  // Optionale Avatare (später einbauen möglich!)
+  // const avatar = imageMap.avatar || require("../assets/avatar-default.png");
+
   const currencyList = [
     {
       key: "coins",
       image: imageMap.coinIcon || getItemImageUrl("coin1"),
       value: coins,
+      accessibilityLabel: "Coins",
     },
     {
       key: "crystals",
       image: imageMap.crystalIcon || getItemImageUrl("crystal1"),
       value: crystals,
+      accessibilityLabel: "Crystals",
     },
   ];
 
+  // Highlight für „Admin“-User (Farbrand)
+  const isSpecialUser =
+    typeof username === "string" &&
+    ["tufan", "admin", "tc", "tcakir"].some((n) =>
+      username.toLowerCase().includes(n)
+    );
+
   return (
-    <View style={styles.headerContainer}>
-      {/* Gradient als Background, unter allen anderen Elementen */}
+    <View style={styles.headerContainer} accessible accessibilityRole="header">
+      {/* Gradient als Hintergrund */}
       <LinearGradient
         colors={colors}
         start={[0, 0]}
         end={[1, 0]}
         style={StyleSheet.absoluteFill}
       />
-      {/* USER + LEVEL */}
+      {/* Links: Username + Level */}
       <View style={styles.leftBlock}>
-        <Text style={styles.username}>{username}</Text>
-        <Text style={styles.level}>
-          {t("levelPrefix")} {level}
+        <Text
+          style={[styles.username, isSpecialUser && styles.usernameSpecial]}
+          accessibilityLabel={t("usernameLabel") || "Benutzername"}
+        >
+          {username}
+        </Text>
+        <Text style={styles.level} accessibilityLabel="Account-Level">
+          {t("levelPrefix") || "Level"} {level}
         </Text>
       </View>
-      {/* XP BAR */}
+      {/* Mitte: XP-Bar */}
       <View style={styles.centerBlock}>
         <Animated.View
           style={[
@@ -97,22 +118,25 @@ export default function Header({ gradientColors }) {
             },
           ]}
         />
-        <Text style={styles.xpText}>
-          {t("xpPrefix")} {xp} / {xpToNextLevel}
+        <Text style={styles.xpText} accessibilityLabel="XP-Fortschritt">
+          {t("xpPrefix") || "XP"} {xp} / {xpToNextLevel}
         </Text>
       </View>
-      {/* CURRENCY */}
+      {/* Rechts: Währungen */}
       <View style={styles.rightBlock}>
-        {currencyList.map(({ key, image, value }) => (
+        {currencyList.map(({ key, image, value, accessibilityLabel }) => (
           <View
             style={[
               styles.currencyItem,
               {
                 borderColor: theme.borderGlowColor,
                 shadowColor: theme.glowColor,
+                backgroundColor: theme.headerCurrencyBg || "#ffffff1a",
               },
             ]}
             key={key}
+            accessible
+            accessibilityLabel={`${accessibilityLabel}: ${value}`}
           >
             <Image
               source={image}
@@ -135,75 +159,114 @@ function createStyles(theme) {
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      height: 88,
-      backgroundColor: "transparent", // <<--- Wichtig: damit der Gradient sichtbar bleibt!
-      position: "relative", // <<--- Wichtig für absoluteFill
+      paddingVertical: Platform.OS === "ios" ? 15 : 12,
+      height: 90,
+      backgroundColor: "transparent",
+      position: "relative",
       overflow: "hidden",
     },
     leftBlock: {
       justifyContent: "center",
       alignItems: "flex-start",
+      minWidth: 75,
+      maxWidth: 120,
+      paddingRight: 4,
     },
     username: {
       fontSize: 16,
       color: theme.textColor,
-      letterSpacing: 0.2,
+      letterSpacing: 0.18,
       marginBottom: 2,
+      fontWeight: "bold",
+      paddingHorizontal: 4,
+      borderRadius: 7,
+    },
+    usernameSpecial: {
+      borderWidth: 2.2,
+      borderColor: theme.glowColor,
+      backgroundColor: theme.headerHighlight || "#1e293bf2",
+      color: theme.glowColor,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 5,
     },
     level: {
       fontSize: 13,
       color: theme.textColor,
-      letterSpacing: 0.2,
+      letterSpacing: 0.15,
+      opacity: 0.85,
+      fontWeight: "600",
+      paddingLeft: 2,
     },
     centerBlock: {
       flex: 1,
-      height: 22,
-      marginHorizontal: 20,
-      borderRadius: 12,
+      height: 23,
+      marginHorizontal: 16,
+      borderRadius: 13,
       overflow: "hidden",
       justifyContent: "center",
       position: "relative",
       borderWidth: 1.8,
       borderColor: theme.borderGlowColor,
+      backgroundColor: theme.headerXpBg || "#0f172ae5",
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.09,
+      shadowRadius: 10,
+      elevation: 3,
     },
     xpBarFill: {
       position: "absolute",
       left: 0,
       top: 0,
       height: "100%",
-      borderRadius: 12,
+      borderRadius: 13,
+      zIndex: 1,
+      shadowRadius: 6,
+      shadowOpacity: 0.17,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
     },
     xpText: {
-      fontSize: 11,
+      fontSize: 11.5,
       textAlign: "center",
       color: theme.textColor,
-      zIndex: 1,
+      zIndex: 2,
+      fontWeight: "bold",
+      letterSpacing: 0.13,
     },
     rightBlock: {
       flexDirection: "row",
-      gap: 8,
+      gap: 6,
       alignItems: "center",
+      minWidth: 88,
+      marginLeft: 2,
     },
     currencyItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 9,
-      paddingVertical: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 7,
       borderRadius: 12,
-      marginLeft: 7,
-      elevation: 6,
+      marginLeft: 6,
+      elevation: 7,
+      borderWidth: 1.2,
+      shadowRadius: 8,
+      shadowOpacity: 0.23,
+      shadowOffset: { width: 0, height: 3 },
     },
     currencyText: {
-      fontSize: 14,
+      fontSize: 14.5,
       marginLeft: 4,
-      letterSpacing: 0.2,
+      letterSpacing: 0.19,
       color: theme.textColor,
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 2,
     },
     icon: {
-      width: 50,
-      height: 50,
+      width: 36,
+      height: 36,
       marginRight: 2,
+      borderRadius: 8,
     },
   });
 }

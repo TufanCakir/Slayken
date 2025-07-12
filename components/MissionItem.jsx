@@ -5,13 +5,14 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useThemeContext } from "../context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
-// Belohnungs-Icon mit eigenen Bildern (Coin/Crystal)
 function RewardIcon({ type, style }) {
   const imgSrc = getItemImageUrl(type);
   return <Image source={imgSrc} style={style} contentFit="contain" />;
@@ -31,6 +32,7 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+  const checkScale = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (item.completed && !item.collected) {
@@ -49,17 +51,41 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
         }),
       ]).start();
     }
-  }, [item.completed, item.collected, scaleAnim, opacityAnim]);
+    if (item.collected) {
+      Animated.spring(checkScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      checkScale.setValue(0);
+    }
+  }, [item.completed, item.collected, scaleAnim, opacityAnim, checkScale]);
 
   const isCollectable = item.completed && !item.collected;
   const isCollected = !!item.collected;
+
+  // Progressbar dynamisch (optional, falls item.progress & item.goal existieren)
+  const progress =
+    typeof item.progress === "number" && typeof item.goal === "number"
+      ? Math.min(item.progress / item.goal, 1)
+      : 1;
 
   return (
     <Animated.View
       style={[
         styles.missionItem,
         isCollected && styles.collectedItem,
-        { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim,
+          shadowOpacity: isCollectable ? 0.22 : 0.12,
+          borderColor: isCollectable
+            ? theme.glowColor
+            : isCollected
+            ? theme.shadowColor + "55"
+            : theme.borderGlowColor,
+        },
       ]}
     >
       {/* Gradient Hintergrund */}
@@ -71,31 +97,58 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
       />
       <Text
         style={[styles.missionText, isCollected && styles.missionTextCollected]}
+        numberOfLines={2}
       >
         {item.title}
       </Text>
 
-      {isCollectable && (
-        <>
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarFill} />
-          </View>
-          <TouchableOpacity
-            onPress={() => onCollect(item)}
-            style={styles.collectButton}
-            accessibilityRole="button"
-            accessibilityLabel={`Belohnung für ${item.title} einsammeln`}
-          >
-            <View style={styles.rewardRow}>
-              <RewardIcon type={item.reward.type} style={styles.icon} />
-              <Text style={styles.collectText}>+{item.reward.amount}</Text>
-            </View>
-          </TouchableOpacity>
-        </>
+      {/* Progressbar */}
+      {!isCollected && (
+        <View style={styles.progressBarContainer}>
+          <Animated.View
+            style={[
+              styles.progressBarFill,
+              {
+                width: `${Math.round(progress * 100)}%`,
+                backgroundColor: isCollectable
+                  ? theme.glowColor
+                  : theme.borderGlowColor,
+                opacity: progress < 1 ? 0.77 : 1,
+              },
+            ]}
+          />
+        </View>
       )}
 
+      {/* Sammel-Button */}
+      {isCollectable && (
+        <Pressable
+          onPress={() => onCollect(item)}
+          style={({ pressed }) => [
+            styles.collectButton,
+            pressed && { transform: [{ scale: 0.97 }], opacity: 0.9 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Belohnung für ${item.title} einsammeln`}
+        >
+          <View style={styles.rewardRow}>
+            <RewardIcon type={item.reward.type} style={styles.icon} />
+            <Text style={styles.collectText}>+{item.reward.amount}</Text>
+          </View>
+        </Pressable>
+      )}
+
+      {/* Collected-Status */}
       {isCollected && (
-        <Text style={styles.collectedLabel}>✅ Belohnung eingesammelt</Text>
+        <Animated.View
+          style={[
+            styles.collectedCheck,
+            { transform: [{ scale: checkScale }] },
+          ]}
+        >
+          <Ionicons name="checkmark-circle" size={30} color={theme.glowColor} />
+          <Text style={styles.collectedLabel}>Eingesammelt</Text>
+        </Animated.View>
       )}
     </Animated.View>
   );
@@ -106,8 +159,8 @@ function createStyles(theme) {
   return StyleSheet.create({
     missionItem: {
       marginBottom: 16,
-      borderRadius: 14,
-      padding: 18,
+      borderRadius: 15,
+      padding: 19,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
       shadowColor: theme.glowColor,
@@ -115,13 +168,13 @@ function createStyles(theme) {
       shadowOpacity: 0.12,
       shadowRadius: 10,
       elevation: 3,
-      position: "relative", // Für Gradient-Layer!
-      overflow: "hidden", // Damit Gradient keine runden Ecken verlässt
-      backgroundColor: "transparent", // Wichtig!
+      position: "relative",
+      overflow: "hidden",
+      backgroundColor: "transparent",
     },
     collectedItem: {
-      backgroundColor: theme.shadowColor + "BB",
-      opacity: 0.82,
+      backgroundColor: theme.shadowColor + "B8",
+      opacity: 0.83,
     },
     missionText: {
       fontSize: 17,
@@ -130,32 +183,32 @@ function createStyles(theme) {
       textShadowColor: theme.shadowColor,
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 1,
+      marginBottom: 7,
     },
     missionTextCollected: {
       textDecorationLine: "line-through",
       opacity: 0.56,
     },
     progressBarContainer: {
-      height: 7,
-      backgroundColor: theme.borderColor,
-      borderRadius: 4,
+      height: 8,
+      backgroundColor: theme.shadowColor + "60",
+      borderRadius: 5,
       overflow: "hidden",
-      marginTop: 10,
+      marginBottom: 11,
     },
     progressBarFill: {
-      width: "100%",
       height: "100%",
-      backgroundColor: theme.glowColor,
+      borderRadius: 5,
     },
     collectButton: {
-      marginTop: 14,
+      marginTop: 7,
       backgroundColor: theme.glowColor,
       paddingVertical: 11,
-      borderRadius: 8,
+      borderRadius: 9,
       alignItems: "center",
       shadowColor: theme.borderGlowColor,
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
       elevation: 2,
     },
     rewardRow: {
@@ -167,20 +220,26 @@ function createStyles(theme) {
       color: theme.textColor,
       fontSize: 15,
       letterSpacing: 0.1,
-    },
-    collectedLabel: {
-      marginTop: 12,
-      textAlign: "center",
-      color: theme.glowColor,
-      fontStyle: "italic",
-      fontSize: 13,
-      letterSpacing: 0.1,
       fontWeight: "bold",
     },
+    collectedCheck: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      justifyContent: "center",
+      marginTop: 15,
+    },
+    collectedLabel: {
+      color: theme.glowColor,
+      fontSize: 15,
+      fontWeight: "bold",
+      fontStyle: "italic",
+      letterSpacing: 0.12,
+    },
     icon: {
-      width: 22,
-      height: 22,
-      marginRight: 3,
+      width: 24,
+      height: 24,
+      marginRight: 2,
     },
   });
 }

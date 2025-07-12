@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import * as Updates from "expo-updates";
 
 /**
@@ -9,6 +9,14 @@ import * as Updates from "expo-updates";
  * @param {function} setUpdateDone - Setzt Status "Update abgeschlossen"
  */
 export default function useUpdateChecker(setUpdateVisible, setUpdateDone) {
+  const setUpdateVisibleRef = useRef(setUpdateVisible);
+  const setUpdateDoneRef = useRef(setUpdateDone);
+
+  useEffect(() => {
+    setUpdateVisibleRef.current = setUpdateVisible;
+    setUpdateDoneRef.current = setUpdateDone;
+  }, [setUpdateVisible, setUpdateDone]);
+
   useEffect(() => {
     let isActive = true;
 
@@ -16,21 +24,24 @@ export default function useUpdateChecker(setUpdateVisible, setUpdateDone) {
       (async () => {
         try {
           const update = await Updates.checkForUpdateAsync();
-          if (update.isAvailable) {
-            if (!isActive) return;
-            setUpdateVisible(true);
+          if (update.isAvailable && isActive) {
+            setUpdateVisibleRef.current(true);
 
             await Updates.fetchUpdateAsync();
             if (!isActive) return;
-            setUpdateDone(true);
+
+            setUpdateDoneRef.current(true);
 
             setTimeout(() => {
               if (isActive) Updates.reloadAsync();
-            }, 1000);
+            }, 1000); // Optional: Delay für Animation/UX
           }
         } catch (e) {
-          if (isActive) setUpdateVisible(false);
-          console.warn("Fehler beim Prüfen von Updates:", e);
+          if (isActive) {
+            setUpdateVisibleRef.current(false);
+            setUpdateDoneRef.current(false);
+          }
+          console.warn("[useUpdateChecker] Fehler beim Prüfen von Updates:", e);
         }
       })();
     }
@@ -38,5 +49,5 @@ export default function useUpdateChecker(setUpdateVisible, setUpdateDone) {
     return () => {
       isActive = false;
     };
-  }, [setUpdateVisible, setUpdateDone]);
+  }, []);
 }

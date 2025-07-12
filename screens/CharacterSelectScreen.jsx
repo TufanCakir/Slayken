@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -13,6 +14,8 @@ import { useClass } from "../context/ClassContext";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
+
+const SLOT_WIDTH = Math.round(Dimensions.get("window").width * 0.93);
 
 export default function CharacterSelectScreen() {
   const navigation = useNavigation();
@@ -36,76 +39,65 @@ export default function CharacterSelectScreen() {
     }
   };
 
-  const renderItem = ({ item }) =>
-    item ? (
-      <CharacterCard
-        item={item}
-        isSelected={selectedId === item.id}
-        onPress={() => setSelectedId(item.id)}
-        imageMap={imageMap}
-        theme={theme}
-      />
-    ) : (
-      <EmptySlot
-        theme={theme}
-        onPress={() => navigation.navigate("CreateCharacterScreen")}
-      />
-    );
-
   return (
     <View style={styles.container}>
-      {/* Gradient Header */}
-      <LinearGradient
-        colors={[
-          theme.accentColorSecondary,
-          theme.accentColor,
-          theme.accentColorDark,
-        ]}
-        start={[0.1, 0]}
-        end={[1, 1]}
-        style={styles.headerGradient}
-      >
-        <Text style={styles.title}>Wähle deinen Kämpfer</Text>
-      </LinearGradient>
+      <GradientHeader theme={theme} />
       <FlatList
         data={fullCharacterList}
         keyExtractor={(_, idx) => idx.toString()}
         contentContainerStyle={styles.list}
-        renderItem={renderItem}
+        renderItem={({ item }) =>
+          item ? (
+            <CharacterCard
+              item={item}
+              isSelected={selectedId === item.id}
+              onPress={() => setSelectedId(item.id)}
+              imageMap={imageMap}
+              theme={theme}
+            />
+          ) : (
+            <EmptySlot
+              onPress={() => navigation.navigate("CreateCharacterScreen")}
+              theme={theme}
+            />
+          )
+        }
       />
-      {selectedId && (
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={handleStart}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={[
-              theme.accentColorSecondary,
-              theme.accentColor,
-              theme.accentColorDark,
-            ]}
-            start={[0.1, 0]}
-            end={[1, 1]}
-            style={styles.startButtonInner}
-          >
-            <Text style={styles.startText}>Starten</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      )}
+      <StartButton visible={!!selectedId} onPress={handleStart} theme={theme} />
     </View>
   );
 }
 
 // ---------- Mini-Komponenten ----------
 
+function GradientHeader({ theme }) {
+  const styles = createStyles(theme);
+  return (
+    <LinearGradient
+      colors={[
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ]}
+      start={[0.1, 0]}
+      end={[1, 1]}
+      style={styles.headerGradient}
+    >
+      <Text style={styles.title}>Wähle deinen Kämpfer</Text>
+    </LinearGradient>
+  );
+}
+
 function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
   const styles = createStyles(theme);
+  const element = elementData[item.element] || {};
   return (
     <TouchableOpacity
       style={[styles.cardOuter, isSelected && styles.selectedCardOuter]}
       onPress={onPress}
       activeOpacity={0.87}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
     >
       <LinearGradient
         colors={[
@@ -126,7 +118,8 @@ function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.level}>Level {item.level}</Text>
         <Text style={styles.element}>
-          {elementData[item.element]?.icon} {elementData[item.element]?.label}
+          {element.icon ? element.icon + " " : ""}
+          {element.label || "Element"}
         </Text>
         <Text style={styles.classText}>{item.type}</Text>
       </LinearGradient>
@@ -141,6 +134,8 @@ function EmptySlot({ theme, onPress }) {
       style={styles.emptySlotOuter}
       onPress={onPress}
       activeOpacity={0.82}
+      accessibilityRole="button"
+      accessibilityLabel="Neuen Charakter erstellen"
     >
       <LinearGradient
         colors={[
@@ -153,6 +148,32 @@ function EmptySlot({ theme, onPress }) {
         style={styles.emptySlot}
       >
         <Text style={styles.emptyText}>+ Charakter erstellen</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
+function StartButton({ visible, onPress, theme }) {
+  const styles = createStyles(theme);
+  if (!visible) return null;
+  return (
+    <TouchableOpacity
+      style={styles.startButton}
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+    >
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.startButtonInner}
+      >
+        <Text style={styles.startText}>Starten</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -204,6 +225,8 @@ function createStyles(theme) {
       shadowRadius: 9,
       shadowOpacity: 0.11,
       elevation: 3,
+      width: SLOT_WIDTH,
+      alignSelf: "center",
     },
     selectedCardOuter: {
       borderColor: highlight,
@@ -222,6 +245,7 @@ function createStyles(theme) {
       borderRadius: 14,
       marginBottom: 10,
       shadowRadius: 8,
+      backgroundColor: shadow,
     },
     name: {
       fontSize: 19,
@@ -267,15 +291,17 @@ function createStyles(theme) {
       shadowRadius: 7,
       shadowOpacity: 0.09,
       elevation: 2,
+      width: SLOT_WIDTH,
+      alignSelf: "center",
     },
     emptySlot: {
       borderRadius: 15,
       paddingVertical: 42,
       paddingHorizontal: 12,
       alignItems: "center",
-      width: 235,
       backgroundColor: accent,
       justifyContent: "center",
+      width: "100%",
     },
     emptyText: {
       color: text,

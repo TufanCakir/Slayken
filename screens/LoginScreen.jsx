@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,26 +6,33 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const { theme } = useThemeContext();
   const [username, setUsername] = useState("");
   const navigation = useNavigation();
+  const inputRef = useRef();
 
   // Bei Mount: Ist schon eingeloggt? Dann skip!
   useEffect(() => {
     AsyncStorage.getItem("user").then((savedUser) => {
       if (savedUser) navigation.replace("HomeScreen");
     });
-  }, []);
+    // Autofokus fürs Input
+    setTimeout(() => inputRef.current?.focus(), 200);
+  }, [navigation]);
 
-  const handleLogin = () => {
+  const isDisabled = !username.trim();
+
+  const handleLogin = useCallback(() => {
     const trimmed = username.trim();
     if (!trimmed) {
       Alert.alert(
@@ -48,10 +55,9 @@ export default function LoginScreen() {
         },
       },
     ]);
-  };
+  }, [username, navigation]);
 
   const styles = createStyles(theme);
-  const isDisabled = !username.trim();
 
   return (
     <View style={styles.container}>
@@ -69,18 +75,33 @@ export default function LoginScreen() {
         <Text style={styles.title}>{t("loginTitle")}</Text>
       </LinearGradient>
 
-      <TextInput
-        placeholder={t("playerNameLabels.newNamePlaceholder")}
-        placeholderTextColor={
-          theme.placeholderTextColor || theme.textColor + "77"
-        }
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="words"
-        autoCorrect={false}
-        maxLength={24}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          ref={inputRef}
+          placeholder={t("playerNameLabels.newNamePlaceholder")}
+          placeholderTextColor={
+            theme.placeholderTextColor || theme.textColor + "77"
+          }
+          style={styles.input}
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="words"
+          autoCorrect={false}
+          maxLength={24}
+          returnKeyType="done"
+          onSubmitEditing={isDisabled ? undefined : handleLogin}
+        />
+        {!!username && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => setUsername("")}
+            hitSlop={16}
+          >
+            <Ionicons name="close-circle" size={22} color={theme.glowColor} />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Button mit Gradient */}
       <TouchableOpacity
         style={[styles.buttonOuter, isDisabled && styles.buttonDisabled]}
@@ -115,45 +136,61 @@ function createStyles(theme) {
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 28,
+      backgroundColor: theme.bgColor || theme.accentColor + "05",
     },
     headerGradient: {
-      borderRadius: 16,
-      marginBottom: 30,
-      paddingVertical: 16,
-      paddingHorizontal: 38,
+      borderRadius: 18,
+      marginBottom: 32,
+      paddingVertical: 20,
+      paddingHorizontal: 40,
       alignSelf: "center",
       shadowColor: theme.glowColor,
-      shadowRadius: 16,
-      shadowOpacity: 0.33,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 6,
+      shadowRadius: 17,
+      shadowOpacity: 0.35,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 7,
+      minWidth: 200,
+      maxWidth: 380,
+      width: "95%",
     },
     title: {
-      fontSize: 26,
+      fontSize: 28,
       color: theme.textColor,
       textAlign: "center",
-      letterSpacing: 0.7,
+      letterSpacing: 1,
       fontWeight: "bold",
       textShadowColor: theme.glowColor,
-      textShadowRadius: 10,
+      textShadowRadius: 11,
       textShadowOffset: { width: 0, height: 2 },
       textTransform: "uppercase",
+    },
+    inputWrapper: {
+      width: "100%",
+      position: "relative",
+      marginBottom: 26,
+      justifyContent: "center",
+      alignItems: "center",
     },
     input: {
       width: "100%",
       backgroundColor: theme.inputBackground || theme.shadowColor,
       borderRadius: 14,
-      fontSize: 18,
+      fontSize: 19,
       color: theme.textColor,
-      paddingVertical: 12,
-      paddingHorizontal: 18,
-      marginBottom: 24,
-      borderWidth: 1.2,
+      paddingVertical: Platform.OS === "ios" ? 15 : 10,
+      paddingHorizontal: 20,
+      borderWidth: 1.4,
       borderColor: theme.borderGlowColor,
       shadowColor: theme.glowColor,
       shadowOpacity: 0.09,
-      shadowRadius: 7,
+      shadowRadius: 8,
       elevation: 3,
+      paddingRight: 40, // Platz für das X
+    },
+    clearButton: {
+      position: "absolute",
+      right: 12,
+      top: Platform.OS === "ios" ? 12 : 8,
     },
     buttonOuter: {
       width: "100%",
@@ -166,21 +203,21 @@ function createStyles(theme) {
     },
     button: {
       borderRadius: 14,
-      paddingVertical: 15,
+      paddingVertical: 17,
       alignItems: "center",
       width: "100%",
       justifyContent: "center",
     },
     buttonDisabled: {
-      opacity: 0.45,
+      opacity: 0.43,
     },
     buttonText: {
       color: theme.textColor,
       fontWeight: "bold",
-      fontSize: 18,
-      letterSpacing: 0.18,
+      fontSize: 19,
+      letterSpacing: 0.19,
       textShadowColor: theme.glowColor,
-      textShadowRadius: 6,
+      textShadowRadius: 7,
     },
   });
 }

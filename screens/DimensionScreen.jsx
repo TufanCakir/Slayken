@@ -48,6 +48,24 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
+// DRY: Generisches Modal mit beliebigen Kindern
+function RewardModal({ visible, onClose, title, children }) {
+  if (!visible) return null;
+  return (
+    <Modal transparent animationType="fade" visible={!!visible}>
+      <View style={stylesModal.overlay}>
+        <View style={stylesModal.modal}>
+          <Text style={stylesModal.title}>{title}</Text>
+          {children}
+          <Pressable style={stylesModal.okButton} onPress={onClose}>
+            <Text style={stylesModal.okText}>OK</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function DimensionScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
@@ -63,8 +81,7 @@ export default function DimensionScreen() {
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
   const [bossMaxHp, setBossMaxHp] = useState(100);
-  const [newDrop, setNewDrop] = useState(null);
-  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+  const [reward, setReward] = useState(null); // { type, drop?, skills? }
   const [activePortalId, setActivePortalId] = useState(null);
   const portalFlyAnim = useSharedValue(1);
 
@@ -76,31 +93,26 @@ export default function DimensionScreen() {
 
   const onBack = () => navigation.goBack();
 
-  // Wenn ein Portal angeklickt wird:
   const handlePortalPress = (portal) => {
-    setActivePortalId(portal.id); // aktiviert Animation
-    // Animation starten
-    portalFlyAnim.value = withTiming(16, { duration: 680 }); // Zoom auf 16x
+    setActivePortalId(portal.id);
+    portalFlyAnim.value = withTiming(16, { duration: 680 });
     setTimeout(() => {
-      handleSelectPortal(portal); // danach echten Screen-Wechsel
-      portalFlyAnim.value = 1; // zurücksetzen für nächsten
+      handleSelectPortal(portal);
+      portalFlyAnim.value = 1;
       setActivePortalId(null);
-    }, 700); // Timing wie Animation
+    }, 700);
   };
 
-  // Aktiver Charakter
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
 
-  // Charakter-Stats
   const { stats: charStats, percentBonuses } = useMemo(() => {
     if (!baseCharacter) return { stats: {}, percentBonuses: {} };
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
-  // Boss aus gewähltem Portal
   const chooseBossFromPortal = useCallback((portal) => {
     if (!portal || !portal.bossPool?.length) return null;
     const bossKey =
@@ -108,7 +120,6 @@ export default function DimensionScreen() {
     return bossData.find((b) => b.id === bossKey);
   }, []);
 
-  // Boss-Stats skalieren
   const scaledBoss = useMemo(() => {
     if (!currentBoss || !baseCharacter) return null;
     return scaleBossStats(currentBoss, baseCharacter.level || 1);
@@ -134,21 +145,17 @@ export default function DimensionScreen() {
     setCurrentBoss(boss);
     setBossHp(boss?.hp || 100);
     setBossMaxHp(boss?.hp || 100);
-    setNewDrop(null);
-    setNewUnlockedSkills(null);
+    setReward(null);
   };
 
-  // Portal zurücksetzen nach Kampf
-  const handleBackToPortals = () => {
+  const handleBackToPortals = useCallback(() => {
     setSelectedPortal(null);
     setCurrentBoss(null);
     setBossHp(100);
     setBossMaxHp(100);
-    setNewDrop(null);
-    setNewUnlockedSkills(null);
-  };
+    setReward(null);
+  }, []);
 
-  // Angriff/Skill-Handler
   const handleFight = useCallback(
     (skill = {}) => {
       if (!baseCharacter || !scaledBoss) return;
@@ -177,29 +184,23 @@ export default function DimensionScreen() {
             const newSkills = leveled.skills?.filter(
               (s) => !oldNames.includes(s.name)
             );
-
             if (newSkills?.length) {
-              setNewUnlockedSkills(newSkills);
-            } else {
+              setReward({ type: "skills", skills: newSkills });
+            } else if (Math.random() < 0.5) {
               // 50% Drop-Chance
-              if (Math.random() < 0.5) {
-                const drop =
-                  equipmentPool[
-                    Math.floor(Math.random() * equipmentPool.length)
-                  ];
-                const nextInventory = [
-                  ...(baseCharacter.inventory || []),
-                  drop.id,
-                ];
-                updateCharacter({
-                  ...baseCharacter,
-                  inventory: nextInventory,
-                });
-                setNewDrop(drop);
-              } else {
-                // Nach Sieg: zurück zu Portalen!
-                setTimeout(handleBackToPortals, 800);
-              }
+              const drop =
+                equipmentPool[Math.floor(Math.random() * equipmentPool.length)];
+              const nextInventory = [
+                ...(baseCharacter.inventory || []),
+                drop.id,
+              ];
+              updateCharacter({
+                ...baseCharacter,
+                inventory: nextInventory,
+              });
+              setReward({ type: "drop", drop });
+            } else {
+              setTimeout(handleBackToPortals, 800);
             }
           }, 350);
         }
@@ -221,12 +222,6 @@ export default function DimensionScreen() {
     ]
   );
 
-  const handleCloseSkillModal = useCallback(() => {
-    setNewUnlockedSkills(null);
-    setTimeout(handleBackToPortals, 400);
-  }, [handleBackToPortals]);
-
-  // Bildquellen gemappt
   const bossBgKey = getBackgroundKey(scaledBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || scaledBoss?.background;
@@ -245,52 +240,6 @@ export default function DimensionScreen() {
   );
 
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  // MODAL SHARED-COMPONENTS
-  const DropModal = ({ visible, drop, onClose }) => (
-    <Modal transparent visible={!!visible} animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
-          <Image
-            source={imageMap["equipment_" + drop.id]}
-            style={{ width: 60, height: 60, margin: 12 }}
-          />
-          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
-            {drop.label}
-          </Text>
-          <Text style={{ color: theme.textColor, fontSize: 14 }}>
-            {drop.description}
-          </Text>
-          <Pressable onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const SkillUnlockModal = ({ visible, skills, onClose }) => (
-    <Modal transparent animationType="fade" visible={!!visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>
-            🎉 Neue Skills freigeschaltet!
-          </Text>
-          {skills.map((s, i) => (
-            <View key={i} style={styles.skillItem}>
-              <Text style={styles.skillName}>{s.name}</Text>
-              <Text style={styles.skillDescription}>{s.description}</Text>
-              <Text style={styles.skillPower}>Power: {s.power}</Text>
-            </View>
-          ))}
-          <Pressable style={styles.okButton} onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
 
   // PORTAL-AUSWAHL
   if (!selectedPortal) {
@@ -330,7 +279,7 @@ export default function DimensionScreen() {
               )}
 
               <LinearGradient
-                colors={item.gradient || gradientColors} // nimmt individuelle Portal-Farben, sonst Fallback
+                colors={item.gradient || gradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.portalTextBg}
@@ -360,7 +309,7 @@ export default function DimensionScreen() {
     );
   }
 
-  // BOSS-KAMPF: wie gehabt
+  // BOSS-KAMPF + RewardModal
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -387,24 +336,42 @@ export default function DimensionScreen() {
         />
       )}
 
-      {newDrop && (
-        <DropModal
-          visible={!!newDrop}
-          drop={newDrop}
-          onClose={() => {
-            setNewDrop(null);
-            setTimeout(handleBackToPortals, 800);
-          }}
+      <RewardModal
+        visible={reward?.type === "drop"}
+        title="🎉 Du hast gefunden:"
+        onClose={() => {
+          setReward(null);
+          setTimeout(handleBackToPortals, 800);
+        }}
+      >
+        <Image
+          source={imageMap["equipment_" + reward?.drop?.id]}
+          style={{ width: 60, height: 60, margin: 12 }}
         />
-      )}
+        <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+          {reward?.drop?.label}
+        </Text>
+        <Text style={{ color: theme.textColor, fontSize: 14 }}>
+          {reward?.drop?.description}
+        </Text>
+      </RewardModal>
 
-      {newUnlockedSkills && (
-        <SkillUnlockModal
-          visible={!!newUnlockedSkills}
-          skills={newUnlockedSkills}
-          onClose={handleCloseSkillModal}
-        />
-      )}
+      <RewardModal
+        visible={reward?.type === "skills"}
+        title="🎉 Neue Skills freigeschaltet!"
+        onClose={() => {
+          setReward(null);
+          setTimeout(handleBackToPortals, 400);
+        }}
+      >
+        {(reward?.skills || []).map((s, i) => (
+          <View key={i} style={stylesModal.skillItem}>
+            <Text style={stylesModal.skillName}>{s.name}</Text>
+            <Text style={stylesModal.skillDescription}>{s.description}</Text>
+            <Text style={stylesModal.skillPower}>Power: {s.power}</Text>
+          </View>
+        ))}
+      </RewardModal>
     </View>
   );
 }
@@ -444,79 +411,6 @@ function createStyles(theme) {
       shadowRadius: 4,
       elevation: 4,
     },
-    closeBtn: {
-      alignSelf: "center",
-      marginTop: 24,
-      backgroundColor: theme.accentColor,
-      paddingHorizontal: 40,
-      paddingVertical: 12,
-      borderRadius: 16,
-      borderWidth: 1.2,
-      borderColor: theme.borderGlowColor,
-    },
-    // Modal Styles:
-    modalOverlay: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.74)",
-      paddingHorizontal: 12,
-    },
-    skillModal: {
-      backgroundColor: theme.accentColor,
-      borderRadius: 18,
-      paddingVertical: 24,
-      paddingHorizontal: 22,
-      minWidth: 270,
-      maxWidth: 350,
-      alignItems: "center",
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.12,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 13,
-      elevation: 3,
-    },
-    skillModalTitle: {
-      fontSize: 20,
-      color: theme.textColor,
-      marginBottom: 18,
-      textAlign: "center",
-      letterSpacing: 0.1,
-    },
-    skillItem: {
-      marginBottom: 13,
-      backgroundColor: theme.accentColor,
-      padding: 8,
-      borderRadius: 8,
-      width: "100%",
-      borderWidth: 1,
-      borderColor: theme.borderGlowColor,
-    },
-    skillName: {
-      fontSize: 16,
-      color: theme.borderGlowColor,
-      marginBottom: 4,
-      fontWeight: "bold",
-    },
-    skillDescription: { fontSize: 14, color: theme.textColor, marginBottom: 4 },
-    skillPower: { fontSize: 12, color: theme.glowColor },
-    okButton: {
-      marginTop: 16,
-      backgroundColor: theme.accentColor,
-      paddingVertical: 10,
-      paddingHorizontal: 34,
-      borderRadius: 13,
-      borderWidth: 1.2,
-      borderColor: theme.borderGlowColor,
-    },
-    okText: {
-      color: theme.textColor,
-      fontSize: 16,
-      letterSpacing: 0.06,
-      fontWeight: "600",
-    },
     headerRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -537,3 +431,69 @@ function createStyles(theme) {
     },
   });
 }
+
+// DRY-Modal-Styles zentral
+const stylesModal = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.74)",
+    paddingHorizontal: 12,
+  },
+  modal: {
+    backgroundColor: "#1e293b",
+    borderRadius: 18,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    minWidth: 270,
+    maxWidth: 350,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#38bdf8",
+    shadowColor: "#38bdf8",
+    shadowOpacity: 0.14,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 13,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 20,
+    color: "#fff",
+    marginBottom: 18,
+    textAlign: "center",
+    letterSpacing: 0.1,
+  },
+  okButton: {
+    marginTop: 16,
+    backgroundColor: "#38bdf8",
+    paddingVertical: 10,
+    paddingHorizontal: 34,
+    borderRadius: 13,
+    borderWidth: 1.2,
+    borderColor: "#bae6fd",
+  },
+  okText: {
+    color: "#fff",
+    fontSize: 16,
+    letterSpacing: 0.06,
+    fontWeight: "600",
+  },
+  skillItem: {
+    marginBottom: 13,
+    backgroundColor: "#1e293b",
+    padding: 8,
+    borderRadius: 8,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#38bdf8",
+  },
+  skillName: {
+    fontSize: 16,
+    color: "#38bdf8",
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
+  skillDescription: { fontSize: 14, color: "#fff", marginBottom: 4 },
+  skillPower: { fontSize: 12, color: "#bae6fd" },
+});

@@ -25,8 +25,9 @@ import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import { equipmentPool } from "../data/equipmentPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useStage } from "../context/StageContext";
+import ScreenLayout from "../components/ScreenLayout";
 
-// Hilfsfunktionen
+// Hilfsfunktionen (zentral)
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
@@ -43,7 +44,7 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-// Generische Modal-Komponente
+// Modal Komponente (vermeidet Duplikate)
 function InfoModal({ visible, children, onClose, styles, theme }) {
   if (!visible) return null;
   return (
@@ -66,8 +67,8 @@ function InfoModal({ visible, children, onClose, styles, theme }) {
   );
 }
 
-// StageNode Komponente
-function StageNode({ stage, progress, onPress, theme, styles }) {
+// StageNode ist jetzt 100% stateless, alles Status wird extern gemappt
+function StageNode({ stage, progress, onPress, theme, styles, imageMap }) {
   const isBoss = stage.type === "boss";
   const isUnlocked = progress.unlocked;
   const isCompleted = progress.completed;
@@ -137,6 +138,19 @@ function StageNode({ stage, progress, onPress, theme, styles }) {
   );
 }
 
+// Duplikate im Haupt-Render vermeiden: Alle stage-progress-Kombinationen zentral berechnen
+function mapStageProgress(stagesData, stageProgress) {
+  // Liefert ein Array: [{stage, progress}, ...] in Reihenfolge
+  return stagesData.map((stage) => ({
+    stage,
+    progress: stageProgress.find((p) => p.id === stage.id) || {
+      unlocked: false,
+      completed: false,
+      stars: 0,
+    },
+  }));
+}
+
 // Hauptkomponente
 export default function ShowdownScreen() {
   const { theme } = useThemeContext();
@@ -154,11 +168,11 @@ export default function ShowdownScreen() {
   const [battleActive, setBattleActive] = useState(false);
   const [modalContent, setModalContent] = useState(null);
 
+  // Basisdaten zentral berechnen, kein Duplikat im Kampf oder Modal
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
-
   const { stats: charStats, percentBonuses } = useMemo(
     () =>
       baseCharacter
@@ -167,22 +181,15 @@ export default function ShowdownScreen() {
     [baseCharacter]
   );
 
-  const boss = useMemo(
-    () =>
-      selectedStage && bossData[selectedStage.bossId]
-        ? {
-            ...bossData[selectedStage.bossId],
-            image:
-              imageMap[
-                getEventBossKey(
-                  bossData[selectedStage.bossId].image,
-                  bossData[selectedStage.bossId].name
-                )
-              ] || bossData[selectedStage.bossId].image,
-          }
-        : null,
-    [selectedStage, imageMap]
-  );
+  const boss = useMemo(() => {
+    if (!selectedStage || !bossData[selectedStage.bossId]) return null;
+    const rawBoss = bossData[selectedStage.bossId];
+    const key = getEventBossKey(rawBoss.image, rawBoss.name);
+    return {
+      ...rawBoss,
+      image: imageMap[key] || rawBoss.image,
+    };
+  }, [selectedStage, imageMap]);
 
   const scaledBoss = useMemo(
     () =>
@@ -197,6 +204,59 @@ export default function ShowdownScreen() {
   useEffect(() => {
     setBossHp(scaledBoss?.hp || 100);
   }, [scaledBoss, battleActive]);
+
+  // Zentrale Stage/Progress Map
+  const stageMap = useMemo(
+    () => mapStageProgress(stagesData, stageProgress),
+    [stagesData, stageProgress]
+  );
+
+  // Modal-Renderlogik DRY
+  const renderModal = () => {
+    if (!modalContent) return null;
+    if (modalContent.type === "drop")
+      return (
+        <InfoModal
+          styles={styles}
+          theme={theme}
+          visible
+          onClose={() => setModalContent(null)}
+        >
+          <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
+          <Image
+            source={imageMap["equipment_" + modalContent.drop?.id]}
+            style={{ width: 60, height: 60, margin: 12 }}
+          />
+          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+            {modalContent.drop?.label}
+          </Text>
+          <Text style={{ color: theme.textColor, fontSize: 14 }}>
+            {modalContent.drop?.description}
+          </Text>
+        </InfoModal>
+      );
+    if (modalContent.type === "skills")
+      return (
+        <InfoModal
+          styles={styles}
+          theme={theme}
+          visible
+          onClose={() => setModalContent(null)}
+        >
+          <Text style={styles.skillModalTitle}>
+            🎉 Neue Skills freigeschaltet!
+          </Text>
+          {(modalContent.skills || []).map((s, i) => (
+            <View key={i} style={styles.skillItem}>
+              <Text style={styles.skillName}>{s.name}</Text>
+              <Text style={styles.skillDescription}>{s.description}</Text>
+              <Text style={styles.skillPower}>Power: {s.power}</Text>
+            </View>
+          ))}
+        </InfoModal>
+      );
+    return null;
+  };
 
   const handleFight = useCallback(
     (skill = {}) => {
@@ -288,43 +348,39 @@ export default function ShowdownScreen() {
 
       {/* Stage-Map */}
       {!battleActive && (
-        <LinearGradient
-          colors={theme.linearGradient}
-          start={{ x: 0.12, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.stageMapRowOuter}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.stageMapRow}
+        <ScreenLayout>
+          <LinearGradient
+            colors={theme.linearGradient}
+            start={{ x: 0.12, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.stageMapRowOuter}
           >
-            {stagesData.map((stage, idx) => (
-              <React.Fragment key={stage.id}>
-                <StageNode
-                  styles={styles}
-                  stage={stage}
-                  progress={
-                    stageProgress.find((p) => p.id === stage.id) || {
-                      unlocked: false,
-                      completed: false,
-                      stars: 0,
-                    }
-                  }
-                  onPress={() => {
-                    setSelectedStage(stage);
-                    setBattleActive(true);
-                  }}
-                  theme={theme}
-                  imageMap={imageMap}
-                />
-                {idx < stagesData.length - 1 && (
-                  <View style={styles.stageLine} />
-                )}
-              </React.Fragment>
-            ))}
-          </ScrollView>
-        </LinearGradient>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.stageMapRow}
+            >
+              {stageMap.map(({ stage, progress }, idx) => (
+                <React.Fragment key={stage.id}>
+                  <StageNode
+                    styles={styles}
+                    stage={stage}
+                    progress={progress}
+                    onPress={() => {
+                      setSelectedStage(stage);
+                      setBattleActive(true);
+                    }}
+                    theme={theme}
+                    imageMap={imageMap}
+                  />
+                  {idx < stageMap.length - 1 && (
+                    <View style={styles.stageLine} />
+                  )}
+                </React.Fragment>
+              ))}
+            </ScrollView>
+          </LinearGradient>
+        </ScreenLayout>
       )}
 
       {battleActive && boss && (
@@ -341,42 +397,8 @@ export default function ShowdownScreen() {
         />
       )}
 
-      {/* Modals */}
-      <InfoModal
-        styles={styles}
-        theme={theme}
-        visible={modalContent?.type === "drop"}
-        onClose={() => setModalContent(null)}
-      >
-        <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
-        <Image
-          source={imageMap["equipment_" + modalContent?.drop?.id]}
-          style={{ width: 60, height: 60, margin: 12 }}
-        />
-        <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
-          {modalContent?.drop?.label}
-        </Text>
-        <Text style={{ color: theme.textColor, fontSize: 14 }}>
-          {modalContent?.drop?.description}
-        </Text>
-      </InfoModal>
-      <InfoModal
-        styles={styles}
-        theme={theme}
-        visible={modalContent?.type === "skills"}
-        onClose={() => setModalContent(null)}
-      >
-        <Text style={styles.skillModalTitle}>
-          🎉 Neue Skills freigeschaltet!
-        </Text>
-        {(modalContent?.skills || []).map((s, i) => (
-          <View key={i} style={styles.skillItem}>
-            <Text style={styles.skillName}>{s.name}</Text>
-            <Text style={styles.skillDescription}>{s.description}</Text>
-            <Text style={styles.skillPower}>Power: {s.power}</Text>
-          </View>
-        ))}
-      </InfoModal>
+      {/* Modal-Block (DRY) */}
+      {renderModal()}
     </View>
   );
 }

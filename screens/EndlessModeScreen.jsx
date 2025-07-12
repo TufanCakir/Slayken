@@ -32,6 +32,60 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
+// Eine Modal-Komponente für alles:
+function ResultModal({
+  visible,
+  onClose,
+  type,
+  drop,
+  skills,
+  imageMap,
+  theme,
+  styles,
+}) {
+  if (!visible) return null;
+  return (
+    <Modal transparent animationType="fade" visible>
+      <View style={styles.modalOverlay}>
+        <View style={styles.skillModal}>
+          {type === "drop" && drop && (
+            <>
+              <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
+              <Image
+                source={imageMap["equipment_" + drop.id]}
+                style={{ width: 60, height: 60, margin: 12 }}
+              />
+              <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+                {drop.label}
+              </Text>
+              <Text style={{ color: theme.textColor, fontSize: 14 }}>
+                {drop.description}
+              </Text>
+            </>
+          )}
+          {type === "skills" && skills && (
+            <>
+              <Text style={styles.skillModalTitle}>
+                🎉 Neue Skills freigeschaltet!
+              </Text>
+              {skills.map((s, i) => (
+                <View key={i} style={styles.skillItem}>
+                  <Text style={styles.skillName}>{s.name}</Text>
+                  <Text style={styles.skillDescription}>{s.description}</Text>
+                  <Text style={styles.skillPower}>Power: {s.power}</Text>
+                </View>
+              ))}
+            </>
+          )}
+          <Pressable style={styles.okButton} onPress={onClose}>
+            <Text style={styles.okText}>OK</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function EndlessModeScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
@@ -43,25 +97,23 @@ export default function EndlessModeScreen() {
   const { gainExp } = useLevelSystem();
   const completeMissionOnce = useCompleteMissionOnce();
 
-  const [newDrop, setNewDrop] = useState(null);
+  // Modalstatus (ein State statt zwei)
+  const [modal, setModal] = useState({ type: null, drop: null, skills: null });
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
   const [bossMaxHp, setBossMaxHp] = useState(100);
-  const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
   // Aktiver Charakter
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
-
-  // Charakter-Stats
   const { stats: charStats, percentBonuses } = useMemo(() => {
     if (!baseCharacter) return { stats: {}, percentBonuses: {} };
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
-  // GESCALETE Bossdaten (Level)
+  // Bossdaten
   const scaledBoss = useMemo(() => {
     if (!currentBoss || !baseCharacter) return null;
     return scaleBossStats(currentBoss, baseCharacter.level || 1);
@@ -115,26 +167,22 @@ export default function EndlessModeScreen() {
             );
 
             if (newSkills?.length) {
-              setNewUnlockedSkills(newSkills);
+              setModal({ type: "skills", skills: newSkills, drop: null });
+            } else if (Math.random() < 0.5) {
+              // Drop
+              const drop =
+                equipmentPool[Math.floor(Math.random() * equipmentPool.length)];
+              const nextInventory = [
+                ...(baseCharacter.inventory || []),
+                drop.id,
+              ];
+              updateCharacter({
+                ...baseCharacter,
+                inventory: nextInventory,
+              });
+              setModal({ type: "drop", drop, skills: null });
             } else {
-              // 50% Drop-Chance
-              if (Math.random() < 0.5) {
-                const drop =
-                  equipmentPool[
-                    Math.floor(Math.random() * equipmentPool.length)
-                  ];
-                const nextInventory = [
-                  ...(baseCharacter.inventory || []),
-                  drop.id,
-                ];
-                updateCharacter({
-                  ...baseCharacter,
-                  inventory: nextInventory,
-                });
-                setNewDrop(drop);
-              } else {
-                setTimeout(spawnNewBoss, 500);
-              }
+              setTimeout(spawnNewBoss, 500);
             }
           }, 300);
         }
@@ -156,9 +204,9 @@ export default function EndlessModeScreen() {
     ]
   );
 
-  const handleCloseSkillModal = useCallback(() => {
-    setNewUnlockedSkills(null);
-    setTimeout(spawnNewBoss, 400);
+  const handleCloseModal = useCallback(() => {
+    setModal({ type: null, drop: null, skills: null });
+    setTimeout(spawnNewBoss, 500);
   }, [spawnNewBoss]);
 
   // Bildquellen gemappt
@@ -180,52 +228,6 @@ export default function EndlessModeScreen() {
   );
 
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  // MODAL SHARED-COMPONENT für weniger Duplikat
-  const DropModal = ({ visible, drop, onClose }) => (
-    <Modal transparent visible={!!visible} animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
-          <Image
-            source={imageMap["equipment_" + drop.id]}
-            style={{ width: 60, height: 60, margin: 12 }}
-          />
-          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
-            {drop.label}
-          </Text>
-          <Text style={{ color: theme.textColor, fontSize: 14 }}>
-            {drop.description}
-          </Text>
-          <Pressable onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const SkillUnlockModal = ({ visible, skills, onClose }) => (
-    <Modal transparent animationType="fade" visible={!!visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>
-            🎉 Neue Skills freigeschaltet!
-          </Text>
-          {skills.map((s, i) => (
-            <View key={i} style={styles.skillItem}>
-              <Text style={styles.skillName}>{s.name}</Text>
-              <Text style={styles.skillDescription}>{s.description}</Text>
-              <Text style={styles.skillPower}>Power: {s.power}</Text>
-            </View>
-          ))}
-          <Pressable style={styles.okButton} onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
 
   return (
     <View style={styles.container}>
@@ -253,24 +255,17 @@ export default function EndlessModeScreen() {
         />
       )}
 
-      {newDrop && (
-        <DropModal
-          visible={!!newDrop}
-          drop={newDrop}
-          onClose={() => {
-            setNewDrop(null);
-            setTimeout(spawnNewBoss, 500);
-          }}
-        />
-      )}
-
-      {newUnlockedSkills && (
-        <SkillUnlockModal
-          visible={!!newUnlockedSkills}
-          skills={newUnlockedSkills}
-          onClose={handleCloseSkillModal}
-        />
-      )}
+      {/* EIN gemeinsames Modal für alles */}
+      <ResultModal
+        visible={modal.type === "drop" || modal.type === "skills"}
+        type={modal.type}
+        drop={modal.drop}
+        skills={modal.skills}
+        onClose={handleCloseModal}
+        imageMap={imageMap}
+        theme={theme}
+        styles={styles}
+      />
     </View>
   );
 }
@@ -278,7 +273,6 @@ export default function EndlessModeScreen() {
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
-
     modalOverlay: {
       flex: 1,
       justifyContent: "center",

@@ -7,6 +7,8 @@ import {
   Modal,
   FlatList,
   TouchableOpacity,
+  Animated,
+  Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAccountLevel } from "../context/AccountLevelContext";
@@ -29,7 +31,6 @@ import ScreenLayout from "../components/ScreenLayout";
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-// Bild/Background-Key Helper
 const getAssetKey = (url, prefix, fallback) => {
   let name = null;
   if (typeof url === "string") {
@@ -58,13 +59,15 @@ function SkillUnlockModal({ visible, skills, onClose, styles, theme }) {
           <Text style={styles.skillModalTitle}>
             🎉 Neue Skills freigeschaltet!
           </Text>
-          {skills.map((skill, idx) => (
-            <View key={idx} style={styles.skillItem}>
-              <Text style={styles.skillName}>{skill.name}</Text>
-              <Text style={styles.skillDescription}>{skill.description}</Text>
-              <Text style={styles.skillPower}>Power: {skill.power}</Text>
-            </View>
-          ))}
+          <View style={{ width: "100%" }}>
+            {skills.map((skill, idx) => (
+              <View key={idx} style={styles.skillItem}>
+                <Text style={styles.skillName}>{skill.name}</Text>
+                <Text style={styles.skillDescription}>{skill.description}</Text>
+                <Text style={styles.skillPower}>Power: {skill.power}</Text>
+              </View>
+            ))}
+          </View>
           <Pressable style={styles.okButton} onPress={onClose}>
             <Text style={styles.okText}>OK</Text>
           </Pressable>
@@ -93,6 +96,9 @@ export default function StoryScreen() {
   const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
+  // Animated HP für Fortschrittsbalken (optional nice effect)
+  const [hpAnim] = useState(new Animated.Value(1));
+
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Boss laden, wenn Kapitel gewählt
@@ -103,17 +109,28 @@ export default function StoryScreen() {
     setCurrentBoss(scaled);
     setBossHp(scaled.hp || 100);
     setBossMaxHp(scaled.hp || 100);
+    hpAnim.setValue(1);
   }, [selectedChapter, activeCharacter]);
 
-  // Bei Boss-/Char-Wechsel MaxHP immer korrekt setzen!
+  // Animate HP
+  useEffect(() => {
+    if (bossMaxHp > 0) {
+      Animated.timing(hpAnim, {
+        toValue: bossHp / bossMaxHp,
+        duration: 340,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [bossHp, bossMaxHp]);
+
   useEffect(() => {
     if (currentBoss) {
       setBossHp(currentBoss.hp ?? 100);
       setBossMaxHp(currentBoss.hp ?? 100);
+      hpAnim.setValue(1);
     }
   }, [currentBoss]);
 
-  // --- Kampflogik & XP ---
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
@@ -151,7 +168,7 @@ export default function StoryScreen() {
             } else {
               resetState();
             }
-          }, 300);
+          }, 350);
         }
         return newHp;
       });
@@ -173,6 +190,7 @@ export default function StoryScreen() {
     setCurrentBoss(null);
     setBossHp(100);
     setBossMaxHp(100);
+    hpAnim.setValue(1);
   }, []);
 
   const handleCloseSkillModal = useCallback(() => {
@@ -200,6 +218,22 @@ export default function StoryScreen() {
 
   // Kapitel-Auswahl
   if (!selectedChapter) {
+    // Keine Charaktere? Keine Kapitel? => Hinweis!
+    if (!classList.length)
+      return (
+        <ScreenLayout style={styles.container}>
+          <Text style={styles.errorText}>
+            Kein Charakter verfügbar. Erstelle zuerst einen Charakter!
+          </Text>
+        </ScreenLayout>
+      );
+    if (!chapterData.length)
+      return (
+        <ScreenLayout style={styles.container}>
+          <Text style={styles.errorText}>Keine Kapitel gefunden.</Text>
+        </ScreenLayout>
+      );
+
     return (
       <ScreenLayout style={styles.container}>
         <Text style={styles.header}>Wähle ein Kapitel</Text>
@@ -262,11 +296,34 @@ export default function StoryScreen() {
           />
         </View>
       )}
+
+      {/* ALWAYS visible Back */}
       <Pressable style={styles.backButton} onPress={resetState}>
         <Text style={styles.backText}>← Zurück zur Kapitel-Auswahl</Text>
       </Pressable>
 
       <Text style={styles.chapterTitleFight}>{selectedChapter.label}</Text>
+
+      {/* HP BAR */}
+      {currentBoss && (
+        <View style={styles.hpBarOuter}>
+          <Animated.View
+            style={[
+              styles.hpBar,
+              {
+                width: hpAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["0%", "100%"],
+                }),
+                backgroundColor: theme.borderGlowColor || "#e11d48",
+              },
+            ]}
+          />
+          <Text style={styles.hpText}>
+            Boss HP: {bossHp} / {bossMaxHp}
+          </Text>
+        </View>
+      )}
 
       {currentBoss && (
         <BattleScene
@@ -297,10 +354,17 @@ function createStyles(theme) {
   const text = theme.textColor || "#fff";
   const glow = theme.glowColor || "#ffd70088";
   const highlight = theme.borderGlowColor || "#ffd700cc";
-  const cardBg = accent + "ee";
+  const windowWidth = Dimensions.get("window").width;
 
   return StyleSheet.create({
     container: { flex: 1 },
+    errorText: {
+      color: "#e11d48",
+      fontSize: 17,
+      textAlign: "center",
+      fontWeight: "bold",
+      marginTop: 50,
+    },
     header: {
       fontSize: 26,
       color: highlight,
@@ -312,19 +376,23 @@ function createStyles(theme) {
       textShadowRadius: 12,
       textShadowOffset: { width: 0, height: 3 },
     },
-    chapterList: { padding: 12, gap: 12 },
+    chapterList: {
+      padding: 12,
+      gap: 12,
+      paddingBottom: 38,
+    },
     chapterCardOuter: {
       marginVertical: 6,
       borderRadius: 22,
       overflow: "hidden",
       shadowColor: highlight,
-      shadowOpacity: 0.16,
-      shadowRadius: 18,
-      elevation: 6,
+      shadowOpacity: 0.18,
+      shadowRadius: 21,
+      elevation: 7,
     },
     chapterCard: {
       borderRadius: 22,
-      height: 300,
+      height: windowWidth > 650 ? 360 : 240,
       justifyContent: "center",
       overflow: "hidden",
       flex: 1,
@@ -332,13 +400,13 @@ function createStyles(theme) {
     chapterImage: {
       ...StyleSheet.absoluteFillObject,
       borderRadius: 22,
-      opacity: 0.61,
+      opacity: 0.63,
     },
     chapterOverlay: {
       position: "absolute",
       bottom: 0,
       width: "100%",
-      padding: 11,
+      padding: 14,
       borderBottomLeftRadius: 22,
       borderBottomRightRadius: 22,
       backgroundColor: accent + "ec",
@@ -346,11 +414,11 @@ function createStyles(theme) {
     },
     chapterTitle: {
       color: highlight,
-      fontSize: 20,
+      fontSize: 21,
       fontWeight: "bold",
-      letterSpacing: 0.22,
+      letterSpacing: 0.23,
       textShadowColor: glow,
-      textShadowRadius: 7,
+      textShadowRadius: 8,
       textShadowOffset: { width: 0, height: 2 },
     },
     chapterDesc: {
@@ -359,17 +427,22 @@ function createStyles(theme) {
       marginTop: 4,
       fontWeight: "500",
       textAlign: "center",
-      textShadowColor: accent + "d0",
+      textShadowColor: accent + "c5",
       textShadowRadius: 5,
       textShadowOffset: { width: 0, height: 1 },
     },
     backButton: {
-      marginVertical: 12,
-      padding: 5,
+      marginVertical: 10,
+      padding: 8,
       alignSelf: "flex-start",
-      marginLeft: 5,
-      backgroundColor: accent + "a4",
-      borderRadius: 12,
+      marginLeft: 12,
+      marginTop: 18,
+      backgroundColor: accent + "e8",
+      borderRadius: 14,
+      zIndex: 40,
+      shadowColor: highlight,
+      shadowRadius: 6,
+      shadowOpacity: 0.09,
     },
     backText: {
       fontSize: 17,
@@ -390,6 +463,39 @@ function createStyles(theme) {
       textShadowRadius: 13,
       textShadowOffset: { width: 0, height: 4 },
     },
+    // HP BAR
+    hpBarOuter: {
+      height: 30,
+      backgroundColor: accent + "88",
+      borderRadius: 11,
+      marginHorizontal: 26,
+      marginBottom: 10,
+      overflow: "hidden",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: highlight,
+      shadowColor: highlight,
+      shadowRadius: 4,
+      shadowOpacity: 0.11,
+    },
+    hpBar: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      borderRadius: 11,
+    },
+    hpText: {
+      textAlign: "center",
+      color: text,
+      fontWeight: "bold",
+      fontSize: 15.5,
+      letterSpacing: 0.12,
+      zIndex: 10,
+      textShadowColor: glow,
+      textShadowRadius: 6,
+    },
+    // MODAL
     modalOverlay: {
       flex: 1,
       justifyContent: "center",
@@ -397,41 +503,47 @@ function createStyles(theme) {
       backgroundColor: "rgba(0,0,0,0.77)",
     },
     skillModal: {
-      borderRadius: 18,
-      padding: 26,
-      width: "85%",
+      borderRadius: 20,
+      padding: 29,
+      width: "88%",
       alignItems: "center",
     },
     skillModalTitle: {
       color: highlight,
       fontWeight: "bold",
-      fontSize: 19,
-      marginBottom: 14,
+      fontSize: 21,
+      marginBottom: 18,
       textAlign: "center",
       textShadowColor: glow,
-      textShadowRadius: 9,
+      textShadowRadius: 12,
     },
-    skillItem: { marginBottom: 15 },
+    skillItem: { marginBottom: 16, alignItems: "center" },
     skillName: {
       fontSize: 17,
       color: highlight,
       fontWeight: "bold",
       textShadowColor: glow,
-      textShadowRadius: 7,
+      textShadowRadius: 8,
     },
-    skillDescription: { fontSize: 14, color: text, textAlign: "center" },
+    skillDescription: {
+      fontSize: 14,
+      color: text,
+      textAlign: "center",
+      marginTop: 3,
+      marginBottom: 1,
+    },
     skillPower: { fontSize: 12, color: text, fontStyle: "italic" },
     okButton: {
       backgroundColor: highlight,
-      paddingVertical: 11,
-      paddingHorizontal: 27,
-      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 31,
+      borderRadius: 13,
       alignSelf: "center",
       marginTop: 19,
       shadowColor: glow,
-      shadowOpacity: 0.6,
-      shadowRadius: 7,
-      elevation: 6,
+      shadowOpacity: 0.7,
+      shadowRadius: 10,
+      elevation: 8,
     },
     okText: { color: accent, fontWeight: "bold", fontSize: 16 },
   });

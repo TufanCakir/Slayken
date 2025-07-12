@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   Modal,
   ScrollView,
+  FlatList,
 } from "react-native";
 import { Image } from "expo-image";
 import { useThemeContext } from "../context/ThemeContext";
@@ -16,14 +16,19 @@ import { useClass } from "../context/ClassContext";
 import ScreenLayout from "../components/ScreenLayout";
 import { LinearGradient } from "expo-linear-gradient";
 
-const leftSlots = ["head", "shoulder", "chest", "hands", "legs"];
-const rightSlots = ["weapon", "ring", "neck", "feet"];
+const LEFT_SLOTS = ["head", "shoulder", "chest", "hands", "legs"];
+const RIGHT_SLOTS = ["weapon", "ring", "neck", "feet"];
 
 export default function InventoryScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const { classList, equipItem } = useClass();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradients = [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
 
   const [selectedCharacterId, setSelectedCharacterId] = useState(
     classList[0]?.id || null
@@ -33,31 +38,40 @@ export default function InventoryScreen() {
 
   const selectedCharacter = classList.find((c) => c.id === selectedCharacterId);
   const selectedInventory = selectedCharacter?.inventory || [];
+  const equipped = selectedCharacter?.equipment || {};
 
-  // Inventory-Zählung (Map aus Item-ID -> Anzahl)
-  const inventoryCounts = selectedInventory.reduce((acc, id) => {
-    acc[id] = (acc[id] || 0) + 1;
-    return acc;
-  }, {});
+  // Zählung der Items: Map<ItemId, Anzahl>
+  const inventoryCounts = useMemo(() => {
+    return selectedInventory.reduce((acc, id) => {
+      acc[id] = (acc[id] || 0) + 1;
+      return acc;
+    }, {});
+  }, [selectedInventory]);
 
-  const handleEquip = (item) => {
-    if (!selectedCharacterId || !selectedSlot) return;
-    equipItem(selectedCharacterId, selectedSlot, item.id);
-    setModalVisible(false);
-  };
+  // Handler für Equip
+  const handleEquip = useCallback(
+    (item) => {
+      if (!selectedCharacterId || !selectedSlot) return;
+      equipItem(selectedCharacterId, selectedSlot, item.id);
+      setModalVisible(false);
+    },
+    [selectedCharacterId, selectedSlot, equipItem]
+  );
 
-  const handleRemove = (slot) => {
-    equipItem(selectedCharacterId, slot, null);
-  };
+  // Handler für Remove
+  const handleRemove = useCallback(
+    (slot) => equipItem(selectedCharacterId, slot, null),
+    [equipItem, selectedCharacterId]
+  );
 
-  const renderSlot = (slot) => {
-    const equippedItemId = selectedCharacter?.equipment?.[slot];
+  // Slot-Komponente
+  const EquipSlot = ({ slot }) => {
+    const equippedItemId = equipped[slot];
     const equippedItem = equipmentPool.find((e) => e.id === equippedItemId);
     const icon = equippedItem ? imageMap[`equipment_${equippedItem.id}`] : null;
 
     return (
       <TouchableOpacity
-        key={slot}
         style={styles.slotButton}
         onPress={() => {
           setSelectedSlot(slot);
@@ -65,17 +79,15 @@ export default function InventoryScreen() {
         }}
         onLongPress={() => handleRemove(slot)}
         activeOpacity={0.82}
+        accessibilityRole="button"
+        accessibilityLabel={
+          equippedItem
+            ? `Slot ${slot}: ${equippedItem.label}`
+            : `Slot ${slot}: leer`
+        }
       >
         <LinearGradient
-          colors={
-            icon
-              ? [
-                  theme.accentColorSecondary,
-                  theme.accentColor,
-                  theme.accentColorDark,
-                ]
-              : [theme.shadowColor, theme.accentColor]
-          }
+          colors={icon ? gradients : [theme.shadowColor, theme.accentColor]}
           start={[0.1, 0]}
           end={[1, 1]}
           style={styles.slotIconOuter}
@@ -91,15 +103,58 @@ export default function InventoryScreen() {
     );
   };
 
+  // Item im Modal
+  const ModalItem = React.memo(({ item, count, onEquip, icon }) => {
+    return (
+      <TouchableOpacity
+        style={[styles.modalItem, !count && styles.modalItemDisabled]}
+        onPress={() => count && onEquip(item)}
+        disabled={!count}
+      >
+        <LinearGradient
+          colors={count ? gradients : [theme.shadowColor, theme.accentColor]}
+          start={[0.1, 0]}
+          end={[1, 1]}
+          style={styles.modalItemGradient}
+        >
+          {icon ? (
+            <Image
+              source={icon}
+              style={styles.modalImage}
+              contentFit="contain"
+            />
+          ) : (
+            <View style={styles.emptySlot} />
+          )}
+          <Text style={styles.modalText}>
+            {item.label}
+            <Text
+              style={{ color: theme.borderGlowColor }}
+            >{`  x${count}`}</Text>
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  });
+
+  // Items für das Modal filtern
+  const filteredEquip = useMemo(
+    () =>
+      equipmentPool
+        .filter((e) => e.slot === selectedSlot)
+        .map((e) => ({
+          ...e,
+          icon: imageMap[`equipment_${e.id}`],
+          count: inventoryCounts[e.id] || 0,
+        })),
+    [selectedSlot, imageMap, inventoryCounts]
+  );
+
   return (
     <ScreenLayout style={styles.container}>
-      {/* Gradient-Header */}
+      {/* Charakter Auswahl */}
       <LinearGradient
-        colors={[
-          theme.accentColorSecondary,
-          theme.accentColor,
-          theme.accentColorDark,
-        ]}
+        colors={gradients}
         start={[0.1, 0]}
         end={[1, 1]}
         style={styles.headingGradient}
@@ -121,11 +176,7 @@ export default function InventoryScreen() {
               <LinearGradient
                 colors={
                   char.id === selectedCharacterId
-                    ? [
-                        theme.accentColorSecondary,
-                        theme.accentColor,
-                        theme.accentColorDark,
-                      ]
+                    ? gradients
                     : [theme.shadowColor, theme.accentColor]
                 }
                 start={[0, 0]}
@@ -156,27 +207,23 @@ export default function InventoryScreen() {
       <View style={styles.characterRow}>
         {/* Linke Slots */}
         <LinearGradient
-          colors={[
-            theme.accentColorSecondary,
-            theme.accentColor,
-            theme.accentColorDark,
-          ]}
+          colors={gradients}
           start={[0.1, 0]}
           end={[1, 1]}
           style={styles.slotColumnGradient}
         >
-          <View style={styles.slotColumn}>{leftSlots.map(renderSlot)}</View>
+          <View style={styles.slotColumn}>
+            {LEFT_SLOTS.map((slot) => (
+              <EquipSlot key={slot} slot={slot} />
+            ))}
+          </View>
         </LinearGradient>
 
         {/* Charakterbild */}
         <View style={styles.characterArea}>
           {selectedCharacter ? (
             <LinearGradient
-              colors={[
-                theme.accentColorSecondary,
-                theme.accentColor,
-                theme.accentColorDark,
-              ]}
+              colors={gradients}
               start={[0.3, 0]}
               end={[1, 1]}
               style={styles.characterGradient}
@@ -192,18 +239,18 @@ export default function InventoryScreen() {
           )}
         </View>
 
-        {/* Rechte Slots mit Gradient */}
+        {/* Rechte Slots */}
         <LinearGradient
-          colors={[
-            theme.accentColorSecondary,
-            theme.accentColor,
-            theme.accentColorDark,
-          ]}
+          colors={gradients}
           start={[0.1, 0]}
           end={[1, 1]}
           style={styles.slotColumnGradient}
         >
-          <View style={styles.slotColumn}>{rightSlots.map(renderSlot)}</View>
+          <View style={styles.slotColumn}>
+            {RIGHT_SLOTS.map((slot) => (
+              <EquipSlot key={slot} slot={slot} />
+            ))}
+          </View>
         </LinearGradient>
       </View>
 
@@ -224,11 +271,7 @@ export default function InventoryScreen() {
         <View style={styles.modalContainerOuter}>
           <View style={styles.modalContainer}>
             <LinearGradient
-              colors={[
-                theme.accentColorSecondary,
-                theme.accentColor,
-                theme.accentColorDark,
-              ]}
+              colors={gradients}
               start={[0.1, 0]}
               end={[1, 1]}
               style={styles.modalTitleGradient}
@@ -236,51 +279,17 @@ export default function InventoryScreen() {
               <Text style={styles.modalTitle}>Ausrüstung wählen</Text>
             </LinearGradient>
             <FlatList
-              data={equipmentPool.filter((e) => e.slot === selectedSlot)}
+              data={filteredEquip}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                const icon = imageMap[`equipment_${item.id}`];
-                const count = inventoryCounts[item.id] || 0;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.modalItem,
-                      !count && styles.modalItemDisabled,
-                    ]}
-                    onPress={() => handleEquip(item)}
-                    disabled={!count}
-                  >
-                    <LinearGradient
-                      colors={
-                        count
-                          ? [
-                              theme.accentColorSecondary,
-                              theme.accentColor,
-                              theme.accentColorDark,
-                            ]
-                          : [theme.shadowColor, theme.accentColor]
-                      }
-                      start={[0.1, 0]}
-                      end={[1, 1]}
-                      style={styles.modalItemGradient}
-                    >
-                      {icon && (
-                        <Image
-                          source={icon}
-                          style={styles.modalImage}
-                          contentFit="contain"
-                        />
-                      )}
-                      <Text style={styles.modalText}>
-                        {item.label}
-                        <Text style={{ color: theme.borderGlowColor }}>
-                          {`  x${count}`}
-                        </Text>
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              }}
+              renderItem={({ item }) => (
+                <ModalItem
+                  item={item}
+                  count={item.count}
+                  onEquip={handleEquip}
+                  icon={item.icon}
+                />
+              )}
+              style={{ maxHeight: 340 }}
             />
             <TouchableOpacity
               style={styles.modalCloseButton}
@@ -288,11 +297,7 @@ export default function InventoryScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[
-                  theme.accentColorSecondary,
-                  theme.accentColor,
-                  theme.accentColorDark,
-                ]}
+                colors={gradients}
                 start={[0.1, 0]}
                 end={[1, 1]}
                 style={styles.modalCloseGradient}
@@ -377,12 +382,10 @@ function createStyles(theme) {
       paddingVertical: 10,
       paddingHorizontal: 3,
       marginHorizontal: 2,
-      // KEIN gap hier!
     },
     slotColumn: {
       alignItems: "center",
       justifyContent: "center",
-      // gap: 12,      // gap NUR im View!
     },
     slotButton: { alignItems: "center", marginVertical: 2 },
     slotIconOuter: {
@@ -392,7 +395,7 @@ function createStyles(theme) {
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 2,
-      padding: 3, // etwas padding gibt mehr "Rahmen"
+      padding: 3,
     },
     slotIcon: {
       width: 48,
@@ -405,10 +408,11 @@ function createStyles(theme) {
     emptySlot: {
       width: 48,
       height: 48,
-      opacity: 0.5,
+      opacity: 0.36,
       borderRadius: 10,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
+      backgroundColor: theme.accentColor,
     },
     slotLabel: {
       color: theme.borderGlowColor,
@@ -424,7 +428,7 @@ function createStyles(theme) {
     },
     characterGradient: {
       width: "90%",
-      height: 360, // etwas mehr als das Bild für einen Rahmen
+      height: 360,
       borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
@@ -514,7 +518,7 @@ function createStyles(theme) {
       elevation: 1,
     },
     modalItemDisabled: {
-      opacity: 0.38,
+      opacity: 0.36,
     },
     modalImage: {
       width: 50,

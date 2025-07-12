@@ -1,14 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function OnlineGuard({ children }) {
   const { theme } = useThemeContext();
   const [isConnected, setIsConnected] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Internet-Check
   const checkConnection = useCallback(() => {
@@ -25,19 +33,53 @@ export default function OnlineGuard({ children }) {
     return () => unsubscribe();
   }, [checkConnection]);
 
+  useEffect(() => {
+    if (!isConnected) {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isConnected, fadeAnim]);
+
   const styles = createStyles(theme);
 
   if (!isConnected) {
     return (
-      <View style={StyleSheet.absoluteFillObject}>
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { opacity: fadeAnim, zIndex: 20 },
+        ]}
+      >
         <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.centered}>
-          <View style={styles.card}>
-            <Text style={styles.message}>{t("noInternetMessage")}</Text>
+          <Animated.View style={styles.card}>
+            <Ionicons
+              name="wifi-off"
+              size={56}
+              color={theme.glowColor}
+              style={{ marginBottom: 13 }}
+              accessibilityLabel="Offline-Icon"
+              accessibilityRole="image"
+            />
+            <Text style={styles.message}>
+              {t("noInternetMessage") || "Keine Internetverbindung"}
+            </Text>
             <TouchableOpacity
               style={styles.buttonOuter}
               onPress={checkConnection}
               activeOpacity={0.89}
+              accessibilityRole="button"
+              accessibilityLabel={t("retryButton") || "Erneut versuchen"}
             >
               <LinearGradient
                 colors={
@@ -52,12 +94,14 @@ export default function OnlineGuard({ children }) {
                 end={{ x: 1, y: 1 }}
                 style={styles.button}
               >
-                <Text style={styles.buttonText}>{t("retryButton")}</Text>
+                <Text style={styles.buttonText}>
+                  {t("retryButton") || "Erneut versuchen"}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
@@ -72,55 +116,56 @@ function createStyles(theme) {
       alignItems: "center",
     },
     card: {
-      padding: 30,
-      borderRadius: 22,
+      padding: 34,
+      borderRadius: 24,
       alignItems: "center",
-      minWidth: 265,
-      elevation: 10,
-      backgroundColor: theme.accentColor + "f7",
-      shadowColor: theme.accentColorDark,
-      shadowOpacity: 0.16,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 3 },
-      borderWidth: 2,
+      minWidth: 270,
+      elevation: 12,
+      backgroundColor: theme.accentColor + "f4",
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.23,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 5 },
+      borderWidth: 2.5,
       borderColor: theme.borderGlowColor,
     },
     message: {
-      fontSize: 20,
+      fontSize: 21,
       textAlign: "center",
-      marginBottom: 19,
-      letterSpacing: 0.14,
-      fontWeight: "700",
+      marginBottom: 22,
+      letterSpacing: 0.17,
+      fontWeight: "bold",
       color: theme.textColor,
-      textShadowColor: theme.accentColorDark,
-      textShadowRadius: 3,
-      textShadowOffset: { width: 0, height: 1 },
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 4,
+      textShadowOffset: { width: 0, height: 2 },
     },
     buttonOuter: {
       borderRadius: 13,
-      marginTop: 14,
+      marginTop: 10,
       overflow: "hidden",
-      minWidth: 180,
+      minWidth: 170,
       alignSelf: "center",
-      shadowColor: theme.accentColorDark,
-      shadowRadius: 13,
-      shadowOpacity: 0.29,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: 3,
+      shadowColor: theme.glowColor,
+      shadowRadius: 15,
+      shadowOpacity: 0.32,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
     },
     button: {
-      paddingVertical: 13,
-      paddingHorizontal: 35,
+      paddingVertical: 14,
+      paddingHorizontal: 36,
       alignItems: "center",
       justifyContent: "center",
       borderRadius: 13,
       width: "100%",
     },
     buttonText: {
-      fontSize: 16,
-      letterSpacing: 0.35,
+      fontSize: 17,
+      letterSpacing: 0.34,
       textAlign: "center",
       color: theme.textColor,
+      fontWeight: "bold",
     },
   });
 }
