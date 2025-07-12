@@ -2,61 +2,61 @@
   {
     "id": "1",
     "title": "Das Urteil der Höllenglut",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/infermor_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/infermor.png",
     "description": "Schalte dieses Event frei, indem du das Höllenglut-Siegel im Shop erwirbst."
   },
   {
     "id": "2",
     "title": "Seelen der Leere",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/malzevox_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/malzevox.png",
     "description": "Aktiviere das Event durch den Kauf des Siegels der Leere im Shop."
   },
   {
     "id": "3",
     "title": "Himmlisches Inferno",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/aurelion_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/aurelion.png",
     "description": "Dieses Event wird freigeschaltet mit dem Segen des Himmelsbrands."
   },
   {
     "id": "4",
     "title": "Göttliches Urteil",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/orionyx_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/orionyx.png",
     "description": "Benötigt das Symbol der Götter, um das Event zu aktivieren."
   },
   {
     "id": "5",
     "title": "Erwachen des Titanen",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/drogmarth_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/drogmarth.png",
     "description": "Kaufe das Titanenfragment im Shop, um dieses Event freizuschalten."
   },
   {
     "id": "6",
     "title": "Kern des Abgrunds",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/korathaz_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/korathaz.png",
     "description": "Freischaltbar mit dem Fragment des Abgrunds aus dem Shop."
   },
   {
     "id": "7",
     "title": "Das Ende der Flamme",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/ashragul_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/ashragul.png",
     "description": "Hol dir das Emblem der Verdammnis, um das Event zu starten."
   },
   {
     "id": "8",
     "title": "Der Fall des Himmels",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/zarael_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/zarael.png",
     "description": "Benötigt die Gefallene Feder aus dem Shop zur Freischaltung."
   },
   {
     "id": "9",
     "title": "Kult der Flamme",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/maldrakar_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/maldrakar.png",
     "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
   },
   {
     "id": "10",
     "title": "Kult der Flamme",
-    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/inferno_temp.png",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/inferno.png",
     "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
   }
 ]
