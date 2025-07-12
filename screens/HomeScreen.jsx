@@ -36,7 +36,8 @@ const tutorialSteps = [
 ];
 
 const battleButtonsConfig = [
-  { screen: "BattleScreen", labelKey: "battleLabel" },
+  { screen: "ShowdownScreen", labelKey: "battleLabel" },
+  { screen: "DimensionScreen", labelKey: "dimensionsLabel" },
   { screen: "PreBattleInfoScreen", labelKey: "endlessfightLabel" },
   { screen: "EventScreen", labelKey: "eventLabel" },
   { screen: "StoryScreen", labelKey: "storyLabel" },
@@ -214,8 +215,6 @@ const localStyles = StyleSheet.create({
     marginTop: 2,
   },
   buttonGradient: {
-    paddingVertical: 11,
-    paddingHorizontal: 28,
     borderRadius: 16,
   },
   tutorialButtonText: {
@@ -227,7 +226,5 @@ const localStyles = StyleSheet.create({
   battleButtonContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: 10,
-    paddingTop: 8,
   },
 });

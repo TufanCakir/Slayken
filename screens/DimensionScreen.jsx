@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, Modal } from "react-native";
+import React, { useState, useMemo, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Modal,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useThemeContext } from "../context/ThemeContext";
@@ -9,12 +16,21 @@ import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import { useAssets } from "../context/AssetsContext";
+import { dimensions } from "../data/dimensions";
 import bossData from "../data/bossData.json";
 import BattleScene from "../components/BattleScene";
 import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import { equipmentPool } from "../data/equipmentPool";
+import AnimatedPortalSvg from "../components/portals/AnimatedPortalSvg";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  useSharedValue,
+} from "react-native-reanimated";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
@@ -32,7 +48,7 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-export default function EndlessModeScreen() {
+export default function DimensionScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const navigation = useNavigation();
@@ -43,11 +59,34 @@ export default function EndlessModeScreen() {
   const { gainExp } = useLevelSystem();
   const completeMissionOnce = useCompleteMissionOnce();
 
-  const [newDrop, setNewDrop] = useState(null);
+  const [selectedPortal, setSelectedPortal] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
   const [bossMaxHp, setBossMaxHp] = useState(100);
+  const [newDrop, setNewDrop] = useState(null);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
+  const [activePortalId, setActivePortalId] = useState(null);
+  const portalFlyAnim = useSharedValue(1);
+
+  const gradientColors = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
+
+  const onBack = () => navigation.goBack();
+
+  // Wenn ein Portal angeklickt wird:
+  const handlePortalPress = (portal) => {
+    setActivePortalId(portal.id); // aktiviert Animation
+    // Animation starten
+    portalFlyAnim.value = withTiming(16, { duration: 680 }); // Zoom auf 16x
+    setTimeout(() => {
+      handleSelectPortal(portal); // danach echten Screen-Wechsel
+      portalFlyAnim.value = 1; // zurücksetzen für nächsten
+      setActivePortalId(null);
+    }, 700); // Timing wie Animation
+  };
 
   // Aktiver Charakter
   const baseCharacter = useMemo(
@@ -61,28 +100,53 @@ export default function EndlessModeScreen() {
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
-  // GESCALETE Bossdaten (Level)
+  // Boss aus gewähltem Portal
+  const chooseBossFromPortal = useCallback((portal) => {
+    if (!portal || !portal.bossPool?.length) return null;
+    const bossKey =
+      portal.bossPool[Math.floor(Math.random() * portal.bossPool.length)];
+    return bossData.find((b) => b.id === bossKey);
+  }, []);
+
+  // Boss-Stats skalieren
   const scaledBoss = useMemo(() => {
     if (!currentBoss || !baseCharacter) return null;
     return scaleBossStats(currentBoss, baseCharacter.level || 1);
   }, [currentBoss, baseCharacter]);
 
-  // Spawn/Refresh Boss + MaxHP
-  const spawnNewBoss = useCallback(() => {
-    const randomBoss = bossData[Math.floor(Math.random() * bossData.length)];
-    setCurrentBoss(randomBoss);
-    setBossHp(randomBoss.hp || 100);
-    setBossMaxHp(randomBoss.hp || 100);
-  }, []);
+  const portalAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: portalFlyAnim.value }],
+    opacity: 1 - (portalFlyAnim.value - 1) / 15,
+    zIndex: 99,
+    position: "absolute",
+    left: -20,
+    top: -20,
+    width: 140,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
+  }));
 
-  useEffect(spawnNewBoss, []);
+  // Neues Portal wählen → Boss starten
+  const handleSelectPortal = (portal) => {
+    setSelectedPortal(portal);
+    const boss = chooseBossFromPortal(portal);
+    setCurrentBoss(boss);
+    setBossHp(boss?.hp || 100);
+    setBossMaxHp(boss?.hp || 100);
+    setNewDrop(null);
+    setNewUnlockedSkills(null);
+  };
 
-  useEffect(() => {
-    if (scaledBoss) {
-      setBossHp(scaledBoss.hp ?? 100);
-      setBossMaxHp(scaledBoss.hp ?? 100);
-    }
-  }, [scaledBoss]);
+  // Portal zurücksetzen nach Kampf
+  const handleBackToPortals = () => {
+    setSelectedPortal(null);
+    setCurrentBoss(null);
+    setBossHp(100);
+    setBossMaxHp(100);
+    setNewDrop(null);
+    setNewUnlockedSkills(null);
+  };
 
   // Angriff/Skill-Handler
   const handleFight = useCallback(
@@ -133,10 +197,11 @@ export default function EndlessModeScreen() {
                 });
                 setNewDrop(drop);
               } else {
-                setTimeout(spawnNewBoss, 500);
+                // Nach Sieg: zurück zu Portalen!
+                setTimeout(handleBackToPortals, 800);
               }
             }
-          }, 300);
+          }, 350);
         }
         return nextHp;
       });
@@ -151,15 +216,15 @@ export default function EndlessModeScreen() {
       addXp,
       gainExp,
       updateCharacter,
-      spawnNewBoss,
+      handleBackToPortals,
       completeMissionOnce,
     ]
   );
 
   const handleCloseSkillModal = useCallback(() => {
     setNewUnlockedSkills(null);
-    setTimeout(spawnNewBoss, 400);
-  }, [spawnNewBoss]);
+    setTimeout(handleBackToPortals, 400);
+  }, [handleBackToPortals]);
 
   // Bildquellen gemappt
   const bossBgKey = getBackgroundKey(scaledBoss?.background);
@@ -181,7 +246,7 @@ export default function EndlessModeScreen() {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // MODAL SHARED-COMPONENT für weniger Duplikat
+  // MODAL SHARED-COMPONENTS
   const DropModal = ({ visible, drop, onClose }) => (
     <Modal transparent visible={!!visible} animationType="fade">
       <View style={styles.modalOverlay}>
@@ -227,6 +292,75 @@ export default function EndlessModeScreen() {
     </Modal>
   );
 
+  // PORTAL-AUSWAHL
+  if (!selectedPortal) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Dimensionstore</Text>
+        <FlatList
+          data={dimensions}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingBottom: 38 }}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => handlePortalPress(item)}
+              style={styles.portalCard}
+              disabled={!!activePortalId}
+            >
+              {activePortalId === item.id ? (
+                <Animated.View style={portalAnimStyle}>
+                  <AnimatedPortalSvg
+                    size={100}
+                    colorA={item.colorA}
+                    colorB={item.colorB}
+                    coreColor={item.coreColor}
+                    dual={!!item.dual}
+                  />
+                </Animated.View>
+              ) : (
+                <View style={{ marginRight: 16 }}>
+                  <AnimatedPortalSvg
+                    size={100}
+                    colorA={item.colorA}
+                    colorB={item.colorB}
+                    coreColor={item.coreColor}
+                    dual={!!item.dual}
+                  />
+                </View>
+              )}
+
+              <LinearGradient
+                colors={item.gradient || gradientColors} // nimmt individuelle Portal-Farben, sonst Fallback
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.portalTextBg}
+              >
+                <Text style={styles.portalName}>{item.name}</Text>
+                <Text style={styles.portalDescription}>{item.description}</Text>
+                <Text style={styles.portalDiff}>
+                  Schwierigkeit: {item.difficulty}
+                </Text>
+              </LinearGradient>
+            </Pressable>
+          )}
+        />
+        <View style={styles.headerRow}>
+          <Pressable style={styles.backButton} onPress={onBack} hitSlop={18}>
+            <LinearGradient
+              colors={gradientColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.backGradient}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.textColor} />
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  // BOSS-KAMPF: wie gehabt
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -249,7 +383,7 @@ export default function EndlessModeScreen() {
           handleFight={handleFight}
           bossBackground={bossBgSrc}
           imageMap={imageMap}
-          onBack={() => navigation.goBack()}
+          onBack={handleBackToPortals}
         />
       )}
 
@@ -259,7 +393,7 @@ export default function EndlessModeScreen() {
           drop={newDrop}
           onClose={() => {
             setNewDrop(null);
-            setTimeout(spawnNewBoss, 500);
+            setTimeout(handleBackToPortals, 800);
           }}
         />
       )}
@@ -277,8 +411,50 @@ export default function EndlessModeScreen() {
 
 function createStyles(theme) {
   return StyleSheet.create({
-    container: { flex: 1 },
-
+    container: { flex: 1, padding: 22, backgroundColor: theme.bgColor },
+    title: {
+      fontSize: 26,
+      fontWeight: "bold",
+      color: theme.textColor,
+      marginVertical: 12,
+      textAlign: "center",
+      letterSpacing: 0.2,
+    },
+    portalCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 28,
+      padding: 16,
+      marginVertical: 18,
+      backgroundColor: "transparent",
+      elevation: 0,
+      shadowColor: "transparent",
+    },
+    portalName: { fontSize: 20, fontWeight: "700", color: "#fff" },
+    portalDescription: { color: "#fff", fontSize: 13, marginTop: 2 },
+    portalDiff: { color: "#ffe", marginTop: 6, fontWeight: "bold" },
+    portalTextBg: {
+      borderRadius: 10,
+      padding: 10,
+      marginLeft: 8,
+      minWidth: 120,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.22,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+    closeBtn: {
+      alignSelf: "center",
+      marginTop: 24,
+      backgroundColor: theme.accentColor,
+      paddingHorizontal: 40,
+      paddingVertical: 12,
+      borderRadius: 16,
+      borderWidth: 1.2,
+      borderColor: theme.borderGlowColor,
+    },
+    // Modal Styles:
     modalOverlay: {
       flex: 1,
       justifyContent: "center",
@@ -340,6 +516,24 @@ function createStyles(theme) {
       fontSize: 16,
       letterSpacing: 0.06,
       fontWeight: "600",
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    backButton: {
+      width: 50,
+      height: 50,
+      borderRadius: 24,
+      overflow: "hidden",
+      justifyContent: "center",
+    },
+    backGradient: {
+      width: 50,
+      height: 50,
+      borderRadius: 24,
+      justifyContent: "center",
+      alignItems: "center",
     },
   });
 }

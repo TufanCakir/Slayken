@@ -5,11 +5,12 @@ import BattleScene from "./BattleScene";
 export default function BattleView({
   selectedEvent,
   bossHp,
-  bossMaxHp, // <--- NEU!
+  bossMaxHp,
   bossDefeated,
   handleFight,
   character,
   imageMap,
+  onBack, // <--- Prop ergänzen!
 }) {
   if (!selectedEvent) return null;
 
@@ -18,10 +19,11 @@ export default function BattleView({
       <BattleScene
         boss={selectedEvent}
         bossHp={bossHp}
-        bossMaxHp={bossMaxHp} // <--- WEITERGEBEN!
+        bossMaxHp={bossMaxHp}
         bossDefeated={bossDefeated}
         handleFight={handleFight}
         character={character}
+        onBack={onBack} // <-- So korrekt!
         bossBackground={selectedEvent.background}
         imageMap={imageMap}
       />

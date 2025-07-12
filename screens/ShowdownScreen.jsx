@@ -26,25 +26,24 @@ import { equipmentPool } from "../data/equipmentPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useStage } from "../context/StageContext";
 
-// ----------- Hilfsfunktionen ---------- //
+// Hilfsfunktionen
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-const getBackgroundKey = (url) =>
-  url
-    ? /\/([\w-]+)\.png$/i.exec(url)?.[1] &&
-      "bg_" + /\/([\w-]+)\.png$/i.exec(url)[1].toLowerCase()
-    : null;
+const getEventBossKey = (url, fallback) => {
+  if (typeof url === "string" && url.endsWith(".png")) {
+    const match = /\/([\w-]+)\.png$/i.exec(url);
+    return match ? "eventboss_" + match[1].toLowerCase() : null;
+  }
+  return fallback ? "eventboss_" + fallback.toLowerCase() : null;
+};
+const getBackgroundKey = (url) => {
+  if (!url) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
+  return match ? "bg_" + match[1].toLowerCase() : null;
+};
 
-const getEventBossKey = (url, fallback) =>
-  typeof url === "string" && url.endsWith(".png")
-    ? /\/([\w-]+)\.png$/i.exec(url)?.[1] &&
-      "eventboss_" + /\/([\w-]+)\.png$/i.exec(url)[1].toLowerCase()
-    : fallback
-    ? "eventboss_" + fallback.toLowerCase()
-    : null;
-
-// ----------- Generische Modal-Komponente ---------- //
+// Generische Modal-Komponente
 function InfoModal({ visible, children, onClose, styles, theme }) {
   if (!visible) return null;
   return (
@@ -67,8 +66,8 @@ function InfoModal({ visible, children, onClose, styles, theme }) {
   );
 }
 
-// ----------- StageNode Komponente ---------- //
-function StageNode({ stage, progress, onPress, theme, imageMap, styles }) {
+// StageNode Komponente
+function StageNode({ stage, progress, onPress, theme, styles }) {
   const isBoss = stage.type === "boss";
   const isUnlocked = progress.unlocked;
   const isCompleted = progress.completed;
@@ -138,8 +137,8 @@ function StageNode({ stage, progress, onPress, theme, imageMap, styles }) {
   );
 }
 
-// ----------- Hauptkomponente ---------- //
-export default function BattleScreen() {
+// Hauptkomponente
+export default function ShowdownScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const navigation = useNavigation();
@@ -182,7 +181,7 @@ export default function BattleScreen() {
               ] || bossData[selectedStage.bossId].image,
           }
         : null,
-    [selectedStage, bossData, imageMap]
+    [selectedStage, imageMap]
   );
 
   const scaledBoss = useMemo(
@@ -233,10 +232,7 @@ export default function BattleScreen() {
               (s) => !oldNames.includes(s.name)
             );
             if (newSkills?.length) {
-              setModalContent({
-                type: "skills",
-                skills: newSkills,
-              });
+              setModalContent({ type: "skills", skills: newSkills });
             } else if (Math.random() < 0.5) {
               const drop =
                 equipmentPool[Math.floor(Math.random() * equipmentPool.length)];
@@ -244,10 +240,7 @@ export default function BattleScreen() {
                 ...baseCharacter,
                 inventory: [...(baseCharacter.inventory || []), drop.id],
               });
-              setModalContent({
-                type: "drop",
-                drop,
-              });
+              setModalContent({ type: "drop", drop });
             }
 
             setBattleActive(false);
@@ -293,11 +286,7 @@ export default function BattleScreen() {
         </View>
       )}
 
-      <Pressable style={styles.backButton} onPress={navigation.goBack}>
-        <Text style={styles.backText}>← Zurück</Text>
-      </Pressable>
-
-      {/* ---------- Stage-Map mit Gradient ---------- */}
+      {/* Stage-Map */}
       {!battleActive && (
         <LinearGradient
           colors={theme.linearGradient}
@@ -315,7 +304,13 @@ export default function BattleScreen() {
                 <StageNode
                   styles={styles}
                   stage={stage}
-                  progress={stageProgress.find((p) => p.id === stage.id)}
+                  progress={
+                    stageProgress.find((p) => p.id === stage.id) || {
+                      unlocked: false,
+                      completed: false,
+                      stars: 0,
+                    }
+                  }
                   onPress={() => {
                     setSelectedStage(stage);
                     setBattleActive(true);
@@ -342,10 +337,11 @@ export default function BattleScreen() {
           bossBackground={bossBgSrc}
           stage={selectedStage}
           imageMap={imageMap}
+          onBack={() => navigation.goBack()}
         />
       )}
 
-      {/* ----- Modals ------ */}
+      {/* Modals */}
       <InfoModal
         styles={styles}
         theme={theme}
@@ -385,39 +381,22 @@ export default function BattleScreen() {
   );
 }
 
-// ------- Styles ---------
+// Styles (unverändert, keine Dubletten)
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
-    backButton: {
-      alignSelf: "flex-start",
-      marginTop: 8,
-      marginBottom: 12,
-      backgroundColor: theme.accentColor,
-      paddingVertical: 9,
-      paddingHorizontal: 24,
-      borderRadius: 14,
-      borderWidth: 1.5,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.11,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    backText: { color: theme.textColor, fontSize: 16, letterSpacing: 0.12 },
     stageMapRowOuter: {
       borderRadius: 20,
       marginHorizontal: 6,
       marginBottom: 12,
       minHeight: 130,
       padding: 2,
-      // Border-Glow über Gradient
       shadowColor: theme.accentColorDark,
       shadowOpacity: 0.17,
       shadowRadius: 14,
       shadowOffset: { width: 0, height: 2 },
       elevation: 5,
+      marginTop: 40,
     },
     stageMapRow: {
       flexDirection: "row",

@@ -1,10 +1,4 @@
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-} from "react-native";
+import { TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
@@ -91,25 +85,18 @@ export default function BattleButton({
 function createStyles(theme) {
   return StyleSheet.create({
     button: {
+      flexDirection: "row",
+      flexWrap: "wrap",
       borderRadius: 18,
-      width: "100%",
+      width: "45%",
       justifyContent: "center",
       overflow: "hidden",
       transform: [{ skewY: "-3deg" }],
-      minHeight: 54,
-      borderWidth: 2,
-      borderColor: theme.borderColor,
-      // Optional Glow-Rand (nur visuell für Android schwächer):
-      ...(Platform.OS === "android"
-        ? { borderColor: theme.borderGlowColor }
-        : {}),
     },
     text: {
       fontSize: 25,
-      fontWeight: "bold",
-      letterSpacing: 0.7,
       textAlign: "center",
-      zIndex: 2,
+      paddingVertical: 10,
     },
   });
 }

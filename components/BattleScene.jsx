@@ -17,6 +17,7 @@ import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import skinData from "../data/skinData.json";
 import { scaleBossStats } from "../utils/combatUtils";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 // Effekt Mapping
 const EFFECT_MAP = {
@@ -41,6 +42,7 @@ export default function BattleScene({
   onSkillPress,
   handleFight,
   skillDmg = 30,
+  onBack, // <-- hinzugefügt
 }) {
   const { classList, activeClassId } = useClass();
   const [activeEffect, setActiveEffect] = useState(null);
@@ -150,6 +152,19 @@ export default function BattleScene({
 
   return (
     <View style={styles.wrapper}>
+      <View style={styles.headerRow}>
+        <Pressable style={styles.backButton} onPress={onBack} hitSlop={18}>
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.backGradient}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.textColor} />
+          </LinearGradient>
+        </Pressable>
+      </View>
+
       {/* Boss-Anzeige */}
       <View style={styles.bossContainer}>
         <LinearGradient
@@ -258,8 +273,6 @@ export default function BattleScene({
 // -------- Styles --------
 function createStyles(theme) {
   const text = theme.textColor || "#fff";
-  const border = theme.borderColor || "#ff8800";
-  const highlight = theme.borderGlowColor || "#ffd700cc";
   const hpBg = theme.shadowColor || "#222";
   return StyleSheet.create({
     wrapper: { flex: 1 },
@@ -381,6 +394,24 @@ function createStyles(theme) {
       color: text,
       textAlign: "center",
       marginTop: 40,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    backButton: {
+      width: 50,
+      height: 50,
+      borderRadius: 24,
+      overflow: "hidden",
+      justifyContent: "center",
+    },
+    backGradient: {
+      width: 50,
+      height: 50,
+      borderRadius: 24,
+      justifyContent: "center",
+      alignItems: "center",
     },
   });
 }

@@ -288,6 +288,7 @@ function createStyles(theme) {
       zIndex: 10,
       backgroundColor: theme.accentColor,
       paddingTop: 8,
+      marginBottom: 10,
     },
     tabsRow: {
       flexDirection: "row",
@@ -310,7 +311,6 @@ function createStyles(theme) {
       borderRadius: 20,
       paddingHorizontal: 18,
       paddingVertical: 8,
-      backgroundColor: theme.shadowColor,
       justifyContent: "center",
       alignItems: "center",
       minWidth: 78,
@@ -321,7 +321,7 @@ function createStyles(theme) {
       fontWeight: "600",
     },
     tabTextActive: {
-      color: theme.borderGlowColor,
+      color: theme.textColor,
     },
   });
 }

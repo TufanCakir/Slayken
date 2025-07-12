@@ -27,9 +27,13 @@ export function buildImageMap(localUris, newsImages) {
     map[`class_${key.replace(/-/g, "")}`] = localUris[idx++];
   });
 
-  // Bosse
+  // Bosse UND Eventbosse synchronisieren
   bossKeys.forEach((key) => {
-    map[`boss_${key.toLowerCase()}`] = localUris[idx++];
+    // Boss
+    map[`boss_${key.toLowerCase()}`] = localUris[idx];
+    // Eventboss (direkt zuordnen – entweder aus newsImages oder aus dem Bossbild)
+    map[`eventboss_${key.toLowerCase()}`] = localUris[idx];
+    idx++;
   });
 
   // Hintergründe
@@ -49,9 +53,9 @@ export function buildImageMap(localUris, newsImages) {
   });
 
   // Main-Background
-  map["bg_main"] = localUris[idx++];
+  map["slayken"] = localUris[idx++];
 
-  // News/EventBosse
+  // News/EventBosse – falls du andere brauchst
   newsImages.forEach((img, i) => {
     const key = getEventBossKey(img);
     if (key && localUris[idx]) {

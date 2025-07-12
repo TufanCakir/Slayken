@@ -21,12 +21,13 @@ export const classKeys = [
 
 export const bossKeys = [
   "infermor",
-  "Malzevox",
-  "Aurelion",
-  "Orionyx",
-  "Drogmarth",
-  "Korathaz",
-  "Ashragul",
+  "malzevox",
+  "aurelion",
+  "orionyx",
+  "drogmarth",
+  "korathaz",
+  "ashragul",
+  "inferno",
 ];
 
 export const bgKeys = [
@@ -39,6 +40,7 @@ export const bgKeys = [
   "background7",
   "bg_dark",
   "bg_light",
+  "slayken",
 ];
 
 export const equipmentKeys = ["sword_of_flames"];

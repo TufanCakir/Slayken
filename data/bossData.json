@@ -97,5 +97,16 @@
     "attackPattern": "regular",
     "power": 20,
     "voiceLines": "Hallo ich bin Maldrakar"
+  },
+  {
+    "id": "inferno",
+    "name": "Inferno",
+    "element": "fire",
+    "hp": 500,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Inferno"
   }
 ]

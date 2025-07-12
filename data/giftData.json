@@ -2,5 +2,5 @@
   { "id": "1", "name": "100 Crystals", "type": "crystals", "amount": 100 },
   { "id": "2", "name": "100 Coins", "type": "coins", "amount": 100 },
   { "id": "3", "name": "100 EXP", "type": "exp", "amount": 100 },
-  { "id": "4", "name": "EXP Potion", "type": "exp-potion", "amount": 100 }
+  { "id": "4", "name": "100 EXP Potion", "type": "exp-potion", "amount": 100 }
 ]

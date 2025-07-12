@@ -139,6 +139,7 @@ function createStyles(theme) {
       marginVertical: 6,
       overflow: "hidden",
       position: "relative",
+      marginTop: 10,
     },
     bannerContainer: {
       flex: 1,

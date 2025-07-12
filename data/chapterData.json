@@ -61,5 +61,12 @@
     "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
     "bossId": "maldrakar",
     "element": "fire"
+  },
+  {
+    "id": "inferno",
+    "label": "Kapitel 10",
+    "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "inferno",
+    "element": "fire"
   }
 ]
