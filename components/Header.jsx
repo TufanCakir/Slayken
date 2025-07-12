@@ -154,7 +154,6 @@ function createStyles(theme) {
     level: {
       fontSize: 13,
       color: theme.textColor,
-      opacity: 0.74,
       letterSpacing: 0.2,
     },
     centerBlock: {

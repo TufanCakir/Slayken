@@ -84,14 +84,14 @@ export default function TeaserCard({ item }) {
           <Text style={styles.date}>{countdownText}</Text>
         </LinearGradient>
 
-        <LinearGradient colors={gradient} style={styles.iconGlow}>
+        <View colors={gradient} style={styles.iconGlow}>
           <Image
             source={imageSource}
             style={styles.image}
             contentFit="contain"
             transition={300}
           />
-        </LinearGradient>
+        </View>
         <Text style={styles.name}>
           {item.id.replace(/-/g, " ").toUpperCase()}
         </Text>

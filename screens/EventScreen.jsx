@@ -16,6 +16,7 @@ import { useCrystals } from "../context/CrystalContext";
 import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import { useAssets } from "../context/AssetsContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 import eventData from "../data/eventData.json";
 import classData from "../data/classData.json";
@@ -221,28 +222,38 @@ export default function EventScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabsRow}
           >
-            {tabOptions.map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key)}
-                style={[
-                  styles.tab,
-                  activeTab === tab.key && [
-                    styles.activeTab,
-                    { backgroundColor: theme.borderGlowColor },
-                  ],
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && { color: theme.accentColor },
-                  ]}
+            {tabOptions.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  onPress={() => setActiveTab(tab.key)}
+                  activeOpacity={0.86}
+                  style={styles.tabTouchable}
                 >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  {isActive ? (
+                    <LinearGradient
+                      colors={[
+                        theme.accentColorSecondary,
+                        theme.accentColor,
+                        theme.accentColorDark,
+                      ]}
+                      start={[0, 0]}
+                      end={[1, 1]}
+                      style={styles.tabGradient}
+                    >
+                      <Text style={[styles.tabText, styles.tabTextActive]}>
+                        {tab.label}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={styles.tab}>
+                      <Text style={styles.tabText}>{tab.label}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
       )}
@@ -283,19 +294,34 @@ function createStyles(theme) {
       paddingHorizontal: 12,
       gap: 8,
     },
-    tab: {
+    tabTouchable: {
+      marginRight: 8,
+      borderRadius: 20,
+    },
+    tabGradient: {
+      borderRadius: 20,
       paddingHorizontal: 18,
       paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: theme.shadowColor,
-      marginRight: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      minWidth: 78,
     },
-    activeTab: {
-      backgroundColor: theme.borderGlowColor,
+    tab: {
+      borderRadius: 20,
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+      backgroundColor: theme.shadowColor,
+      justifyContent: "center",
+      alignItems: "center",
+      minWidth: 78,
     },
     tabText: {
       color: theme.textColor,
       fontSize: 16,
+      fontWeight: "600",
+    },
+    tabTextActive: {
+      color: theme.borderGlowColor,
     },
   });
 }

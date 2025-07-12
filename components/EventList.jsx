@@ -93,11 +93,7 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
 
           {/* Text-Overlay mit Gradient */}
           <LinearGradient
-            colors={[
-              theme.accentColor + "d0",
-              theme.accentColorDark + "e0",
-              "#000000cc",
-            ]}
+            colors={[theme.accentColor + "d0"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.textOverlay}
@@ -142,19 +138,17 @@ function createStyles(theme) {
       height: 300,
       marginVertical: 6,
       overflow: "hidden",
-      backgroundColor: accent,
       position: "relative",
     },
     bannerContainer: {
       flex: 1,
       borderRadius: 16,
-      backgroundColor: "transparent",
       justifyContent: "center",
     },
     imageBackground: {
       height: 200,
       borderRadius: 16,
-      zIndex: 0,
+      marginTop: 50,
     },
     topRow: {
       position: "absolute",
@@ -168,7 +162,6 @@ function createStyles(theme) {
       alignItems: "center",
     },
     badge: {
-      backgroundColor: accent,
       paddingHorizontal: 11,
       paddingVertical: 4,
       borderRadius: 8,
@@ -187,7 +180,6 @@ function createStyles(theme) {
       gap: 6,
     },
     completedBadge: {
-      backgroundColor: accent,
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 8,
@@ -207,28 +199,20 @@ function createStyles(theme) {
       zIndex: 10,
     },
     dateText: {
-      color: "#ff8a00",
-      fontWeight: "bold",
-      fontSize: 15,
-      textShadowColor: "#000",
-      textShadowRadius: 2,
-      textShadowOffset: { width: 0, height: 1 },
+      color: text,
+      fontSize: 16,
     },
     textOverlay: {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomLeftRadius: 16,
       borderBottomRightRadius: 16,
-      zIndex: 3,
-      marginTop: -6,
-      flexDirection: "column",
     },
     title: {
       fontSize: 19,
-      marginBottom: 2,
       letterSpacing: 0.3,
       color: text,
-      fontWeight: "bold",
+      textAlign: "center",
     },
     description: {
       fontSize: 13.5,

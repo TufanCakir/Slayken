@@ -217,8 +217,6 @@ const localStyles = StyleSheet.create({
     paddingVertical: 11,
     paddingHorizontal: 28,
     borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
   },
   tutorialButtonText: {
     fontSize: 16,
@@ -229,7 +227,6 @@ const localStyles = StyleSheet.create({
   battleButtonContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
     paddingHorizontal: 10,
     paddingTop: 8,
   },

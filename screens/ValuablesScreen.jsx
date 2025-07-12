@@ -94,16 +94,26 @@ export default function ValuablesScreen() {
           style={{ width: 54, height: 54, marginBottom: 6 }}
           contentFit="contain"
         />
-
-        <TouchableOpacity
-          style={[styles.useButton, { opacity: potions > 0 ? 1 : 0.45 }]}
-          onPress={handleUsePotion}
-          disabled={potions <= 0}
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0, 0]}
+          end={[1, 0]}
+          style={styles.headerGradient}
         >
-          <Text style={styles.useButtonText}>
-            {t("valuablesNameLabels.useExpPotion") || "EXP-Potion verwenden"}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.useButton, { opacity: potions > 0 ? 1 : 0.45 }]}
+            onPress={handleUsePotion}
+            disabled={potions <= 0}
+          >
+            <Text style={styles.useButtonText}>
+              {t("valuablesNameLabels.useExpPotion") || "EXP-Potion verwenden"}
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
 
       {/* Charakter Auswahl Modal */}
@@ -114,7 +124,16 @@ export default function ValuablesScreen() {
         onRequestClose={() => setSelectCharModalOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <LinearGradient
+            colors={[
+              theme.accentColorSecondary,
+              theme.accentColor,
+              theme.accentColorDark,
+            ]}
+            start={[0.12, 0]}
+            end={[1, 1]}
+            style={styles.modalContent}
+          >
             <Text style={styles.modalTitle}>
               {t("valuablesNameLabels.selectCharacter") ||
                 "Wähle einen Charakter"}
@@ -130,7 +149,7 @@ export default function ValuablesScreen() {
                   <Image
                     source={{ uri: item.classUrl }}
                     style={styles.charAvatar}
-                    contentFit="cover"
+                    contentFit="contain"
                   />
                   <Text style={styles.charName}>{item.name}</Text>
                   <Text style={styles.charLevel}>
@@ -140,14 +159,25 @@ export default function ValuablesScreen() {
               )}
             />
             <TouchableOpacity
-              style={styles.modalClose}
               onPress={() => setSelectCharModalOpen(false)}
+              activeOpacity={0.85}
             >
-              <Text style={styles.modalCloseText}>
-                {t("valuablesNameLabels.cancel") || "Abbrechen"}
-              </Text>
+              <LinearGradient
+                colors={[
+                  theme.accentColorSecondary,
+                  theme.accentColor,
+                  theme.accentColorDark,
+                ]}
+                start={[0.12, 0]}
+                end={[1, 1]}
+                style={styles.modalClose}
+              >
+                <Text style={styles.modalCloseText}>
+                  {t("valuablesNameLabels.cancel") || "Abbrechen"}
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
         </View>
       </Modal>
     </ScreenLayout>
@@ -183,11 +213,10 @@ function createStyles(theme) {
       textAlign: "center",
     },
     potionCount: {
-      color: theme.borderGlowColor,
+      color: theme.textColor,
       fontSize: 19,
     },
     useButton: {
-      backgroundColor: theme.accentColor,
       borderRadius: 13,
       paddingVertical: 13,
       paddingHorizontal: 30,
@@ -209,7 +238,6 @@ function createStyles(theme) {
       alignItems: "center",
     },
     modalContent: {
-      backgroundColor: theme.accentColor,
       borderRadius: 18,
       padding: 22,
       minWidth: "77%",
@@ -229,26 +257,20 @@ function createStyles(theme) {
       padding: 11,
       marginVertical: 6,
       borderRadius: 12,
-      backgroundColor: theme.shadowColor + "44",
-      borderWidth: 1.5,
-      borderColor: theme.borderGlowColor,
     },
     charAvatar: {
-      width: 36,
-      height: 36,
+      width: 100,
+      height: 100,
       borderRadius: 18,
       marginRight: 10,
-      backgroundColor: "#222",
     },
     charName: {
       fontSize: 15,
       color: theme.textColor,
-      flex: 1,
     },
     charLevel: {
       fontSize: 13,
-      color: theme.accentColorSecondary,
-      fontWeight: "700",
+      color: theme.textColor,
       marginLeft: 8,
     },
     modalClose: {
@@ -256,12 +278,11 @@ function createStyles(theme) {
       borderRadius: 9,
       paddingVertical: 8,
       paddingHorizontal: 23,
-      backgroundColor: "#111C",
       alignSelf: "center",
+      alignItems: "center",
     },
     modalCloseText: {
       color: theme.borderGlowColor,
-      fontWeight: "bold",
       fontSize: 16,
       letterSpacing: 0.15,
     },

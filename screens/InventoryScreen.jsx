@@ -16,7 +16,6 @@ import { useClass } from "../context/ClassContext";
 import ScreenLayout from "../components/ScreenLayout";
 import { LinearGradient } from "expo-linear-gradient";
 
-// Einmalig definierte Slot-Arrays
 const leftSlots = ["head", "shoulder", "chest", "hands", "legs"];
 const rightSlots = ["weapon", "ring", "neck", "feet"];
 
@@ -77,6 +76,8 @@ export default function InventoryScreen() {
                 ]
               : [theme.shadowColor, theme.accentColor]
           }
+          start={[0.1, 0]}
+          end={[1, 1]}
           style={styles.slotIconOuter}
         >
           {icon ? (
@@ -117,11 +118,26 @@ export default function InventoryScreen() {
               onPress={() => setSelectedCharacterId(char.id)}
               activeOpacity={0.85}
             >
-              <Image
-                source={char.classUrl}
-                style={styles.charSelectAvatar}
-                contentFit="contain"
-              />
+              <LinearGradient
+                colors={
+                  char.id === selectedCharacterId
+                    ? [
+                        theme.accentColorSecondary,
+                        theme.accentColor,
+                        theme.accentColorDark,
+                      ]
+                    : [theme.shadowColor, theme.accentColor]
+                }
+                start={[0, 0]}
+                end={[1, 1]}
+                style={styles.charSelectGradient}
+              >
+                <Image
+                  source={char.classUrl}
+                  style={styles.charSelectAvatar}
+                  contentFit="contain"
+                />
+              </LinearGradient>
               <Text
                 style={[
                   styles.charSelectLabel,
@@ -139,35 +155,86 @@ export default function InventoryScreen() {
       {/* Ausrüstungsübersicht */}
       <View style={styles.characterRow}>
         {/* Linke Slots */}
-        <View style={styles.slotColumn}>{leftSlots.map(renderSlot)}</View>
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0.1, 0]}
+          end={[1, 1]}
+          style={styles.slotColumnGradient}
+        >
+          <View style={styles.slotColumn}>{leftSlots.map(renderSlot)}</View>
+        </LinearGradient>
 
         {/* Charakterbild */}
         <View style={styles.characterArea}>
           {selectedCharacter ? (
-            <Image
-              source={selectedCharacter.classUrl}
-              style={styles.characterImageLarge}
-              contentFit="contain"
-            />
+            <LinearGradient
+              colors={[
+                theme.accentColorSecondary,
+                theme.accentColor,
+                theme.accentColorDark,
+              ]}
+              start={[0.3, 0]}
+              end={[1, 1]}
+              style={styles.characterGradient}
+            >
+              <Image
+                source={selectedCharacter.classUrl}
+                style={styles.characterImageLarge}
+                contentFit="contain"
+              />
+            </LinearGradient>
           ) : (
             <Text style={styles.noCharacter}>Kein Charakter ausgewählt</Text>
           )}
         </View>
 
-        {/* Rechte Slots */}
-        <View style={styles.slotColumn}>{rightSlots.map(renderSlot)}</View>
+        {/* Rechte Slots mit Gradient */}
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary,
+            theme.accentColor,
+            theme.accentColorDark,
+          ]}
+          start={[0.1, 0]}
+          end={[1, 1]}
+          style={styles.slotColumnGradient}
+        >
+          <View style={styles.slotColumn}>{rightSlots.map(renderSlot)}</View>
+        </LinearGradient>
       </View>
 
       {/* Tipp */}
-      <Text style={[styles.tipText, { backgroundColor: theme.accentColor }]}>
-        Tippe auf einen Slot zum Anlegen, lange tippen zum Entfernen
-      </Text>
+      <LinearGradient
+        colors={[theme.accentColorSecondary, theme.accentColorDark]}
+        start={[0.2, 0]}
+        end={[1, 1]}
+        style={styles.tipGradient}
+      >
+        <Text style={styles.tipText}>
+          Tippe auf einen Slot zum Anlegen, lange tippen zum Entfernen
+        </Text>
+      </LinearGradient>
 
       {/* Modal für Item-Auswahl */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainerOuter}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Ausrüstung wählen</Text>
+            <LinearGradient
+              colors={[
+                theme.accentColorSecondary,
+                theme.accentColor,
+                theme.accentColorDark,
+              ]}
+              start={[0.1, 0]}
+              end={[1, 1]}
+              style={styles.modalTitleGradient}
+            >
+              <Text style={styles.modalTitle}>Ausrüstung wählen</Text>
+            </LinearGradient>
             <FlatList
               data={equipmentPool.filter((e) => e.slot === selectedSlot)}
               keyExtractor={(item) => item.id}
@@ -183,29 +250,55 @@ export default function InventoryScreen() {
                     onPress={() => handleEquip(item)}
                     disabled={!count}
                   >
-                    {icon && (
-                      <Image
-                        source={icon}
-                        style={styles.modalImage}
-                        contentFit="contain"
-                      />
-                    )}
-                    <Text style={styles.modalText}>
-                      {item.label}
-                      <Text style={{ color: theme.borderGlowColor }}>
-                        {`  x${count}`}
+                    <LinearGradient
+                      colors={
+                        count
+                          ? [
+                              theme.accentColorSecondary,
+                              theme.accentColor,
+                              theme.accentColorDark,
+                            ]
+                          : [theme.shadowColor, theme.accentColor]
+                      }
+                      start={[0.1, 0]}
+                      end={[1, 1]}
+                      style={styles.modalItemGradient}
+                    >
+                      {icon && (
+                        <Image
+                          source={icon}
+                          style={styles.modalImage}
+                          contentFit="contain"
+                        />
+                      )}
+                      <Text style={styles.modalText}>
+                        {item.label}
+                        <Text style={{ color: theme.borderGlowColor }}>
+                          {`  x${count}`}
+                        </Text>
                       </Text>
-                    </Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                 );
               }}
             />
             <TouchableOpacity
-              style={styles.modalClose}
+              style={styles.modalCloseButton}
               onPress={() => setModalVisible(false)}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>Abbrechen</Text>
+              <LinearGradient
+                colors={[
+                  theme.accentColorSecondary,
+                  theme.accentColor,
+                  theme.accentColorDark,
+                ]}
+                start={[0.1, 0]}
+                end={[1, 1]}
+                style={styles.modalCloseGradient}
+              >
+                <Text style={styles.buttonText}>Abbrechen</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -224,11 +317,6 @@ function createStyles(theme) {
       borderRadius: 15,
       paddingVertical: 13,
       paddingHorizontal: 38,
-      shadowColor: theme.glowColor,
-      shadowRadius: 12,
-      shadowOpacity: 0.38,
-      shadowOffset: { width: 0, height: 5 },
-      elevation: 6,
     },
     heading: {
       fontSize: 22,
@@ -236,10 +324,6 @@ function createStyles(theme) {
       color: theme.textColor,
       textAlign: "center",
       letterSpacing: 0.7,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 8,
-      textShadowOffset: { width: 0, height: 2 },
-      textTransform: "uppercase",
     },
     characterSelectRow: {
       flexDirection: "row",
@@ -256,36 +340,31 @@ function createStyles(theme) {
       borderRadius: 9,
       borderWidth: 2,
       borderColor: "transparent",
-      backgroundColor: theme.shadowColor + "20",
-      shadowColor: theme.glowColor,
-      shadowRadius: 4,
-      shadowOpacity: 0.15,
-      elevation: 2,
+    },
+    charSelectGradient: {
+      borderRadius: 8,
+      padding: 2,
+      marginBottom: 2,
     },
     charSelectActive: {
-      borderColor: theme.borderGlowColor,
-      backgroundColor: theme.accentColor,
+      borderColor: "transparent",
     },
     charSelectAvatar: {
       width: 40,
       height: 40,
       borderRadius: 7,
-      marginBottom: 2,
-      backgroundColor: theme.shadowColor,
-      borderWidth: 1.2,
-      borderColor: theme.borderGlowColor,
+      marginBottom: 0,
     },
     charSelectLabel: {
       fontSize: 12,
       color: theme.textColor,
       opacity: 0.78,
+      marginTop: 2,
     },
     charSelectLabelActive: {
       fontWeight: "bold",
       color: theme.borderGlowColor,
       opacity: 1,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 4,
     },
     characterRow: {
       flexDirection: "row",
@@ -293,39 +372,42 @@ function createStyles(theme) {
       justifyContent: "center",
       alignItems: "center",
     },
+    slotColumnGradient: {
+      borderRadius: 16,
+      paddingVertical: 10,
+      paddingHorizontal: 3,
+      marginHorizontal: 2,
+      // KEIN gap hier!
+    },
     slotColumn: {
       alignItems: "center",
       justifyContent: "center",
-      gap: 12,
+      // gap: 12,      // gap NUR im View!
     },
     slotButton: { alignItems: "center", marginVertical: 2 },
     slotIconOuter: {
-      width: 54,
-      height: 54,
-      borderRadius: 12,
+      width: 58,
+      height: 58,
+      borderRadius: 15,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 2,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.17,
-      shadowRadius: 6,
-      elevation: 2,
+      padding: 3, // etwas padding gibt mehr "Rahmen"
     },
     slotIcon: {
-      width: 45,
-      height: 45,
-      borderRadius: 8,
-      borderWidth: 1.7,
+      width: 48,
+      height: 48,
+      borderRadius: 10,
+      borderWidth: 2,
       borderColor: theme.borderGlowColor,
       backgroundColor: theme.shadowColor,
     },
     emptySlot: {
-      width: 45,
-      height: 45,
-      backgroundColor: theme.shadowColor,
+      width: 48,
+      height: 48,
       opacity: 0.5,
-      borderRadius: 8,
-      borderWidth: 1.7,
+      borderRadius: 10,
+      borderWidth: 2,
       borderColor: theme.borderGlowColor,
     },
     slotLabel: {
@@ -334,26 +416,28 @@ function createStyles(theme) {
       marginTop: 1,
       letterSpacing: 1.1,
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
     },
     characterArea: {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
     },
-    characterImageLarge: {
-      width: "80%",
-      height: 350,
-      resizeMode: "contain",
-      borderRadius: 20,
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      backgroundColor: theme.shadowColor,
+    characterGradient: {
+      width: "90%",
+      height: 360, // etwas mehr als das Bild für einen Rahmen
+      borderRadius: 22,
+      alignItems: "center",
+      justifyContent: "center",
       shadowColor: theme.glowColor,
-      shadowRadius: 16,
-      shadowOpacity: 0.13,
-      elevation: 5,
+      shadowRadius: 18,
+      shadowOpacity: 0.14,
+      marginVertical: 6,
+    },
+    characterImageLarge: {
+      width: "97%",
+      height: 340,
+      resizeMode: "contain",
+      borderRadius: 18,
     },
     noCharacter: {
       color: theme.textColor,
@@ -362,19 +446,22 @@ function createStyles(theme) {
       fontStyle: "italic",
       opacity: 0.85,
     },
-    tipText: {
-      color: theme.textColor,
+    tipGradient: {
       marginBottom: 15,
-      textAlign: "center",
-      fontSize: 13,
-      fontStyle: "italic",
+      marginHorizontal: 32,
       borderRadius: 13,
       paddingVertical: 6,
-      marginHorizontal: 32,
+      paddingHorizontal: 8,
       shadowColor: theme.glowColor,
       shadowRadius: 7,
       shadowOpacity: 0.11,
       elevation: 3,
+    },
+    tipText: {
+      color: theme.textColor,
+      textAlign: "center",
+      fontSize: 13,
+      fontStyle: "italic",
     },
     modalContainerOuter: {
       flex: 1,
@@ -394,28 +481,37 @@ function createStyles(theme) {
       shadowOpacity: 0.22,
       elevation: 8,
     },
+    modalTitleGradient: {
+      borderRadius: 9,
+      marginBottom: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      alignSelf: "stretch",
+      alignItems: "center",
+    },
     modalTitle: {
-      color: theme.borderGlowColor,
+      color: theme.textColor,
       fontWeight: "bold",
       fontSize: 17,
-      marginBottom: 12,
       letterSpacing: 0.2,
       textShadowColor: theme.glowColor,
       textShadowRadius: 7,
     },
     modalItem: {
+      marginBottom: 13,
+      borderRadius: 10,
+      opacity: 1,
+    },
+    modalItemGradient: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 13,
       borderRadius: 10,
       paddingVertical: 6,
       paddingHorizontal: 8,
-      backgroundColor: theme.accentColor,
       shadowColor: theme.glowColor,
       shadowRadius: 5,
       shadowOpacity: 0.09,
       elevation: 1,
-      opacity: 1,
     },
     modalItemDisabled: {
       opacity: 0.38,
@@ -435,20 +531,21 @@ function createStyles(theme) {
       fontWeight: "bold",
       letterSpacing: 0.1,
     },
-    modalClose: {
+    modalCloseButton: {
       marginTop: 16,
-      backgroundColor: theme.borderGlowColor,
+      alignItems: "center",
+      alignSelf: "stretch",
+    },
+    modalCloseGradient: {
       borderRadius: 11,
       paddingVertical: 8,
       paddingHorizontal: 24,
       alignItems: "center",
     },
     buttonText: {
-      color: theme.accentColor,
+      color: theme.textColor,
       fontWeight: "bold",
       fontSize: 16,
-      textShadowColor: theme.shadowColor,
-      textShadowRadius: 4,
     },
   });
 }

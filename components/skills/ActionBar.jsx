@@ -278,6 +278,7 @@ function createStyles(theme) {
       alignSelf: "center",
       // backgroundColor wird durch Gradient ersetzt!
       overflow: "hidden",
+      top: 100,
     },
     skillButton: {
       alignItems: "center",
