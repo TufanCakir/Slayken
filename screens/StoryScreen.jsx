@@ -27,6 +27,7 @@ import { useCompleteMissionOnce } from "../utils/mission/missionUtils";
 import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import ScreenLayout from "../components/ScreenLayout";
+import { getBossImageUrl } from "../utils/boss/bossUtils";
 
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
@@ -232,18 +233,13 @@ export default function StoryScreen() {
 
     return (
       <ScreenLayout style={styles.container}>
-        <Text style={styles.header}>Wähle ein Kapitel</Text>
         <FlatList
           data={chapterData}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.chapterList}
           renderItem={({ item }) => {
-            const boss = bossData.find((b) => b.id === item.bossId);
-            const bossImgKey = getEventBossKey(
-              boss?.image,
-              boss?.name || boss?.id
-            );
-            const bossImage = boss ? imageMap[bossImgKey] || boss?.image : null;
+            const bossImage = getBossImageUrl(item.bossId);
+
             return (
               <TouchableOpacity
                 style={styles.chapterCardOuter}
@@ -263,7 +259,7 @@ export default function StoryScreen() {
                   <Image
                     source={bossImage}
                     style={styles.chapterImage}
-                    contentFit="cover"
+                    contentFit="contain"
                   />
                   <View style={styles.chapterOverlay}>
                     <Text style={styles.chapterTitle}>{item.label}</Text>
@@ -333,24 +329,12 @@ function createStyles(theme) {
       fontWeight: "bold",
       marginTop: 50,
     },
-    header: {
-      fontSize: 26,
-      color: highlight,
-      marginBottom: 12,
-      textAlign: "center",
-      letterSpacing: 0.7,
-      fontWeight: "bold",
-      textShadowColor: glow,
-      textShadowRadius: 12,
-      textShadowOffset: { width: 0, height: 3 },
-    },
     chapterList: {
       padding: 12,
       gap: 12,
       paddingBottom: 38,
     },
     chapterCardOuter: {
-      marginVertical: 6,
       borderRadius: 22,
       overflow: "hidden",
       shadowColor: highlight,
@@ -368,7 +352,6 @@ function createStyles(theme) {
     chapterImage: {
       ...StyleSheet.absoluteFillObject,
       borderRadius: 22,
-      opacity: 0.63,
     },
     chapterOverlay: {
       position: "absolute",
@@ -377,7 +360,6 @@ function createStyles(theme) {
       padding: 14,
       borderBottomLeftRadius: 22,
       borderBottomRightRadius: 22,
-      backgroundColor: accent + "ec",
       alignItems: "center",
     },
     chapterTitle: {

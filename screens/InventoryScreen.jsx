@@ -15,6 +15,7 @@ import { equipmentPool } from "../data/equipmentPool";
 import { useClass } from "../context/ClassContext";
 import ScreenLayout from "../components/ScreenLayout";
 import { LinearGradient } from "expo-linear-gradient";
+import { getEquipmentImageUrl } from "../utils/equipment/equipment";
 
 const LEFT_SLOTS = ["head", "shoulder", "chest", "hands", "legs"];
 const RIGHT_SLOTS = ["weapon", "ring", "neck", "feet"];
@@ -68,7 +69,7 @@ export default function InventoryScreen() {
   const EquipSlot = ({ slot }) => {
     const equippedItemId = equipped[slot];
     const equippedItem = equipmentPool.find((e) => e.id === equippedItemId);
-    const icon = equippedItem ? imageMap[`equipment_${equippedItem.id}`] : null;
+    const icon = equippedItem ? getEquipmentImageUrl(equippedItem.id) : null;
 
     return (
       <TouchableOpacity
@@ -144,10 +145,10 @@ export default function InventoryScreen() {
         .filter((e) => e.slot === selectedSlot)
         .map((e) => ({
           ...e,
-          icon: imageMap[`equipment_${e.id}`],
+          icon: getEquipmentImageUrl(e.id), // ✅ hier fix!
           count: inventoryCounts[e.id] || 0,
         })),
-    [selectedSlot, imageMap, inventoryCounts]
+    [selectedSlot, inventoryCounts]
   );
 
   return (

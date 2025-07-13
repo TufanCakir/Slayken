@@ -93,8 +93,8 @@ export default function NewsScreen() {
             <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
           ) : (
             <View style={styles.tooltip}>
-              <RewardChip icon="coin" text="+100" theme={theme} />
-              <RewardChip icon="crystal" text="+10" theme={theme} />
+              <RewardChip icon="coin1" text="+100" theme={theme} />
+              <RewardChip icon="crystal1" text="+10" theme={theme} />
               <Text style={styles.longpressHint}>
                 Long-Press für Belohnung!
               </Text>

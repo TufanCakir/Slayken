@@ -13,6 +13,7 @@ import useCooldownTimer from "../../hooks/useCooldownTimer";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useAssets } from "../../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { getSkillImageUrl } from "../../utils/skillUtils";
 
 function TooltipModal({ skill, visible, onClose, styles, gradientColors }) {
   if (!skill || !visible) return null;
@@ -129,8 +130,8 @@ export default function ActionBar({
 
   // Skillbild laden
   const getSkillImage = (skill) => {
-    const key = `skill_${skill.id}`;
-    return imageMap[key] || require("../../assets/logo.png");
+    if (!skill || !skill.id) return require("../../assets/logo.png");
+    return getSkillImageUrl(skill.id);
   };
 
   // Status aller Skills vorberechnen (Memo für Performance)

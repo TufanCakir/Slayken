@@ -112,12 +112,12 @@ export default function VictoryScreen({ route }) {
         {/* Rewards */}
         <View style={styles.rewards}>
           <RewardRow
-            icon={getItemImageUrl("coin")}
+            icon={getItemImageUrl("coin1")}
             label={`+${coinReward} Coins`}
             theme={theme}
           />
           <RewardRow
-            icon={getItemImageUrl("crystal")}
+            icon={getItemImageUrl("crystal1")}
             label={`+${crystalReward} Crystals`}
             theme={theme}
           />
@@ -340,6 +340,7 @@ function createStyles(theme) {
       shadowOffset: { width: 0, height: 3 },
       elevation: 6,
       overflow: "hidden",
+      top: 200,
     },
     title: {
       fontSize: 36,
@@ -423,6 +424,7 @@ function createStyles(theme) {
       shadowRadius: 13,
       shadowOpacity: 0.43,
       elevation: 7,
+      bottom: 200,
     },
     button: {
       paddingVertical: 16,

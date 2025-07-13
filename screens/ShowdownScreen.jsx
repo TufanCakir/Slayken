@@ -26,6 +26,7 @@ import { equipmentPool } from "../data/equipmentPool";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 import { useStage } from "../context/StageContext";
 import ScreenLayout from "../components/ScreenLayout";
+import { getEquipmentImageUrl } from "../utils/equipment/equipment";
 
 // Hilfsfunktionen (zentral)
 const COIN_REWARD = 100;
@@ -224,9 +225,11 @@ export default function ShowdownScreen() {
         >
           <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
           <Image
-            source={imageMap["equipment_" + modalContent.drop?.id]}
+            source={getEquipmentImageUrl(modalContent.drop?.id)}
             style={{ width: 60, height: 60, margin: 12 }}
+            contentFit="contain"
           />
+
           <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
             {modalContent.drop?.label}
           </Text>
