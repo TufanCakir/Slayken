@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCoins } from "../context/CoinContext";
@@ -20,7 +20,7 @@ export default function Header({ gradientColors }) {
 
   const [username, setUsername] = useState("Spieler");
 
-  // Progress als Wert zw. 0 und 1
+  // Progress als Wert zwischen 0 und 1
   const progress = xpToNextLevel > 0 ? Math.min(1, xp / xpToNextLevel) : 0;
   const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
@@ -43,13 +43,12 @@ export default function Header({ gradientColors }) {
       toValue: progress,
       duration: 660,
       useNativeDriver: false,
-      easing: (t) => t * (2 - t), // sanfte Ease-Out Animation
+      easing: (t) => t * (2 - t),
     }).start();
-  }, [progress, animatedXpBar]);
+  }, [progress]);
 
   const styles = createStyles(theme);
 
-  // Farben aus Theme/Prop
   const colors = gradientColors ||
     theme.linearGradient || [
       theme.accentColorSecondary,
@@ -57,41 +56,42 @@ export default function Header({ gradientColors }) {
       theme.accentColorDark,
     ];
 
-  // Optionale Avatare (später einbauen möglich!)
-  // const avatar = imageMap.avatar || require("../assets/avatar-default.png");
+  // Fallback-Images falls imageMap noch nicht geladen
+  const coinIcon = imageMap?.coinIcon || getItemImageUrl("coin1");
+  const crystalIcon = imageMap?.crystalIcon || getItemImageUrl("crystal1");
 
   const currencyList = [
     {
       key: "coins",
-      image: imageMap.coinIcon || getItemImageUrl("coin1"),
+      image: coinIcon,
       value: coins,
       accessibilityLabel: "Coins",
     },
     {
       key: "crystals",
-      image: imageMap.crystalIcon || getItemImageUrl("crystal1"),
+      image: crystalIcon,
       value: crystals,
       accessibilityLabel: "Crystals",
     },
   ];
 
-  // Highlight für „Admin“-User (Farbrand)
+  // Highlight für "Admin"-User
   const isSpecialUser =
     typeof username === "string" &&
-    ["tufan", "admin", "tc", "tcakir"].some((n) =>
+    ["tufan", "admin", "tc", "tcakir", "tufancakir"].some((n) =>
       username.toLowerCase().includes(n)
     );
 
   return (
     <View style={styles.headerContainer} accessible accessibilityRole="header">
-      {/* Gradient als Hintergrund */}
       <LinearGradient
         colors={colors}
         start={[0, 0]}
         end={[1, 0]}
         style={StyleSheet.absoluteFill}
       />
-      {/* Links: Username + Level */}
+
+      {/* Links: Username & Level */}
       <View style={styles.leftBlock}>
         <Text
           style={[styles.username, isSpecialUser && styles.usernameSpecial]}
@@ -103,6 +103,7 @@ export default function Header({ gradientColors }) {
           {t("levelPrefix") || "Level"} {level}
         </Text>
       </View>
+
       {/* Mitte: XP-Bar */}
       <View style={styles.centerBlock}>
         <Animated.View
@@ -113,8 +114,8 @@ export default function Header({ gradientColors }) {
                 inputRange: [0, 1],
                 outputRange: ["0%", "100%"],
               }),
-              backgroundColor: theme.glowColor || "#14b8a6",
-              shadowColor: theme.borderGlowColor,
+              borderColor: theme.borderGlowColor + "36",
+              backgroundColor: theme.accentColor + "1A",
             },
           ]}
         />
@@ -122,19 +123,19 @@ export default function Header({ gradientColors }) {
           {t("xpPrefix") || "XP"} {xp} / {xpToNextLevel}
         </Text>
       </View>
+
       {/* Rechts: Währungen */}
       <View style={styles.rightBlock}>
         {currencyList.map(({ key, image, value, accessibilityLabel }) => (
           <View
+            key={key}
             style={[
               styles.currencyItem,
               {
-                borderColor: theme.borderGlowColor,
-                shadowColor: theme.glowColor,
-                backgroundColor: theme.headerCurrencyBg || "#ffffff1a",
+                borderColor: theme.borderGlowColor + "36",
+                backgroundColor: theme.accentColor + "1A",
               },
             ]}
-            key={key}
             accessible
             accessibilityLabel={`${accessibilityLabel}: ${value}`}
           >
@@ -183,9 +184,8 @@ function createStyles(theme) {
     },
     usernameSpecial: {
       borderWidth: 2.2,
-      borderColor: theme.glowColor,
-      backgroundColor: theme.headerHighlight || "#1e293bf2",
-      color: theme.glowColor,
+      color: theme.accentColor,
+      backgroundColor: theme.textColor,
       textShadowColor: theme.glowColor,
       textShadowRadius: 5,
     },
@@ -205,9 +205,9 @@ function createStyles(theme) {
       overflow: "hidden",
       justifyContent: "center",
       position: "relative",
-      borderWidth: 1.8,
-      borderColor: theme.borderGlowColor,
-      backgroundColor: theme.headerXpBg || "#0f172ae5",
+      borderWidth: 1.7,
+      borderColor: theme.borderGlowColor + "36",
+      backgroundColor: theme.accentColor + "1A",
       shadowColor: theme.glowColor,
       shadowOpacity: 0.09,
       shadowRadius: 10,

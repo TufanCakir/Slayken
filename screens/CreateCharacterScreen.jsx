@@ -99,56 +99,74 @@ function NameStep({ name, setName, onNext, theme }) {
 
 function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
   const styles = createStyles(theme);
+
+  const filteredClasses = (classes ?? []).filter((cls) => !cls.eventReward);
+
+  console.log("elementData", elementData);
+
   return (
     <>
       <GradientHeader theme={theme} title="Wähle eine Klasse" />
       <FlatList
-        data={classes.filter((cls) => !cls.eventReward)}
-        keyExtractor={(item) => item.id}
+        data={filteredClasses}
+        keyExtractor={(item) => item?.id ?? Math.random().toString()}
         contentContainerStyle={styles.classList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => onSelect(item)}
-            style={styles.classCardOuter}
-            activeOpacity={0.87}
-            accessibilityRole="button"
-            accessibilityLabel={`Klasse auswählen: ${item.label}`}
-          >
-            <LinearGradient
-              colors={[
-                theme.accentColorSecondary,
-                theme.accentColor,
-                theme.accentColorDark,
-              ]}
-              start={[0, 0]}
-              end={[1, 0]}
-              style={styles.classCard}
+        renderItem={({ item }) => {
+          if (!item) return null;
+
+          const element = elementData[item.element];
+
+          return (
+            <TouchableOpacity
+              onPress={() => onSelect(item)}
+              style={styles.classCardOuter}
+              activeOpacity={0.87}
+              accessibilityRole="button"
+              accessibilityLabel={`Klasse auswählen: ${
+                item.label || "Unbekannt"
+              }`}
             >
-              <View style={styles.classRow}>
-                <Image
-                  source={
-                    imageMap[`class_${item.id}`] || {
-                      uri: getClassImageUrl(item.id),
+              <LinearGradient
+                colors={[
+                  theme.accentColorSecondary,
+                  theme.accentColor,
+                  theme.accentColorDark,
+                ]}
+                start={[0, 0]}
+                end={[1, 0]}
+                style={styles.classCard}
+              >
+                <View style={styles.classRow}>
+                  <Image
+                    source={
+                      imageMap[`class_${item.id}`] || {
+                        uri: getClassImageUrl(item.id),
+                      }
                     }
-                  }
-                  style={styles.avatar}
-                  contentFit="contain"
-                  transition={300}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.optionTitle}>{item.label}</Text>
-                  <Text style={styles.optionDescription}>
-                    {item.description}
-                  </Text>
-                  <Text style={styles.elementLabel}>
-                    {elementData[item.element]?.icon}{" "}
-                    {elementData[item.element]?.label}
-                  </Text>
+                    style={styles.avatar}
+                    contentFit="contain"
+                    transition={300}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.optionTitle}>
+                      {item.label ?? "Unbekannt"}
+                    </Text>
+                    <Text style={styles.optionDescription}>
+                      {item.description ?? "Keine Beschreibung vorhanden."}
+                    </Text>
+                    {element ? (
+                      <Text style={styles.elementLabel}>
+                        {element.icon} {element.label}
+                      </Text>
+                    ) : (
+                      <Text style={styles.elementLabel}>🌟 Unbekannt</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
+              </LinearGradient>
+            </TouchableOpacity>
+          );
+        }}
         getItemLayout={(_, index) => ({
           length: 138,
           offset: 138 * index,

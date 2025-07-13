@@ -3,7 +3,7 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  Animated,
+  Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
@@ -16,7 +16,7 @@ import {
 import { t } from "../i18n";
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRef } from "react";
+import { BlurView } from "expo-blur";
 
 const TABS = [
   {
@@ -35,7 +35,7 @@ const TABS = [
   },
   {
     key: "create",
-    screen: "CharacterSelectScreen",
+    screen: "CreateCharacterScreen",
     Icon: Ionicons,
     iconProps: { name: "people-circle-outline" },
     labelKey: "createLabel",
@@ -63,7 +63,7 @@ export default function Footer({ gradientColors }) {
   const current = route.name;
   const styles = createStyles(theme);
 
-  // Farben für Gradient
+  // Gradient aus Theme oder Prop
   const colors = gradientColors ||
     theme.linearGradient || [
       theme.accentColorSecondary,
@@ -71,104 +71,71 @@ export default function Footer({ gradientColors }) {
       theme.accentColorDark,
     ];
 
-  // Animation für aktives Tab (Scale)
-  const activeScale = useRef(new Animated.Value(1)).current;
-
-  // Bei Tab-Wechsel kurzes Pop-Scale (nur Demo, kann auch pro Tab)
-  const animateTab = () => {
-    Animated.sequence([
-      Animated.timing(activeScale, {
-        toValue: 1.18,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-      Animated.timing(activeScale, {
-        toValue: 1,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
   return (
     <View style={styles.footer}>
+      {/* Glassmorphism: Blur + Gradient */}
+      <BlurView
+        intensity={Platform.OS === "ios" ? 38 : 22}
+        tint={theme.mode === "dark" ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
       <LinearGradient
         colors={colors}
         start={[0, 0]}
         end={[1, 0]}
-        style={styles.gradientBg}
+        style={[StyleSheet.absoluteFill, { opacity: 0.82 }]}
       />
-      <View style={styles.innerRow}>
-        {TABS.map(({ key, screen, Icon, iconProps, labelKey }) => {
-          const isActive = current === screen;
-          const Wrapper = isActive ? Animated.View : View;
-
-          return (
-            <Wrapper
-              key={key}
+      {/* Tab-Buttons */}
+      {TABS.map(({ key, screen, Icon, iconProps, labelKey }) => {
+        const isActive = current === screen;
+        return (
+          <TouchableOpacity
+            key={key}
+            onPress={() => navigation.navigate(screen)}
+            activeOpacity={0.89}
+            style={[
+              styles.tab,
+              isActive && styles.activeTab,
+              isActive && {
+                borderColor: theme.borderGlowColor,
+                backgroundColor: theme.borderGlowColor + "22",
+              },
+            ]}
+          >
+            <View style={[styles.iconWrap, isActive && styles.iconActiveWrap]}>
+              <Icon
+                {...iconProps}
+                size={27}
+                color={
+                  isActive
+                    ? theme.borderGlowColor || theme.textColor
+                    : theme.textColor + "99"
+                }
+                style={
+                  isActive && {
+                    textShadowColor: theme.glowColor,
+                    textShadowRadius: 8,
+                  }
+                }
+              />
+            </View>
+            <Text
               style={[
-                styles.tabWrap,
-                isActive && { transform: [{ scale: activeScale }] },
+                styles.label,
+                isActive && styles.activeLabel,
+                isActive && {
+                  color: theme.borderGlowColor,
+                  textShadowColor: theme.glowColor,
+                  textShadowRadius: 7,
+                },
               ]}
             >
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={t(labelKey)}
-                key={key}
-                onPress={() => {
-                  if (!isActive) animateTab();
-                  navigation.navigate(screen);
-                }}
-                activeOpacity={0.91}
-                style={[
-                  styles.tab,
-                  isActive && styles.activeTab,
-                  isActive && {
-                    borderColor: theme.borderGlowColor,
-                    backgroundColor: theme.borderGlowColor + "22",
-                  },
-                ]}
-              >
-                <View
-                  style={[styles.iconWrap, isActive && styles.iconActiveWrap]}
-                >
-                  <Icon
-                    {...iconProps}
-                    size={26}
-                    color={
-                      isActive
-                        ? theme.borderGlowColor || theme.textColor
-                        : theme.textColor + "B0"
-                    }
-                    style={
-                      isActive
-                        ? {
-                            textShadowColor: theme.glowColor,
-                            textShadowRadius: 8,
-                            shadowOpacity: 0.5,
-                          }
-                        : undefined
-                    }
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.label,
-                    isActive && styles.activeLabel,
-                    isActive && {
-                      color: theme.borderGlowColor,
-                      textShadowColor: theme.glowColor,
-                      textShadowRadius: 6,
-                    },
-                  ]}
-                >
-                  {t(labelKey)}
-                </Text>
-              </TouchableOpacity>
-            </Wrapper>
-          );
-        })}
-      </View>
+              {t(labelKey)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+      {/* Soft-Glow-Shadow oben */}
       <View style={styles.barShadow} pointerEvents="none" />
     </View>
   );
@@ -177,116 +144,98 @@ export default function Footer({ gradientColors }) {
 function createStyles(theme) {
   return StyleSheet.create({
     footer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      paddingBottom: 8,
+      height: 94,
+      gap: 11,
       position: "relative",
-      height: 90,
-      width: "100%",
-      justifyContent: "flex-end",
-      backgroundColor: "transparent",
       overflow: "visible",
-      zIndex: 10,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      backgroundColor: "transparent",
+      borderWidth: 1.1,
+      borderColor: "#fff2",
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: -5 },
+      shadowOpacity: 0.13,
+      shadowRadius: 22,
+      elevation: 7,
     },
-    gradientBg: {
-      ...StyleSheet.absoluteFillObject,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      opacity: 0.98,
+    tab: {
+      flex: 1,
+      marginHorizontal: 6,
+      height: 74,
+      borderRadius: 17,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1.7,
+      borderColor: theme.borderGlowColor + "36",
+      backgroundColor: theme.accentColor + "1A", // Glasiger Button
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.09,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    activeTab: {
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: -3 },
+      shadowOpacity: 0.33,
+      shadowRadius: 17,
+      elevation: 9,
+      borderWidth: 2.5,
+      borderColor: theme.borderGlowColor,
+      backgroundColor: theme.borderGlowColor + "22",
+    },
+    iconWrap: {
+      alignItems: "center",
+      justifyContent: "center",
+      margin: 6,
+      padding: 3,
+      transform: [{ scale: 1.32 }],
+    },
+    iconActiveWrap: {
+      borderRadius: 13,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.22,
+      shadowRadius: 14,
+      elevation: 5,
+    },
+    label: {
+      fontSize: 13,
+      marginTop: 3,
+      textAlign: "center",
+      color: theme.textColor,
+      letterSpacing: 0.2,
+      opacity: 0.82,
+      fontWeight: "normal",
+      textShadowColor: theme.shadowColor,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    activeLabel: {
+      opacity: 1,
+      color: theme.borderGlowColor,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 8,
     },
     barShadow: {
       position: "absolute",
       top: 0,
       left: 0,
       right: 0,
-      height: 10,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
-      backgroundColor: theme.shadowColor + "2A",
+      height: 11,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      backgroundColor: theme.shadowColor + "17",
       shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -5 },
-      shadowOpacity: 0.22,
-      shadowRadius: 20,
+      shadowOffset: { width: 0, height: -7 },
+      shadowOpacity: 0.18,
+      shadowRadius: 24,
       zIndex: 1,
       elevation: 2,
-    },
-    innerRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "flex-end",
-      gap: 10,
-      paddingHorizontal: 14,
-      paddingBottom: 6,
-      height: 90,
-      width: "100%",
-      zIndex: 2,
-    },
-    tabWrap: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    tab: {
-      flex: 1,
-      minWidth: 48,
-      maxWidth: 88,
-      height: 74,
-      marginHorizontal: 3,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 18,
-      backgroundColor: "transparent",
-      borderWidth: 2,
-      borderColor: theme.borderColor + "40",
-      overflow: "visible",
-      marginBottom: 0,
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 2,
-      zIndex: 3,
-    },
-    activeTab: {
-      borderColor: theme.borderGlowColor,
-      backgroundColor: theme.borderGlowColor + "18",
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.22,
-      shadowRadius: 18,
-      elevation: 8,
-    },
-    iconWrap: {
-      alignItems: "center",
-      justifyContent: "center",
-      margin: 6,
-      padding: 4,
-      marginBottom: 2,
-    },
-    iconActiveWrap: {
-      borderRadius: 13,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.17,
-      shadowRadius: 13,
-      elevation: 4,
-    },
-    label: {
-      fontSize: 13.5,
-      marginTop: 1,
-      textAlign: "center",
-      color: theme.textColor,
-      letterSpacing: 0.18,
-      opacity: 0.8,
-      fontWeight: "400",
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
-      paddingBottom: 3,
-    },
-    activeLabel: {
-      opacity: 1,
-      color: theme.borderGlowColor,
-      fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 8,
-      fontSize: 14.5,
     },
   });
 }

@@ -11,7 +11,7 @@ import { useThemeContext } from "../context/ThemeContext";
 import { t } from "../i18n";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
 export default function OnlineGuard({ children }) {
   const { theme } = useThemeContext();
@@ -60,46 +60,55 @@ export default function OnlineGuard({ children }) {
           { opacity: fadeAnim, zIndex: 20 },
         ]}
       >
+        {/* Blur Glass-Overlay */}
         <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.centered}>
-          <Animated.View style={styles.card}>
-            <Ionicons
-              name="wifi-off"
-              size={56}
-              color={theme.glowColor}
-              style={{ marginBottom: 13 }}
-              accessibilityLabel="Offline-Icon"
-              accessibilityRole="image"
+          {/* Glassmorphic Card */}
+          <View style={styles.glassCard}>
+            <BlurView
+              intensity={28}
+              tint="light"
+              style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.message}>
-              {t("noInternetMessage") || "Keine Internetverbindung"}
-            </Text>
-            <TouchableOpacity
-              style={styles.buttonOuter}
-              onPress={checkConnection}
-              activeOpacity={0.89}
-              accessibilityRole="button"
-              accessibilityLabel={t("retryButton") || "Erneut versuchen"}
-            >
-              <LinearGradient
-                colors={
-                  theme.linearGradient || [
-                    "#000000",
-                    "#000000",
-                    "#FF2D00",
-                    "#FF2D00",
-                  ]
-                }
-                start={{ x: 0.1, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.button}
+            <View style={styles.cardContent}>
+              <Feather
+                name="wifi-off"
+                size={56}
+                color={theme.glowColor}
+                style={{ marginBottom: 13 }}
+                accessibilityLabel="Offline-Icon"
+                accessibilityRole="image"
+              />
+              <Text style={styles.message}>
+                {t("noInternetMessage") || "Keine Internetverbindung"}
+              </Text>
+              <TouchableOpacity
+                style={styles.buttonOuter}
+                onPress={checkConnection}
+                activeOpacity={0.89}
+                accessibilityRole="button"
+                accessibilityLabel={t("retryButton") || "Erneut versuchen"}
               >
-                <Text style={styles.buttonText}>
-                  {t("retryButton") || "Erneut versuchen"}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
+                <LinearGradient
+                  colors={
+                    theme.linearGradient || [
+                      "#000000",
+                      "#000000",
+                      "#FF2D00",
+                      "#FF2D00",
+                    ]
+                  }
+                  start={{ x: 0.1, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.button}
+                >
+                  <Text style={styles.buttonText}>
+                    {t("retryButton") || "Erneut versuchen"}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Animated.View>
     );
@@ -115,19 +124,24 @@ function createStyles(theme) {
       justifyContent: "center",
       alignItems: "center",
     },
-    card: {
-      padding: 34,
-      borderRadius: 24,
-      alignItems: "center",
+    glassCard: {
       minWidth: 270,
+      borderRadius: 24,
+      overflow: "hidden",
+      position: "relative",
+      borderWidth: 1.4,
+      borderColor: "#fff6",
+      backgroundColor: "rgba(30, 41, 59, 0.30)", // Dunkler, glasiger Hintergrund
       elevation: 12,
-      backgroundColor: theme.accentColor + "f4",
       shadowColor: theme.glowColor,
-      shadowOpacity: 0.23,
-      shadowRadius: 24,
+      shadowOpacity: 0.24,
+      shadowRadius: 32,
       shadowOffset: { width: 0, height: 5 },
-      borderWidth: 2.5,
-      borderColor: theme.borderGlowColor,
+    },
+    cardContent: {
+      alignItems: "center",
+      padding: 36,
+      zIndex: 2,
     },
     message: {
       fontSize: 21,

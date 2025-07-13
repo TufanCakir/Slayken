@@ -230,7 +230,7 @@ function createStyles(theme) {
       marginTop: 15,
     },
     collectedLabel: {
-      color: theme.glowColor,
+      color: theme.textColor,
       fontSize: 15,
       fontWeight: "bold",
       fontStyle: "italic",

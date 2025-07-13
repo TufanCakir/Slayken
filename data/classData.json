@@ -36,7 +36,6 @@
       "agility": 5,
       "intelligence": 5,
       "attack": 1000,
-
       "base": {
         "strength": 10,
         "defense": 8,
@@ -65,7 +64,6 @@
       "agility": 5,
       "intelligence": 5,
       "attack": 1000,
-
       "base": {
         "strength": 10,
         "defense": 8,
@@ -78,9 +76,7 @@
     "unlockDate": "2025-08",
     "element": "ice",
     "inventory": [],
-
     "equipment": {},
-
     "skills": []
   },
   {
@@ -94,7 +90,6 @@
       "agility": 5,
       "intelligence": 5,
       "attack": 1000,
-
       "base": {
         "strength": 10,
         "defense": 8,
@@ -107,9 +102,7 @@
     "unlockDate": "2025-08",
     "element": "fire",
     "inventory": [],
-
     "equipment": {},
-
     "skills": []
   },
   {
@@ -123,7 +116,6 @@
       "agility": 5,
       "intelligence": 5,
       "attack": 1000,
-
       "base": {
         "strength": 10,
         "defense": 8,
@@ -136,9 +128,7 @@
     "unlockDate": "2025-08",
     "element": "fire",
     "inventory": [],
-
     "equipment": {},
-
     "skills": []
   },
   {
@@ -152,7 +142,6 @@
       "agility": 5,
       "intelligence": 5,
       "attack": 1000,
-
       "base": {
         "strength": 10,
         "defense": 8,
@@ -165,9 +154,7 @@
     "unlockDate": "2025-08",
     "element": "fire",
     "inventory": [],
-
     "equipment": {},
-
     "skills": []
   },
   {
@@ -195,7 +182,6 @@
     "element": "fire",
     "inventory": [],
     "equipment": {},
-
     "skills": []
   }
 ]

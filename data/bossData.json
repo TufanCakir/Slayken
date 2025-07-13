@@ -108,5 +108,16 @@
     "attackPattern": "regular",
     "power": 20,
     "voiceLines": "Hallo ich bin Inferno"
+  },
+  {
+    "id": "azhilok",
+    "name": "Azhilok",
+    "element": "fire",
+    "hp": 500,
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background7.png",
+    "phases": 1,
+    "attackPattern": "regular",
+    "power": 20,
+    "voiceLines": "Hallo ich bin Azhilok"
   }
 ]

@@ -17,7 +17,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
-import { AssetsProvider } from "./context/AssetsContext";
 import { buildImageMap } from "./utils/imageMapBuilder";
 import { getImportantImages } from "./utils/imageHelper";
 
@@ -43,7 +42,7 @@ function AppContent() {
   const [updateVisible, setUpdateVisible] = useState(false);
   const [updateDone, setUpdateDone] = useState(false);
   const { theme, uiThemeType } = useThemeContext();
-  const { data, error } = useDataLoader();
+  const { error } = useDataLoader();
   const onNavigationStateChange = useNavigationLoading({ delay: 700 });
 
   useUpdateChecker(setUpdateVisible, setUpdateDone);
@@ -134,15 +133,13 @@ function AppContent() {
           backgroundColor="transparent"
           barStyle={uiThemeType === "dark" ? "light-content" : "dark-content"}
         />
-        <AssetsProvider value={{ data, localUris, imageMap }}>
-          <NavigationContainer
-            theme={navigationTheme}
-            onStateChange={onNavigationStateChange}
-          >
-            <MainStackNavigator />
-            <LoadingOverlay />
-          </NavigationContainer>
-        </AssetsProvider>
+        <NavigationContainer
+          theme={navigationTheme}
+          onStateChange={onNavigationStateChange}
+        >
+          <MainStackNavigator />
+          <LoadingOverlay />
+        </NavigationContainer>
         {updateVisible && <UpdateOverlay done={updateDone} />}
       </SafeAreaView>
     </OnlineGuard>

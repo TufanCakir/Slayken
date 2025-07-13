@@ -8,6 +8,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 const INFO_POINTS = [
   "Im Kampf kannst du je nach Charakter-Level neue Fähigkeiten freischalten.",
@@ -32,6 +33,13 @@ export default function PreBattleInfoScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={28} color={theme.textColor} />
+      </TouchableOpacity>
+
       <LinearGradient
         colors={gradient}
         start={{ x: 0.12, y: 0 }}
@@ -156,6 +164,13 @@ function createStyles(theme) {
       width: "100%",
       justifyContent: "center",
     },
+    backButton: {
+      position: "absolute",
+      top: 38,
+      left: 22,
+      zIndex: 10,
+    },
+
     buttonText: {
       color: theme.textColor,
       fontSize: 20,

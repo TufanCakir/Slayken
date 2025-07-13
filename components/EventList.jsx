@@ -11,6 +11,7 @@ import ScreenLayout from "./ScreenLayout";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 function formatEndDate(iso) {
   const date = new Date(iso);
@@ -55,12 +56,19 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
         onPress={() => onSelectEvent(item)}
         activeOpacity={0.92}
       >
-        <LinearGradient
-          colors={theme.linearGradient || ["#000", "#FF2D00"]}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
+        {/* 3D/Glass Effekt */}
+        <View style={styles.absoluteFill}>
+          <LinearGradient
+            colors={theme.linearGradient || ["#000", "#FF2D00"]}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+        {/* Glass Card */}
+        <BlurView intensity={46} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={styles.glassBorder} pointerEvents="none" />
+        {/* Card-Content */}
         <View style={styles.bannerContainer}>
           <Image
             source={imageSource}
@@ -93,8 +101,8 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
 
           {/* Text-Overlay mit Gradient */}
           <LinearGradient
-            colors={[theme.accentColor + "d0"]}
-            start={{ x: 0, y: 0 }}
+            colors={[theme.accentColor + "d0", theme.accentColor + "00"]}
+            start={{ x: 0, y: 0.7 }}
             end={{ x: 1, y: 1 }}
             style={styles.textOverlay}
           >
@@ -134,17 +142,37 @@ function createStyles(theme) {
       paddingBottom: 90,
     },
     card: {
-      borderRadius: 18,
+      borderRadius: 22,
       height: 300,
-      marginVertical: 6,
+      marginVertical: 7,
       overflow: "hidden",
       position: "relative",
       marginTop: 10,
+      backgroundColor: "rgba(255,255,255,0.18)",
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.17,
+      shadowRadius: 19,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    absoluteFill: {
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 0,
+    },
+    glassBorder: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: 22,
+      borderWidth: 1.8,
+      borderColor: "#fff5",
+      zIndex: 2,
+      pointerEvents: "none",
     },
     bannerContainer: {
       flex: 1,
-      borderRadius: 16,
+      borderRadius: 18,
       justifyContent: "center",
+      position: "relative",
+      overflow: "visible",
     },
     imageBackground: {
       height: 200,
@@ -152,21 +180,13 @@ function createStyles(theme) {
       marginTop: 50,
     },
     topRow: {
-      position: "absolute",
-      top: 10,
-      left: 0,
-      right: 0,
-      zIndex: 5,
       flexDirection: "row",
       justifyContent: "space-between",
+      bottom: 5,
       paddingHorizontal: 10,
       alignItems: "center",
     },
     badge: {
-      paddingHorizontal: 11,
-      paddingVertical: 4,
-      borderRadius: 8,
-      minWidth: 42,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -186,6 +206,7 @@ function createStyles(theme) {
       borderRadius: 8,
       fontSize: 12,
       color: text,
+      backgroundColor: "#fff6",
     },
     starIcon: {
       fontSize: 19,
@@ -205,22 +226,27 @@ function createStyles(theme) {
     },
     textOverlay: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomLeftRadius: 16,
-      borderBottomRightRadius: 16,
+      paddingVertical: 14,
+      borderBottomLeftRadius: 18,
+      borderBottomRightRadius: 18,
     },
     title: {
-      fontSize: 19,
+      fontSize: 20,
       letterSpacing: 0.3,
       color: text,
       textAlign: "center",
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor + "99",
+      textShadowRadius: 6,
+      textShadowOffset: { width: 0, height: 1 },
     },
     description: {
-      fontSize: 13.5,
+      fontSize: 14,
       marginBottom: 2,
       lineHeight: 18,
       opacity: 0.93,
       color: text,
+      textAlign: "center",
     },
   });
 }

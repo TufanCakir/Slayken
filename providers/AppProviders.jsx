@@ -18,33 +18,35 @@ import { InventoryProvider } from "../context/InventoryContext";
 export function AppProviders({ children }) {
   return (
     <SafeAreaProvider>
-      <InventoryProvider>
-        <ShopProvider>
-          <StageProvider>
-            <GiftProvider>
-              <LoadingProvider>
-                <MusicProvider>
-                  <ThemeProvider>
-                    <LanguageProvider>
-                      <AccountLevelProvider>
-                        <CrystalProvider>
-                          <CoinProvider>
-                            <MissionProvider>
-                              <CharacterProvider>
-                                <ClassProvider>{children}</ClassProvider>
-                              </CharacterProvider>
-                            </MissionProvider>
-                          </CoinProvider>
-                        </CrystalProvider>
-                      </AccountLevelProvider>
-                    </LanguageProvider>
-                  </ThemeProvider>
-                </MusicProvider>
-              </LoadingProvider>
-            </GiftProvider>
-          </StageProvider>
-        </ShopProvider>
-      </InventoryProvider>
+      <AssetsProvider>
+        <InventoryProvider>
+          <ShopProvider>
+            <StageProvider>
+              <GiftProvider>
+                <LoadingProvider>
+                  <MusicProvider>
+                    <ThemeProvider>
+                      <LanguageProvider>
+                        <AccountLevelProvider>
+                          <CrystalProvider>
+                            <CoinProvider>
+                              <MissionProvider>
+                                <CharacterProvider>
+                                  <ClassProvider>{children}</ClassProvider>
+                                </CharacterProvider>
+                              </MissionProvider>
+                            </CoinProvider>
+                          </CrystalProvider>
+                        </AccountLevelProvider>
+                      </LanguageProvider>
+                    </ThemeProvider>
+                  </MusicProvider>
+                </LoadingProvider>
+              </GiftProvider>
+            </StageProvider>
+          </ShopProvider>
+        </InventoryProvider>
+      </AssetsProvider>
     </SafeAreaProvider>
   );
 }

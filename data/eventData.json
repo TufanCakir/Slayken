@@ -183,6 +183,24 @@
   {
     "id": "11",
     "unlockItemId": "11",
+    "eventName": "Azhilok",
+    "title": "Kult der Flamme",
+    "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
+    "tag": "recommended",
+    "activeFrom": "2025-01-07T00:00:00Z",
+    "activeTo": "2025-07-14T23:59:59Z",
+    "info": "recommended",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/azhilok.png",
+    "hp": 500,
+    "expReward": 100,
+    "accountExpReward": 100,
+    "coinReward": 100,
+    "crystalReward": 50,
+    "skillDmg": 50
+  },
+  {
+    "id": "12",
+    "unlockItemId": "12",
     "eventName": "Reon Dragonheart",
     "title": "holt euch den Exklusiven Charakter Reon Dragonheart",
     "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",
@@ -200,8 +218,8 @@
     "rewardCharacterId": "reon-dragonheart"
   },
   {
-    "id": "12",
-    "unlockItemId": "12",
+    "id": "13",
+    "unlockItemId": "13",
     "eventName": "Reon Dragonheart",
     "title": "holt euch den Exklusiven Charakter Reon Dragonheart",
     "background": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/background1.png",

@@ -58,5 +58,11 @@
     "title": "Kult der Flamme",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/inferno.png",
     "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
+  },
+  {
+    "id": "11",
+    "title": "Kult der Flamme",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/azhilok.png",
+    "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
   }
 ]

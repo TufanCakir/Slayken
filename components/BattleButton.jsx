@@ -1,25 +1,26 @@
-import { TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
-import { Image } from "expo-image";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Platform,
+  View,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { useThemeContext } from "../context/ThemeContext";
-import { useAssets } from "../context/AssetsContext";
 
 export default function BattleButton({
   onPress,
   label,
   style,
-  gradientColors, // Neu: Übergebbare Farbpalette für LinearGradient
-  textColor, // Optional: Textfarbe überschreiben
-  glowColor, // Optional: Glowfarbe überschreiben
+  gradientColors,
+  textColor,
+  glowColor,
 }) {
   const { theme } = useThemeContext();
-  const { imageMap } = useAssets();
   const styles = createStyles(theme);
 
-  // Hintergrundbild optional aus imageMap
-  const buttonBg = imageMap["button_bg"];
-
-  // Default-Gradient: Feuerfarben aus dem Theme
+  // Gradient aus Theme oder Prop
   const colors = gradientColors || [
     theme.accentColorSecondary,
     theme.accentColor,
@@ -37,12 +38,12 @@ export default function BattleButton({
           ...Platform.select({
             ios: {
               shadowColor: gColor,
-              shadowRadius: 7,
-              shadowOpacity: 0.7,
+              shadowRadius: 8,
+              shadowOpacity: 0.22,
               shadowOffset: { width: 0, height: 2 },
             },
             android: {
-              elevation: 6,
+              elevation: 7,
             },
           }),
         },
@@ -51,20 +52,31 @@ export default function BattleButton({
       onPress={onPress}
       activeOpacity={0.85}
     >
+      {/* Glass-Blur-Background */}
+      <BlurView
+        intensity={38}
+        tint={theme.mode === "dark" ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
       <LinearGradient
         colors={colors}
         start={[0, 0]}
         end={[1, 0]}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { opacity: 0.81 }]}
       />
-      {!!buttonBg && (
-        <Image
-          source={buttonBg}
-          style={[StyleSheet.absoluteFill, { opacity: 0.35 }]} // leicht transparent, damit das Gradient dominiert
-          contentFit="cover"
-          transition={400}
-        />
-      )}
+      {/* Glasrand */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: 18,
+            borderWidth: 1.5,
+            borderColor: "#fff7", // halbtransparenter Glasrand
+            opacity: 0.7,
+          },
+        ]}
+        pointerEvents="none"
+      />
       <Text
         style={[
           styles.text,
@@ -72,7 +84,7 @@ export default function BattleButton({
             color: tColor,
             textShadowColor: gColor,
             textShadowOffset: { width: 0, height: 2 },
-            textShadowRadius: 8,
+            textShadowRadius: 11,
           },
         ]}
       >
@@ -92,11 +104,15 @@ function createStyles(theme) {
       justifyContent: "center",
       overflow: "hidden",
       transform: [{ skewY: "-3deg" }],
+      backgroundColor: theme.mode === "dark" ? "#25252599" : "#fff8", // Fallback
+      marginVertical: 6,
     },
     text: {
       fontSize: 25,
       textAlign: "center",
       paddingVertical: 10,
+      fontWeight: "600",
+      letterSpacing: 0.04,
     },
   });
 }

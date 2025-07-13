@@ -68,5 +68,12 @@
     "description": "Die Flammen des Schicksals lodern höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
     "bossId": "inferno",
     "element": "fire"
+  },
+  {
+    "id": "azhilok",
+    "label": "Kapitel 11",
+    "description": "Das Eis des Schicksals ist höher – ein letzter Kampf entscheidet über das Schicksal der Welt.",
+    "bossId": "azhilok",
+    "element": "ice"
   }
 ]

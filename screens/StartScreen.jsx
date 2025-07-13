@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   Linking,
   Platform,
-  StyleSheet, // <-- HIER!
+  StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -22,6 +22,7 @@ import { t } from "../i18n";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAssets } from "../context/AssetsContext";
 
 const { width } = Dimensions.get("window");
 
@@ -60,7 +61,7 @@ const SOCIALS = [
   },
 ];
 
-function SocialIcons({ theme }) {
+function SocialIcons({ theme, styles }) {
   return (
     <View style={styles.socialIcons}>
       {SOCIALS.map((social) => (
@@ -82,6 +83,7 @@ export default function StartScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
   const [modalVisible, setModalVisible] = useState(false);
+  const { reloadAssets } = useAssets();
 
   const localImage = require("../assets/slayken-font.png");
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -97,6 +99,7 @@ export default function StartScreen() {
           accessibilityLabel="Slayken Schriftzug"
         />
       </View>
+
       {/* Start-Button */}
       <TouchableOpacity
         onPress={() => navigation.navigate("LoginScreen")}
@@ -162,7 +165,16 @@ export default function StartScreen() {
               <Text style={styles.modalItemText}>{t("termsOfService")}</Text>
             </TouchableOpacity>
 
-            <SocialIcons theme={theme} />
+            <TouchableOpacity
+              style={styles.modalItem}
+              onPress={() => reloadAssets()}
+              activeOpacity={0.82}
+            >
+              <Feather name="refresh-ccw" size={20} color={theme.textColor} />
+              <Text style={styles.modalItemText}>Assets neu laden</Text>
+            </TouchableOpacity>
+
+            <SocialIcons theme={theme} styles={styles} />
 
             <TouchableOpacity
               onPress={() => setModalVisible(false)}

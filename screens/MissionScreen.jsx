@@ -1,5 +1,6 @@
 import { Text, FlatList, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import ScreenLayout from "../components/ScreenLayout";
 import { useCrystals } from "../context/CrystalContext";
 import { useCoins } from "../context/CoinContext";
@@ -35,6 +36,29 @@ export default function MissionScreen() {
     collectReward(mission.id);
   };
 
+  // Prüfen, ob wirklich alle eingesammelt sind (sonst bleibt ListFooter leer)
+  const allCollected =
+    missions.length > 0 && missions.every((m) => m.completed && m.collected);
+
+  // Footer-Glass-Komponente für „Mehr Missionen kommen noch!“
+  const Footer = () =>
+    allCollected ? (
+      <View style={styles.footerWrap}>
+        <BlurView intensity={38} tint="light" style={StyleSheet.absoluteFill} />
+        <LinearGradient
+          colors={[
+            theme.accentColorSecondary + "cc",
+            theme.accentColor + "bb",
+            theme.accentColorDark + "a0",
+          ]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Text style={styles.footerText}>Mehr Missionen kommen noch!</Text>
+      </View>
+    ) : null;
+
   return (
     <ScreenLayout style={styles.container}>
       {/* Header mit Gradient */}
@@ -64,6 +88,7 @@ export default function MissionScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>Keine Missionen verfügbar</Text>
         }
+        ListFooterComponent={Footer}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
@@ -101,7 +126,7 @@ function createStyles(theme) {
       textTransform: "uppercase",
     },
     listContainer: {
-      paddingBottom: 80,
+      paddingBottom: 110,
       paddingHorizontal: 14,
       gap: 10,
     },
@@ -115,6 +140,34 @@ function createStyles(theme) {
       letterSpacing: 0.3,
       textShadowColor: theme.glowColor,
       textShadowRadius: 4,
+    },
+    footerWrap: {
+      alignSelf: "center",
+      marginTop: 44,
+      marginBottom: 16,
+      paddingVertical: 22,
+      paddingHorizontal: 36,
+      borderRadius: 24,
+      overflow: "hidden",
+      minWidth: 210,
+      borderWidth: 1.6,
+      borderColor: theme.borderGlowColor,
+      shadowColor: theme.glowColor,
+      shadowOpacity: 0.19,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 5,
+      position: "relative",
+    },
+    footerText: {
+      fontSize: 18,
+      color: theme.textColor,
+      textAlign: "center",
+      fontWeight: "600",
+      letterSpacing: 0.19,
+      opacity: 0.78,
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 8,
     },
   });
 }

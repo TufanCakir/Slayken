@@ -1,7 +1,14 @@
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Platform,
+} from "react-native";
 import { Ionicons, Feather, FontAwesome5, Entypo } from "@expo/vector-icons";
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 export default function ActionBar({ navigation, t, gradientColors }) {
   const { theme } = useThemeContext();
@@ -46,19 +53,26 @@ export default function ActionBar({ navigation, t, gradientColors }) {
 
   return (
     <View style={styles.row}>
-      {/* Gradient als Hintergrund */}
+      {/* BlurView für Glass-Effekt */}
+      <BlurView
+        intensity={28}
+        tint={theme.mode === "dark" ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Gradient als Overlay */}
       <LinearGradient
         colors={colors}
         start={[0, 0]}
         end={[1, 0]}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { opacity: 0.78 }]}
       />
       {buttons.map(({ Icon, iconProps, screen, label }) => (
         <TouchableOpacity
           key={screen}
           style={styles.button}
           onPress={() => navigation.navigate(screen)}
-          activeOpacity={0.85}
+          activeOpacity={0.88}
         >
           <View style={styles.inner}>
             <Icon {...iconProps} />
@@ -84,22 +98,40 @@ function createStyles(theme) {
       overflow: "hidden",
       minHeight: 74,
       bottom: 15,
+      borderRadius: 26, // mehr Curve!
+      borderWidth: 1.5,
+      borderColor: theme.borderGlowColor + "55",
+      // Schatten für Glass-Look
+      shadowColor: theme.glowColor,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.19,
+      shadowRadius: 13,
+      elevation: 5,
+      backgroundColor: theme.accentColor + "33", // leichte Transparenz für fallback
     },
     button: {
       flex: 1,
       marginHorizontal: 6,
       height: 74,
-      borderRadius: 16,
+      borderRadius: 17,
       justifyContent: "center",
       alignItems: "center",
-      borderWidth: 2.5,
+      borderWidth: 1.7,
+      borderColor: theme.borderGlowColor + "36",
+      backgroundColor: theme.accentColor + "1A", // Glasiger Button
+      shadowColor: theme.shadowColor,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.09,
+      shadowRadius: 6,
+      elevation: 2,
       top: 7,
     },
     inner: {
       alignItems: "center",
+      justifyContent: "center",
     },
     label: {
-      fontSize: 14,
+      fontSize: 12,
       marginTop: 7,
       textAlign: "center",
       color: theme.textColor,

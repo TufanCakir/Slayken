@@ -31,14 +31,19 @@ import ScreenLayout from "../components/ScreenLayout";
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
-const getAssetKey = (url, prefix, fallback) => {
-  let name = null;
-  if (typeof url === "string") {
+// Utility: Key für Boss-Bild
+const getEventBossKey = (url, fallback) => {
+  if (typeof url === "string" && url.endsWith(".png")) {
     const match = /\/([\w-]+)\.png$/i.exec(url);
-    name = match ? match[1] : null;
+    return match ? "eventboss_" + match[1].toLowerCase() : null;
   }
-  if (!name && fallback) name = fallback;
-  return name ? `${prefix}${name.toLowerCase()}` : null;
+  return fallback ? "eventboss_" + fallback.toLowerCase() : null;
+};
+
+const getBackgroundKey = (url) => {
+  if (!url) return null;
+  const match = /\/([\w-]+)\.png$/i.exec(url);
+  return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
 function SkillUnlockModal({ visible, skills, onClose, styles, theme }) {
@@ -96,12 +101,10 @@ export default function StoryScreen() {
   const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  // Animated HP für Fortschrittsbalken (optional nice effect)
   const [hpAnim] = useState(new Animated.Value(1));
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Boss laden, wenn Kapitel gewählt
   useEffect(() => {
     if (!selectedChapter || !activeCharacter) return;
     const boss = bossData.find((b) => b.id === selectedChapter.bossId);
@@ -112,7 +115,6 @@ export default function StoryScreen() {
     hpAnim.setValue(1);
   }, [selectedChapter, activeCharacter]);
 
-  // Animate HP
   useEffect(() => {
     if (bossMaxHp > 0) {
       Animated.timing(hpAnim, {
@@ -134,7 +136,6 @@ export default function StoryScreen() {
   const handleFight = useCallback(
     (skill) => {
       if (!activeCharacter || !currentBoss) return;
-
       const { stats, percentBonuses } =
         getCharacterStatsWithEquipment(activeCharacter);
       const skillPower = skill?.power ?? 30;
@@ -198,32 +199,27 @@ export default function StoryScreen() {
     resetState();
   }, [resetState]);
 
-  // Hintergrund & Bildzuordnung
-  const bossBgKey = getAssetKey(currentBoss?.background, "bg_");
+  // Background
+  const bossBgKey = getBackgroundKey(currentBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
+  // Gemappter Boss
   const mappedBoss = useMemo(() => {
     if (!currentBoss) return null;
-    const bossImgKey = getAssetKey(
-      currentBoss.image,
-      "eventboss_",
-      currentBoss.name
-    );
+    const bossImgKey = getEventBossKey(currentBoss.image, currentBoss.name);
     return {
       ...currentBoss,
       image: (bossImgKey && imageMap[bossImgKey]) || currentBoss.image,
     };
   }, [currentBoss, imageMap]);
 
-  // Kapitel-Auswahl
   if (!selectedChapter) {
-    // Keine Charaktere? Keine Kapitel? => Hinweis!
     if (!classList.length)
       return (
         <ScreenLayout style={styles.container}>
           <Text style={styles.errorText}>
-            Kein Charakter verfügbar. Erstelle zuerst einen Charakter!
+            Kein Charakter verfügbar. Erstelle zuerst einen!
           </Text>
         </ScreenLayout>
       );
@@ -243,12 +239,11 @@ export default function StoryScreen() {
           contentContainerStyle={styles.chapterList}
           renderItem={({ item }) => {
             const boss = bossData.find((b) => b.id === item.bossId);
-            const bossImgKey = getAssetKey(
+            const bossImgKey = getEventBossKey(
               boss?.image,
-              "eventboss_",
               boss?.name || boss?.id
             );
-            const bossImage = boss ? imageMap[bossImgKey] || boss.image : null;
+            const bossImage = boss ? imageMap[bossImgKey] || boss?.image : null;
             return (
               <TouchableOpacity
                 style={styles.chapterCardOuter}
@@ -283,7 +278,6 @@ export default function StoryScreen() {
     );
   }
 
-  // Kampf-Ansicht
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -297,33 +291,7 @@ export default function StoryScreen() {
         </View>
       )}
 
-      {/* ALWAYS visible Back */}
-      <Pressable style={styles.backButton} onPress={resetState}>
-        <Text style={styles.backText}>← Zurück zur Kapitel-Auswahl</Text>
-      </Pressable>
-
       <Text style={styles.chapterTitleFight}>{selectedChapter.label}</Text>
-
-      {/* HP BAR */}
-      {currentBoss && (
-        <View style={styles.hpBarOuter}>
-          <Animated.View
-            style={[
-              styles.hpBar,
-              {
-                width: hpAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0%", "100%"],
-                }),
-                backgroundColor: theme.borderGlowColor || "#e11d48",
-              },
-            ]}
-          />
-          <Text style={styles.hpText}>
-            Boss HP: {bossHp} / {bossMaxHp}
-          </Text>
-        </View>
-      )}
 
       {currentBoss && (
         <BattleScene
@@ -334,6 +302,7 @@ export default function StoryScreen() {
           handleFight={handleFight}
           bossBackground={bossBgSrc}
           imageMap={imageMap}
+          onBack={() => navigation.goBack()}
         />
       )}
 
@@ -348,7 +317,6 @@ export default function StoryScreen() {
   );
 }
 
-// ---------- STYLES ----------
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
@@ -431,27 +399,6 @@ function createStyles(theme) {
       textShadowRadius: 5,
       textShadowOffset: { width: 0, height: 1 },
     },
-    backButton: {
-      marginVertical: 10,
-      padding: 8,
-      alignSelf: "flex-start",
-      marginLeft: 12,
-      marginTop: 18,
-      backgroundColor: accent + "e8",
-      borderRadius: 14,
-      zIndex: 40,
-      shadowColor: highlight,
-      shadowRadius: 6,
-      shadowOpacity: 0.09,
-    },
-    backText: {
-      fontSize: 17,
-      color: highlight,
-      fontWeight: "bold",
-      textShadowColor: glow,
-      textShadowRadius: 7,
-      textShadowOffset: { width: 0, height: 2 },
-    },
     chapterTitleFight: {
       color: highlight,
       fontSize: 23,
@@ -463,39 +410,6 @@ function createStyles(theme) {
       textShadowRadius: 13,
       textShadowOffset: { width: 0, height: 4 },
     },
-    // HP BAR
-    hpBarOuter: {
-      height: 30,
-      backgroundColor: accent + "88",
-      borderRadius: 11,
-      marginHorizontal: 26,
-      marginBottom: 10,
-      overflow: "hidden",
-      justifyContent: "center",
-      borderWidth: 2,
-      borderColor: highlight,
-      shadowColor: highlight,
-      shadowRadius: 4,
-      shadowOpacity: 0.11,
-    },
-    hpBar: {
-      position: "absolute",
-      left: 0,
-      top: 0,
-      bottom: 0,
-      borderRadius: 11,
-    },
-    hpText: {
-      textAlign: "center",
-      color: text,
-      fontWeight: "bold",
-      fontSize: 15.5,
-      letterSpacing: 0.12,
-      zIndex: 10,
-      textShadowColor: glow,
-      textShadowRadius: 6,
-    },
-    // MODAL
     modalOverlay: {
       flex: 1,
       justifyContent: "center",

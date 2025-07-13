@@ -28,6 +28,7 @@ export const bossKeys = [
   "korathaz",
   "ashragul",
   "inferno",
+  "azhilok",
 ];
 
 export const bgKeys = [
