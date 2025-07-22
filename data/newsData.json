@@ -49,7 +49,7 @@
   },
   {
     "id": "9",
-    "title": "Kult der Flamme",
+    "title": "Stärke des Donners",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/maldrakar.png",
     "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
   },
@@ -61,8 +61,14 @@
   },
   {
     "id": "11",
-    "title": "Kult der Flamme",
+    "title": "Eiskalter Winter",
     "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/azhilok.png",
+    "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
+  },
+  {
+    "id": "12",
+    "title": "König der Dunkelheit",
+    "image": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/eventBosse/dark.png",
     "description": "Kaufe die Flammenrune im Shop, um dieses Event zu aktivieren."
   }
 ]

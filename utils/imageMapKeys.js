@@ -29,6 +29,8 @@ export const bossKeys = [
   "ashragul",
   "inferno",
   "azhilok",
+  "reon-dragonheart",
+  "dark",
 ];
 
 export const bgKeys = [
@@ -42,6 +44,7 @@ export const bgKeys = [
   "bg_dark",
   "bg_light",
   "slayken",
+  "dark_land",
 ];
 
 export const equipmentKeys = ["sword_of_flames"];

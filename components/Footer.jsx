@@ -140,7 +140,6 @@ function Footer({ gradientColors }) {
           </TouchableOpacity>
         )
       )}
-      {/* Kein zusätzlicher Schatten-View mehr */}
     </View>
   );
 }
@@ -152,8 +151,8 @@ function createStyles(theme) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-end",
-      paddingBottom: 8,
-      height: 94,
+      paddingBottom: 10,
+      height: 100,
       gap: 11,
       position: "relative",
       overflow: "visible",
@@ -162,7 +161,6 @@ function createStyles(theme) {
       backgroundColor: "transparent",
       borderWidth: 1.1,
       borderColor: "#fff2",
-      // Kein shadow, kein elevation!
     },
     tab: {
       flex: 1,

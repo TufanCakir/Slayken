@@ -10,8 +10,7 @@ import { Image } from "expo-image";
 import ScreenLayout from "./ScreenLayout";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
+import { getBossBackgroundUrl } from "../utils/boss/backgroundUtils";
 
 // --- Hilfsfunktion für Enddatum-Formatierung ---
 function formatEndDate(iso) {
@@ -39,18 +38,18 @@ const EventCard = React.memo(function EventCard({
       onPress={() => onPress(item)}
       activeOpacity={0.92}
     >
-      <View style={styles.absoluteFill}>
-        <LinearGradient
-          colors={theme.linearGradient || ["#000", "#FF2D00"]}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+      {/* Hintergrundbild (direkt sichtbar, kein Blur, kein Gradient) */}
+      <View style={styles.backgroundWrapper}>
+        <Image
+          source={{ uri: item.background }}
+          style={styles.backgroundImage}
+          contentFit="cover"
+          transition={300}
         />
       </View>
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
-      <View style={styles.glassBorder} pointerEvents="none" />
 
       {/* Card-Content */}
+      <View style={styles.glassBorder} pointerEvents="none" />
       <View style={styles.bannerContainer}>
         <Image
           source={imageSource}
@@ -76,15 +75,10 @@ const EventCard = React.memo(function EventCard({
         <View style={styles.dateBox}>
           <Text style={styles.dateText}>{formatEndDate(item.activeTo)}</Text>
         </View>
-        <LinearGradient
-          colors={[theme.accentColor + "d0", theme.accentColor + "00"]}
-          start={{ x: 0, y: 0.7 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.textOverlay}
-        >
+        <View style={styles.textOverlay}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.description}>{item.description}</Text>
-        </LinearGradient>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -147,6 +141,29 @@ function createStyles(theme) {
   const text = theme.textColor || "#fff";
   return StyleSheet.create({
     container: { flex: 1 },
+    backgroundWrapper: {
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 0,
+    },
+    backgroundImage: {
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 0,
+    },
+    glassBorder: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: 22,
+      borderWidth: 1.2,
+      borderColor: "#fff4",
+      zIndex: 1,
+      pointerEvents: "none",
+    },
+    bannerContainer: {
+      flex: 1,
+      borderRadius: 18,
+      justifyContent: "center",
+      position: "relative",
+      zIndex: 2, // wichtig!
+    },
     message: {
       fontSize: 16,
       textAlign: "center",
@@ -170,21 +187,6 @@ function createStyles(theme) {
     absoluteFill: {
       ...StyleSheet.absoluteFillObject,
       zIndex: 0,
-    },
-    glassBorder: {
-      ...StyleSheet.absoluteFillObject,
-      borderRadius: 22,
-      borderWidth: 1.2,
-      borderColor: "#fff4",
-      zIndex: 2,
-      pointerEvents: "none",
-    },
-    bannerContainer: {
-      flex: 1,
-      borderRadius: 18,
-      justifyContent: "center",
-      position: "relative",
-      overflow: "visible",
     },
     imageBackground: {
       height: 200,

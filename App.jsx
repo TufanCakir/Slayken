@@ -23,21 +23,17 @@ import { AppProviders } from "./providers/AppProviders";
 import useUpdateChecker from "./hooks/useUpdateChecker";
 import MainStackNavigator from "./navigation/MainStackNavigator";
 import { useThemeContext } from "./context/ThemeContext";
-import LoadingOverlay from "./components/LoadingOverlay";
 import useDataLoader from "./hooks/useDataLoader";
-import useNavigationLoading from "./hooks/useNavigationLoading";
 import OnlineGuard from "./components/OnlineGuard";
 import UpdateOverlay from "./components/UpdateOverlay";
 import useImagePreloader from "./hooks/useImagePreloader";
 
-// --- Memoized ProgressBar ---
 const ProgressBar = React.memo(({ percent }) => (
   <View style={styles.progressBarBackground}>
     <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
   </View>
 ));
 
-// --- Memoized Background Image ---
 const BackgroundImage = React.memo(({ source }) =>
   source ? (
     <Image
@@ -50,7 +46,6 @@ const BackgroundImage = React.memo(({ source }) =>
   ) : null
 );
 
-// --- Memoized Error Screen ---
 const ErrorScreen = React.memo(({ errorText, accentColor, bgImage }) => (
   <SafeAreaView style={styles.errorContainer} edges={["top", "right", "left"]}>
     <BackgroundImage source={bgImage} />
@@ -67,7 +62,6 @@ const ErrorScreen = React.memo(({ errorText, accentColor, bgImage }) => (
   </SafeAreaView>
 ));
 
-// --- Memoized Loading Screen ---
 const LoadingScreen = React.memo(({ percent, bgImage, themeType }) => (
   <SafeAreaView
     style={styles.loadingContainer}
@@ -87,18 +81,17 @@ const LoadingScreen = React.memo(({ percent, bgImage, themeType }) => (
   </SafeAreaView>
 ));
 
-// --- Main App Content ---
 function AppContent() {
   const [updateVisible, setUpdateVisible] = useState(false);
   const [updateDone, setUpdateDone] = useState(false);
+  const [isNavLoading, setIsNavLoading] = useState(false);
 
   const { theme, uiThemeType } = useThemeContext();
   const { error } = useDataLoader();
-  const onNavigationStateChange = useNavigationLoading({ delay: 700 });
 
   useUpdateChecker(setUpdateVisible, setUpdateDone);
 
-  // Navigation theme setup
+  // Navigation Theme
   const navigationTheme = useMemo(() => {
     const baseTheme = uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme;
     return {
@@ -107,27 +100,29 @@ function AppContent() {
     };
   }, [uiThemeType]);
 
-  // Preload important images
+  // Image preload
   const { images: importantImages, newsImages } = useMemo(
     () => getImportantImages(theme.bgImage),
     [theme.bgImage]
   );
-
   const { loaded, progress, localUris } = useImagePreloader(importantImages, 5);
-
   const imageMap = useMemo(
     () => buildImageMap(localUris, newsImages),
     [localUris, newsImages]
   );
-
   const localBgImage = useMemo(
     () => imageMap[theme.bgImage] || theme.bgImage,
     [imageMap, theme.bgImage]
   );
-
   const progressPercent = Math.min(Math.round(progress * 100), 100);
 
-  // Show loading screen while assets load
+  // Navigation loading handling
+  const handleStateChange = () => {
+    setIsNavLoading(true);
+    // Minimal delay so spinner doesn't flicker on fast transitions
+    setTimeout(() => setIsNavLoading(false), 600);
+  };
+
   if (!loaded) {
     return (
       <LoadingScreen
@@ -138,7 +133,6 @@ function AppContent() {
     );
   }
 
-  // Show error screen if loading data failed
   if (error) {
     return (
       <ErrorScreen
@@ -149,10 +143,9 @@ function AppContent() {
     );
   }
 
-  // Main app rendering
   return (
     <OnlineGuard>
-      <SafeAreaView style={styles.safeArea} edges={["top", "right", "left"]}>
+      <SafeAreaView style={styles.safeArea}>
         <BackgroundImage source={localBgImage} />
         <StatusBar
           translucent
@@ -161,10 +154,14 @@ function AppContent() {
         />
         <NavigationContainer
           theme={navigationTheme}
-          onStateChange={onNavigationStateChange}
+          onStateChange={handleStateChange}
         >
           <MainStackNavigator />
-          <LoadingOverlay />
+          {isNavLoading && (
+            <View style={styles.globalLoader}>
+              <ActivityIndicator size="large" color="#fff" />
+            </View>
+          )}
         </NavigationContainer>
         {updateVisible && <UpdateOverlay done={updateDone} />}
       </SafeAreaView>
@@ -172,7 +169,6 @@ function AppContent() {
   );
 }
 
-// --- Root App ---
 export default function App() {
   return (
     <AppProviders>
@@ -181,7 +177,6 @@ export default function App() {
   );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -226,5 +221,12 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: "100%",
     backgroundColor: "#22d3ee",
+  },
+  globalLoader: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+    zIndex: 1000,
   },
 });
