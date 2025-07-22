@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import {
   View,
   TouchableOpacity,
@@ -56,24 +57,43 @@ const TABS = [
   },
 ];
 
-export default function Footer({ gradientColors }) {
+// --- Footer (mit React.memo) ---
+function Footer({ gradientColors }) {
   const navigation = useNavigation();
   const route = useRoute();
   const { theme } = useThemeContext();
   const current = route.name;
-  const styles = createStyles(theme);
 
-  // Gradient aus Theme oder Prop
-  const colors = gradientColors ||
-    theme.linearGradient || [
-      theme.accentColorSecondary,
-      theme.accentColor,
-      theme.accentColorDark,
-    ];
+  // Styles und Farben memoisiert
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const colors = useMemo(
+    () =>
+      gradientColors ||
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [gradientColors, theme]
+  );
+
+  // Memoisiere Labels & Iconfarben (Sinnvoll für viele Locale-Switches)
+  const tabItems = useMemo(
+    () =>
+      TABS.map((tab) => ({
+        ...tab,
+        label: t(tab.labelKey),
+        iconColor:
+          current === tab.screen
+            ? theme.borderGlowColor || theme.textColor
+            : theme.textColor + "99",
+        isActive: current === tab.screen,
+      })),
+    [current, theme, t]
+  );
 
   return (
     <View style={styles.footer}>
-      {/* Glassmorphism: Blur + Gradient */}
       <BlurView
         intensity={Platform.OS === "ios" ? 38 : 22}
         tint={theme.mode === "dark" ? "dark" : "light"}
@@ -85,10 +105,8 @@ export default function Footer({ gradientColors }) {
         end={[1, 0]}
         style={[StyleSheet.absoluteFill, { opacity: 0.82 }]}
       />
-      {/* Tab-Buttons */}
-      {TABS.map(({ key, screen, Icon, iconProps, labelKey }) => {
-        const isActive = current === screen;
-        return (
+      {tabItems.map(
+        ({ key, screen, Icon, iconProps, label, iconColor, isActive }) => (
           <TouchableOpacity
             key={key}
             onPress={() => navigation.navigate(screen)}
@@ -102,45 +120,32 @@ export default function Footer({ gradientColors }) {
               },
             ]}
           >
-            <View style={[styles.iconWrap, isActive && styles.iconActiveWrap]}>
+            <View style={styles.iconWrap}>
               <Icon
                 {...iconProps}
                 size={27}
-                color={
-                  isActive
-                    ? theme.borderGlowColor || theme.textColor
-                    : theme.textColor + "99"
-                }
-                style={
-                  isActive && {
-                    textShadowColor: theme.glowColor,
-                    textShadowRadius: 8,
-                  }
-                }
+                color={iconColor}
+                // Kein textShadow!
               />
             </View>
             <Text
               style={[
                 styles.label,
                 isActive && styles.activeLabel,
-                isActive && {
-                  color: theme.borderGlowColor,
-                  textShadowColor: theme.glowColor,
-                  textShadowRadius: 7,
-                },
+                isActive && { color: theme.borderGlowColor },
               ]}
             >
-              {t(labelKey)}
+              {label}
             </Text>
           </TouchableOpacity>
-        );
-      })}
-      {/* Soft-Glow-Shadow oben */}
-      <View style={styles.barShadow} pointerEvents="none" />
+        )
+      )}
+      {/* Kein zusätzlicher Schatten-View mehr */}
     </View>
   );
 }
 
+// --- Styles ohne Shadows/Elevation/TextShadows ---
 function createStyles(theme) {
   return StyleSheet.create({
     footer: {
@@ -157,11 +162,7 @@ function createStyles(theme) {
       backgroundColor: "transparent",
       borderWidth: 1.1,
       borderColor: "#fff2",
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -5 },
-      shadowOpacity: 0.13,
-      shadowRadius: 22,
-      elevation: 7,
+      // Kein shadow, kein elevation!
     },
     tab: {
       flex: 1,
@@ -172,19 +173,10 @@ function createStyles(theme) {
       alignItems: "center",
       borderWidth: 1.7,
       borderColor: theme.borderGlowColor + "36",
-      backgroundColor: theme.accentColor + "1A", // Glasiger Button
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.09,
-      shadowRadius: 6,
-      elevation: 2,
+      backgroundColor: theme.accentColor + "1A",
+      // Kein shadow, kein elevation!
     },
     activeTab: {
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -3 },
-      shadowOpacity: 0.33,
-      shadowRadius: 17,
-      elevation: 9,
       borderWidth: 2.5,
       borderColor: theme.borderGlowColor,
       backgroundColor: theme.borderGlowColor + "22",
@@ -196,13 +188,6 @@ function createStyles(theme) {
       padding: 3,
       transform: [{ scale: 1.32 }],
     },
-    iconActiveWrap: {
-      borderRadius: 13,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.22,
-      shadowRadius: 14,
-      elevation: 5,
-    },
     label: {
       fontSize: 13,
       marginTop: 3,
@@ -211,31 +196,14 @@ function createStyles(theme) {
       letterSpacing: 0.2,
       opacity: 0.82,
       fontWeight: "normal",
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
+      // Kein textShadow!
     },
     activeLabel: {
       opacity: 1,
       color: theme.borderGlowColor,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 8,
-    },
-    barShadow: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 11,
-      borderTopLeftRadius: 22,
-      borderTopRightRadius: 22,
-      backgroundColor: theme.shadowColor + "17",
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: -7 },
-      shadowOpacity: 0.18,
-      shadowRadius: 24,
-      zIndex: 1,
-      elevation: 2,
     },
   });
 }
+
+// --- Exportiert als React.memo ---
+export default React.memo(Footer);

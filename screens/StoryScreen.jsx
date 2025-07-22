@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   Modal,
   FlatList,
   TouchableOpacity,
@@ -29,10 +28,9 @@ import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 import ScreenLayout from "../components/ScreenLayout";
 import { getBossImageUrl } from "../utils/boss/bossUtils";
 
+// Utilities
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
-
-// Utility: Key für Boss-Bild
 const getEventBossKey = (url, fallback) => {
   if (typeof url === "string" && url.endsWith(".png")) {
     const match = /\/([\w-]+)\.png$/i.exec(url);
@@ -40,14 +38,20 @@ const getEventBossKey = (url, fallback) => {
   }
   return fallback ? "eventboss_" + fallback.toLowerCase() : null;
 };
-
 const getBackgroundKey = (url) => {
   if (!url) return null;
   const match = /\/([\w-]+)\.png$/i.exec(url);
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-function SkillUnlockModal({ visible, skills, onClose, styles, theme }) {
+// ------ Memoized Modal ------
+const SkillUnlockModal = React.memo(function SkillUnlockModal({
+  visible,
+  skills,
+  onClose,
+  styles,
+  theme,
+}) {
   if (!visible) return null;
   return (
     <Modal transparent animationType="fade" visible>
@@ -74,14 +78,52 @@ function SkillUnlockModal({ visible, skills, onClose, styles, theme }) {
               </View>
             ))}
           </View>
-          <Pressable style={styles.okButton} onPress={onClose}>
+          <TouchableOpacity style={styles.okButton} onPress={onClose}>
             <Text style={styles.okText}>OK</Text>
-          </Pressable>
+          </TouchableOpacity>
         </LinearGradient>
       </View>
     </Modal>
   );
-}
+});
+
+// ------ Memoized ChapterCard ------
+const ChapterCard = React.memo(function ChapterCard({
+  item,
+  onPress,
+  theme,
+  styles,
+}) {
+  const bossImage = useMemo(() => getBossImageUrl(item.bossId), [item.bossId]);
+  return (
+    <TouchableOpacity
+      style={styles.chapterCardOuter}
+      onPress={() => onPress(item)}
+      activeOpacity={0.89}
+    >
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.2, 0]}
+        end={[1, 1]}
+        style={styles.chapterCard}
+      >
+        <Image
+          source={bossImage}
+          style={styles.chapterImage}
+          contentFit="contain"
+        />
+        <View style={styles.chapterOverlay}>
+          <Text style={styles.chapterTitle}>{item.label}</Text>
+          <Text style={styles.chapterDesc}>{item.description}</Text>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+});
 
 export default function StoryScreen() {
   const navigation = useNavigation();
@@ -101,7 +143,6 @@ export default function StoryScreen() {
   const [bossHp, setBossHp] = useState(100);
   const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
-
   const [hpAnim] = useState(new Animated.Value(1));
 
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -205,7 +246,7 @@ export default function StoryScreen() {
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || currentBoss?.background;
 
-  // Gemappter Boss
+  // Memoized Boss
   const mappedBoss = useMemo(() => {
     if (!currentBoss) return null;
     const bossImgKey = getEventBossKey(currentBoss.image, currentBoss.name);
@@ -214,6 +255,19 @@ export default function StoryScreen() {
       image: (bossImgKey && imageMap[bossImgKey]) || currentBoss.image,
     };
   }, [currentBoss, imageMap]);
+
+  // Memoisiertes RenderItem für FlatList
+  const renderChapterItem = useCallback(
+    ({ item }) => (
+      <ChapterCard
+        item={item}
+        onPress={setSelectedChapter}
+        theme={theme}
+        styles={styles}
+      />
+    ),
+    [theme, styles]
+  );
 
   if (!selectedChapter) {
     if (!classList.length)
@@ -237,38 +291,7 @@ export default function StoryScreen() {
           data={chapterData}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.chapterList}
-          renderItem={({ item }) => {
-            const bossImage = getBossImageUrl(item.bossId);
-
-            return (
-              <TouchableOpacity
-                style={styles.chapterCardOuter}
-                onPress={() => setSelectedChapter(item)}
-                activeOpacity={0.89}
-              >
-                <LinearGradient
-                  colors={[
-                    theme.accentColorSecondary,
-                    theme.accentColor,
-                    theme.accentColorDark,
-                  ]}
-                  start={[0.2, 0]}
-                  end={[1, 1]}
-                  style={styles.chapterCard}
-                >
-                  <Image
-                    source={bossImage}
-                    style={styles.chapterImage}
-                    contentFit="contain"
-                  />
-                  <View style={styles.chapterOverlay}>
-                    <Text style={styles.chapterTitle}>{item.label}</Text>
-                    <Text style={styles.chapterDesc}>{item.description}</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={renderChapterItem}
         />
       </ScreenLayout>
     );
@@ -316,8 +339,8 @@ export default function StoryScreen() {
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
-  const glow = theme.glowColor || "#ffd70088";
   const highlight = theme.borderGlowColor || "#ffd700cc";
+
   const windowWidth = Dimensions.get("window").width;
 
   return StyleSheet.create({
@@ -338,9 +361,9 @@ function createStyles(theme) {
       borderRadius: 22,
       overflow: "hidden",
       shadowColor: highlight,
-      shadowOpacity: 0.18,
-      shadowRadius: 21,
-      elevation: 7,
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 5,
     },
     chapterCard: {
       borderRadius: 22,
@@ -361,15 +384,13 @@ function createStyles(theme) {
       borderBottomLeftRadius: 22,
       borderBottomRightRadius: 22,
       alignItems: "center",
+      backgroundColor: "rgba(0,0,0,0.4)",
     },
     chapterTitle: {
       color: highlight,
       fontSize: 21,
       fontWeight: "bold",
       letterSpacing: 0.23,
-      textShadowColor: glow,
-      textShadowRadius: 8,
-      textShadowOffset: { width: 0, height: 2 },
     },
     chapterDesc: {
       color: text,
@@ -377,9 +398,6 @@ function createStyles(theme) {
       marginTop: 4,
       fontWeight: "500",
       textAlign: "center",
-      textShadowColor: accent + "c5",
-      textShadowRadius: 5,
-      textShadowOffset: { width: 0, height: 1 },
     },
     chapterTitleFight: {
       color: highlight,
@@ -388,9 +406,6 @@ function createStyles(theme) {
       textAlign: "center",
       letterSpacing: 0.7,
       fontWeight: "bold",
-      textShadowColor: glow,
-      textShadowRadius: 13,
-      textShadowOffset: { width: 0, height: 4 },
     },
     modalOverlay: {
       flex: 1,
@@ -403,6 +418,7 @@ function createStyles(theme) {
       padding: 29,
       width: "88%",
       alignItems: "center",
+      backgroundColor: theme.accentColor,
     },
     skillModalTitle: {
       color: highlight,
@@ -410,16 +426,15 @@ function createStyles(theme) {
       fontSize: 21,
       marginBottom: 18,
       textAlign: "center",
-      textShadowColor: glow,
-      textShadowRadius: 12,
     },
-    skillItem: { marginBottom: 16, alignItems: "center" },
+    skillItem: {
+      marginBottom: 16,
+      alignItems: "center",
+    },
     skillName: {
       fontSize: 17,
       color: highlight,
       fontWeight: "bold",
-      textShadowColor: glow,
-      textShadowRadius: 8,
     },
     skillDescription: {
       fontSize: 14,
@@ -428,7 +443,11 @@ function createStyles(theme) {
       marginTop: 3,
       marginBottom: 1,
     },
-    skillPower: { fontSize: 12, color: text, fontStyle: "italic" },
+    skillPower: {
+      fontSize: 12,
+      color: text,
+      fontStyle: "italic",
+    },
     okButton: {
       backgroundColor: highlight,
       paddingVertical: 12,
@@ -436,11 +455,13 @@ function createStyles(theme) {
       borderRadius: 13,
       alignSelf: "center",
       marginTop: 19,
-      shadowColor: glow,
-      shadowOpacity: 0.7,
-      shadowRadius: 10,
-      elevation: 8,
+      // Schatten reduziert
+      elevation: 5,
     },
-    okText: { color: accent, fontWeight: "bold", fontSize: 16 },
+    okText: {
+      color: accent,
+      fontWeight: "bold",
+      fontSize: 16,
+    },
   });
 }

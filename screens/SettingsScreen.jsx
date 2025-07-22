@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "../i18n";
@@ -6,13 +6,16 @@ import { useLanguage } from "../context/LanguageContext";
 import { useThemeContext } from "../context/ThemeContext";
 import ScreenLayout from "../components/ScreenLayout";
 
-// 🧩 Modularisierte Sektionen
+// 🧩 Modularisierte Sektionen (Tipp: direkt memoisiert importieren!)
 import PlayerNameSection from "../components/settings/PlayerNameSection";
 import LanguageSection from "../components/settings/LanguageSection";
 import UIThemeSection from "../components/settings/UIThemeSection";
 import MusicSection from "../components/settings/MusicSection";
 import ToSSection from "../components/settings/ToSSection";
 import DeleteSection from "../components/settings/DeleteSection";
+
+// Optional: direkt memoisiert importieren! (im Komponentenfile selbst: export default React.memo(...))
+// z.B. export default React.memo(PlayerNameSection);
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
@@ -21,13 +24,17 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     navigation.setOptions({ title: t("settingsTitle") });
-  }, [language]);
+  }, [language, navigation]);
 
-  const styles = createStyles(theme);
+  // Styles nur bei Theme-Wechsel neu
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Konstant, keine Inline-Funktion für ScrollView-Props
+  const scrollContentStyle = styles.scroll;
 
   return (
     <ScreenLayout style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={scrollContentStyle}>
         <PlayerNameSection />
         <LanguageSection />
         <UIThemeSection />

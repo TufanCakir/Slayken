@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -23,107 +23,8 @@ function getEventBossKey(imageUrl) {
   return match ? "eventboss_" + match[1].toLowerCase() : null;
 }
 
-export default function NewsScreen() {
-  const { theme } = useThemeContext();
-  const { imageMap } = useAssets();
-  const { addCoins } = useCoins();
-  const { addCrystals } = useCrystals();
-  const [claimedNews, setClaimedNews] = useState({});
-  const styles = createStyles(theme);
-
-  // Reward einlösen
-  const handleLongPress = async (item) => {
-    const key = `claimed_news_${item.id}`;
-    if (await AsyncStorage.getItem(key)) return;
-    addCoins(100);
-    addCrystals(10);
-    await AsyncStorage.setItem(key, "true");
-    setClaimedNews((prev) => ({ ...prev, [item.id]: true }));
-  };
-
-  useEffect(() => {
-    (async () => {
-      const claims = {};
-      for (let item of newsData) {
-        if (await AsyncStorage.getItem(`claimed_news_${item.id}`)) {
-          claims[item.id] = true;
-        }
-      }
-      setClaimedNews(claims);
-    })();
-  }, []);
-
-  const renderItem = ({ item }) => {
-    const claimed = claimedNews[item.id];
-    const bossKey = getEventBossKey(item.image);
-    const imageSource =
-      bossKey && imageMap[bossKey] ? imageMap[bossKey] : item.image;
-
-    // Farben aus Theme (oder eigene)
-    const gradientColors = theme.linearGradient || [
-      theme.accentColorSecondary,
-      theme.accentColor,
-      theme.accentColorDark,
-    ];
-
-    return (
-      <TouchableOpacity
-        onLongPress={() => handleLongPress(item)}
-        activeOpacity={0.91}
-        style={claimed ? styles.itemClaimedWrap : undefined}
-        disabled={claimed}
-      >
-        <View style={[styles.item, claimed && styles.itemClaimed]}>
-          {/* LinearGradient als Hintergrund */}
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-
-          <Image
-            source={imageSource}
-            style={styles.image}
-            contentFit="contain"
-            transition={300}
-          />
-          <Text style={styles.itemText}>{item.title}</Text>
-          {claimed ? (
-            <Text style={styles.claimed}>✅ Belohnung erhalten!</Text>
-          ) : (
-            <View style={styles.tooltip}>
-              <RewardChip icon="coin1" text="+100" theme={theme} />
-              <RewardChip icon="crystal1" text="+10" theme={theme} />
-              <Text style={styles.longpressHint}>
-                Long-Press für Belohnung!
-              </Text>
-            </View>
-          )}
-          {item.description && (
-            <Text style={styles.description}>{item.description}</Text>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <ScreenLayout style={styles.container}>
-      <Text style={styles.header}>{t("newsTitle")}</Text>
-      <FlatList
-        data={newsData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
-    </ScreenLayout>
-  );
-}
-
-// Stylischer Reward-Chip für Coin/Crystal
-function RewardChip({ icon, text, theme }) {
+// --------- RewardChip mit React.memo ----------
+const RewardChip = React.memo(function RewardChip({ icon, text, theme }) {
   return (
     <View
       style={{
@@ -157,9 +58,136 @@ function RewardChip({ icon, text, theme }) {
       </Text>
     </View>
   );
+});
+
+// --------- NewsItem als eigenes React.memo ----------
+const NewsItem = React.memo(function NewsItem({
+  item,
+  claimed,
+  theme,
+  imageMap,
+  onClaim,
+}) {
+  const bossKey = getEventBossKey(item.image);
+  const imageSource =
+    bossKey && imageMap[bossKey] ? imageMap[bossKey] : item.image;
+
+  // Farben aus Theme (oder eigene)
+  const gradientColors = theme.linearGradient || [
+    theme.accentColorSecondary,
+    theme.accentColor,
+    theme.accentColorDark,
+  ];
+
+  return (
+    <TouchableOpacity
+      onLongPress={() => onClaim(item)}
+      activeOpacity={0.91}
+      style={claimed ? styles(theme).itemClaimedWrap : undefined}
+      disabled={claimed}
+    >
+      <View style={[styles(theme).item, claimed && styles(theme).itemClaimed]}>
+        {/* LinearGradient als Hintergrund */}
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <Image
+          source={imageSource}
+          style={styles(theme).image}
+          contentFit="contain"
+          transition={300}
+        />
+        <Text style={styles(theme).itemText}>{item.title}</Text>
+        {claimed ? (
+          <Text style={styles(theme).claimed}>✅ Belohnung erhalten!</Text>
+        ) : (
+          <View style={styles(theme).tooltip}>
+            <RewardChip icon="coin1" text="+100" theme={theme} />
+            <RewardChip icon="crystal1" text="+10" theme={theme} />
+            <Text style={styles(theme).longpressHint}>
+              Long-Press für Belohnung!
+            </Text>
+          </View>
+        )}
+        {item.description && (
+          <Text style={styles(theme).description}>{item.description}</Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+export default function NewsScreen() {
+  const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
+  const { addCoins } = useCoins();
+  const { addCrystals } = useCrystals();
+  const [claimedNews, setClaimedNews] = useState({});
+
+  // Styles als useMemo – optional für minimale Effizienz
+  const memoStyles = useMemo(() => styles(theme), [theme]);
+
+  // Belohnung einlösen
+  const handleLongPress = useCallback(
+    async (item) => {
+      const key = `claimed_news_${item.id}`;
+      if (await AsyncStorage.getItem(key)) return;
+      addCoins(100);
+      addCrystals(10);
+      await AsyncStorage.setItem(key, "true");
+      setClaimedNews((prev) => ({ ...prev, [item.id]: true }));
+    },
+    [addCoins, addCrystals]
+  );
+
+  // Claims aus Storage laden (nur 1x)
+  useEffect(() => {
+    (async () => {
+      const claims = {};
+      for (let item of newsData) {
+        if (await AsyncStorage.getItem(`claimed_news_${item.id}`)) {
+          claims[item.id] = true;
+        }
+      }
+      setClaimedNews(claims);
+    })();
+  }, []);
+
+  // Memoisiertes Render-Item für FlatList
+  const renderItem = useCallback(
+    ({ item }) => (
+      <NewsItem
+        item={item}
+        claimed={claimedNews[item.id]}
+        theme={theme}
+        imageMap={imageMap}
+        onClaim={handleLongPress}
+      />
+    ),
+    [claimedNews, theme, imageMap, handleLongPress]
+  );
+
+  return (
+    <ScreenLayout style={memoStyles.container}>
+      <Text style={memoStyles.header}>{t("newsTitle")}</Text>
+      <FlatList
+        data={newsData}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={memoStyles.listContainer}
+        showsVerticalScrollIndicator={false}
+        extraData={claimedNews} // Damit FlatList weiß, wann ein Item sich ändert!
+      />
+    </ScreenLayout>
+  );
 }
 
-function createStyles(theme) {
+// ---------- Styles als Factory-Funktion (damit Theme 100% sauber ist) ----------
+function styles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },
     header: {
@@ -172,11 +200,6 @@ function createStyles(theme) {
       backgroundColor: theme.accentColor,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.19,
-      shadowRadius: 14,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: 4,
       fontWeight: "bold",
       letterSpacing: 0.3,
     },
@@ -191,11 +214,6 @@ function createStyles(theme) {
       padding: 11,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.11,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
       alignItems: "center",
     },
     itemClaimed: { opacity: 0.42 },
@@ -206,9 +224,6 @@ function createStyles(theme) {
       letterSpacing: 0.14,
       textAlign: "center",
       fontWeight: "bold",
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 3,
     },
     image: {
       width: "100%",

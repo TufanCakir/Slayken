@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -14,8 +15,85 @@ import { getItemImageUrl } from "../utils/item/itemUtils";
 import { LinearGradient } from "expo-linear-gradient";
 import skinData from "../data/skinData.json";
 
-// Responsive max width for reward areas
 const MAX_CONTENT_WIDTH = 410;
+
+// --- Memoisierte RewardBox ---
+const RewardBox = React.memo(function RewardBox({
+  label,
+  image,
+  text,
+  theme,
+  type,
+  gradientColors,
+}) {
+  const styles = useMemo(() => rewardBoxStyles(theme), [theme]);
+  const isSkin = type === "skin";
+  const boxStyle = isSkin ? styles.skinBox : styles.rewardBox;
+  const imgStyle = isSkin ? styles.skinImage : styles.avatar;
+  const labelStyle = isSkin ? styles.skinTitle : styles.rewardTitle;
+  const textStyle = isSkin ? styles.skinLabel : styles.rewardLabel;
+
+  return (
+    <LinearGradient
+      colors={gradientColors}
+      start={{ x: 0.2, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={boxStyle}
+    >
+      <Text style={labelStyle}>{label}</Text>
+      {image && (
+        <ExpoImage source={image} style={imgStyle} contentFit="contain" />
+      )}
+      <Text style={textStyle}>{text}</Text>
+    </LinearGradient>
+  );
+});
+
+// --- Memoisierte RewardRow ---
+const RewardRow = React.memo(function RewardRow({ icon, label, theme }) {
+  const style = useMemo(
+    () => ({
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: 5,
+      gap: 8,
+    }),
+    []
+  );
+  const iconStyle = useMemo(
+    () => ({
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: theme.accentColor,
+      borderWidth: 1.5,
+      borderColor: theme.borderGlowColor,
+    }),
+    [theme]
+  );
+  const textStyle = useMemo(
+    () => ({
+      fontSize: 18,
+      color: theme.textColor,
+      fontWeight: "bold",
+      textShadowColor: theme.glowColor,
+      textShadowRadius: 7,
+      textShadowOffset: { width: 0, height: 2 },
+    }),
+    [theme]
+  );
+
+  return (
+    <View style={style}>
+      <ExpoImage
+        source={{ uri: icon }}
+        style={iconStyle}
+        contentFit="contain"
+      />
+      <Text style={textStyle}>{label}</Text>
+    </View>
+  );
+});
 
 export default function VictoryScreen({ route }) {
   const navigation = useNavigation();
@@ -31,17 +109,28 @@ export default function VictoryScreen({ route }) {
     skinId,
   } = route.params || {};
 
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
-  // Helpers
-  const getCharacterImage = (char) => char && imageMap[`class_${char.id}`];
-  const unlockedSkin = skinId && skinData.find((skin) => skin.id === skinId);
+  // Helper: Memoisiertes Bild des Charakters
+  const getCharacterImage = React.useCallback(
+    (char) => char && imageMap[`class_${char.id}`],
+    [imageMap]
+  );
 
-  const styles = createStyles(theme);
+  const unlockedSkin = useMemo(
+    () => skinId && skinData.find((skin) => skin.id === skinId),
+    [skinId]
+  );
+
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>
@@ -67,7 +156,7 @@ export default function VictoryScreen({ route }) {
       </LinearGradient>
 
       <View style={styles.contentArea}>
-        {/* Neue Charaktere und Skins prominent */}
+        {/* Neue Charaktere und Skins */}
         {newCharacter && (
           <RewardBox
             label="🎉 Neuer Held freigeschaltet!"
@@ -146,70 +235,7 @@ export default function VictoryScreen({ route }) {
   );
 }
 
-// ---------- RewardBox/RewardRow ----------
-function RewardBox({ label, image, text, theme, type, gradientColors }) {
-  const styles = rewardBoxStyles(theme);
-  const isSkin = type === "skin";
-  const boxStyle = isSkin ? styles.skinBox : styles.rewardBox;
-  const imgStyle = isSkin ? styles.skinImage : styles.avatar;
-  const labelStyle = isSkin ? styles.skinTitle : styles.rewardTitle;
-  const textStyle = isSkin ? styles.skinLabel : styles.rewardLabel;
-
-  return (
-    <LinearGradient
-      colors={gradientColors}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={boxStyle}
-    >
-      <Text style={labelStyle}>{label}</Text>
-      {image && (
-        <ExpoImage source={image} style={imgStyle} contentFit="contain" />
-      )}
-      <Text style={textStyle}>{text}</Text>
-    </LinearGradient>
-  );
-}
-
-function RewardRow({ icon, label, theme }) {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginVertical: 5,
-        gap: 8,
-      }}
-    >
-      <ExpoImage
-        source={{ uri: icon }}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          backgroundColor: theme.accentColor,
-          borderWidth: 1.5,
-          borderColor: theme.borderGlowColor,
-        }}
-        contentFit="contain"
-      />
-      <Text
-        style={{
-          fontSize: 18,
-          color: theme.textColor,
-          fontWeight: "bold",
-          textShadowColor: theme.glowColor,
-          textShadowRadius: 7,
-          textShadowOffset: { width: 0, height: 2 },
-        }}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-// ---------- Styles ----------
+// ---------- RewardBox/RewardRow Styles ----------
 function rewardBoxStyles(theme) {
   return StyleSheet.create({
     rewardBox: {

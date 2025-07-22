@@ -32,6 +32,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 
+// --- Helper-Funktionen ---
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
@@ -48,8 +49,13 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-// DRY: Generisches Modal mit beliebigen Kindern
-function RewardModal({ visible, onClose, title, children }) {
+// --- Modal als Memo-Komponente ---
+const RewardModal = React.memo(function RewardModal({
+  visible,
+  onClose,
+  title,
+  children,
+}) {
   if (!visible) return null;
   return (
     <Modal transparent animationType="fade" visible={!!visible}>
@@ -64,9 +70,9 @@ function RewardModal({ visible, onClose, title, children }) {
       </View>
     </Modal>
   );
-}
+});
 
-export default function DimensionScreen() {
+const DimensionScreen = React.memo(function DimensionScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const navigation = useNavigation();
@@ -81,7 +87,7 @@ export default function DimensionScreen() {
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHp, setBossHp] = useState(100);
   const [bossMaxHp, setBossMaxHp] = useState(100);
-  const [reward, setReward] = useState(null); // { type, drop?, skills? }
+  const [reward, setReward] = useState(null);
   const [activePortalId, setActivePortalId] = useState(null);
   const portalFlyAnim = useSharedValue(1);
 
@@ -91,18 +97,7 @@ export default function DimensionScreen() {
     theme.accentColorDark,
   ];
 
-  const onBack = () => navigation.goBack();
-
-  const handlePortalPress = (portal) => {
-    setActivePortalId(portal.id);
-    portalFlyAnim.value = withTiming(16, { duration: 680 });
-    setTimeout(() => {
-      handleSelectPortal(portal);
-      portalFlyAnim.value = 1;
-      setActivePortalId(null);
-    }, 700);
-  };
-
+  const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
@@ -113,6 +108,21 @@ export default function DimensionScreen() {
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
+  // --- Portal Auswahl ---
+  const handlePortalPress = useCallback(
+    (portal) => {
+      setActivePortalId(portal.id);
+      portalFlyAnim.value = withTiming(16, { duration: 680 });
+      setTimeout(() => {
+        handleSelectPortal(portal);
+        portalFlyAnim.value = 1;
+        setActivePortalId(null);
+      }, 700);
+    },
+    [portalFlyAnim]
+  );
+
+  // --- Boss-Auswahl aus Portal ---
   const chooseBossFromPortal = useCallback((portal) => {
     if (!portal || !portal.bossPool?.length) return null;
     const bossKey =
@@ -120,33 +130,17 @@ export default function DimensionScreen() {
     return bossData.find((b) => b.id === bossKey);
   }, []);
 
-  const scaledBoss = useMemo(() => {
-    if (!currentBoss || !baseCharacter) return null;
-    return scaleBossStats(currentBoss, baseCharacter.level || 1);
-  }, [currentBoss, baseCharacter]);
-
-  const portalAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: portalFlyAnim.value }],
-    opacity: 1 - (portalFlyAnim.value - 1) / 15,
-    zIndex: 99,
-    position: "absolute",
-    left: -20,
-    top: -20,
-    width: 140,
-    height: 140,
-    alignItems: "center",
-    justifyContent: "center",
-  }));
-
-  // Neues Portal wählen → Boss starten
-  const handleSelectPortal = (portal) => {
-    setSelectedPortal(portal);
-    const boss = chooseBossFromPortal(portal);
-    setCurrentBoss(boss);
-    setBossHp(boss?.hp || 100);
-    setBossMaxHp(boss?.hp || 100);
-    setReward(null);
-  };
+  const handleSelectPortal = useCallback(
+    (portal) => {
+      setSelectedPortal(portal);
+      const boss = chooseBossFromPortal(portal);
+      setCurrentBoss(boss);
+      setBossHp(boss?.hp || 100);
+      setBossMaxHp(boss?.hp || 100);
+      setReward(null);
+    },
+    [chooseBossFromPortal]
+  );
 
   const handleBackToPortals = useCallback(() => {
     setSelectedPortal(null);
@@ -156,6 +150,13 @@ export default function DimensionScreen() {
     setReward(null);
   }, []);
 
+  // --- Boss Stats Skalieren ---
+  const scaledBoss = useMemo(() => {
+    if (!currentBoss || !baseCharacter) return null;
+    return scaleBossStats(currentBoss, baseCharacter.level || 1);
+  }, [currentBoss, baseCharacter]);
+
+  // --- Kampf-Logik ---
   const handleFight = useCallback(
     (skill = {}) => {
       if (!baseCharacter || !scaledBoss) return;
@@ -179,7 +180,7 @@ export default function DimensionScreen() {
             const leveled = gainExp(baseCharacter, 120);
             updateCharacter(leveled);
 
-            // Neue Skills
+            // Neue Skills?
             const oldNames = baseCharacter.skills?.map((s) => s.name) || [];
             const newSkills = leveled.skills?.filter(
               (s) => !oldNames.includes(s.name)
@@ -222,10 +223,24 @@ export default function DimensionScreen() {
     ]
   );
 
+  // --- Animation Style für aktives Portal ---
+  const portalAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: portalFlyAnim.value }],
+    opacity: 1 - (portalFlyAnim.value - 1) / 15,
+    zIndex: 99,
+    position: "absolute",
+    left: -20,
+    top: -20,
+    width: 140,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
+  }));
+
+  // --- Boss/MappedBoss + BG ---
   const bossBgKey = getBackgroundKey(scaledBoss?.background);
   const bossBgSrc =
     (bossBgKey && imageMap[bossBgKey]) || scaledBoss?.background;
-
   const mappedBoss = useMemo(
     () =>
       scaledBoss
@@ -239,9 +254,57 @@ export default function DimensionScreen() {
     [scaledBoss, imageMap]
   );
 
+  // --- Styles ---
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // PORTAL-AUSWAHL
+  // --- Portal-Liste render ---
+  const renderPortalItem = useCallback(
+    ({ item }) => (
+      <Pressable
+        onPress={() => handlePortalPress(item)}
+        style={styles.portalCard}
+        disabled={!!activePortalId}
+      >
+        {activePortalId === item.id ? (
+          <Animated.View style={portalAnimStyle}>
+            <AnimatedPortalSvg
+              size={100}
+              colorA={item.colorA}
+              colorB={item.colorB}
+              coreColor={item.coreColor}
+              dual={!!item.dual}
+            />
+          </Animated.View>
+        ) : (
+          <View style={{ marginRight: 16 }}>
+            <AnimatedPortalSvg
+              size={100}
+              colorA={item.colorA}
+              colorB={item.colorB}
+              coreColor={item.coreColor}
+              dual={!!item.dual}
+            />
+          </View>
+        )}
+
+        <LinearGradient
+          colors={item.gradient || gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.portalTextBg}
+        >
+          <Text style={styles.portalName}>{item.name}</Text>
+          <Text style={styles.portalDescription}>{item.description}</Text>
+          <Text style={styles.portalDiff}>
+            Schwierigkeit: {item.difficulty}
+          </Text>
+        </LinearGradient>
+      </Pressable>
+    ),
+    [styles, activePortalId, handlePortalPress, portalAnimStyle, gradientColors]
+  );
+
+  // --- Main Render ---
   if (!selectedPortal) {
     return (
       <View style={styles.container}>
@@ -250,48 +313,7 @@ export default function DimensionScreen() {
           data={dimensions}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 38 }}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handlePortalPress(item)}
-              style={styles.portalCard}
-              disabled={!!activePortalId}
-            >
-              {activePortalId === item.id ? (
-                <Animated.View style={portalAnimStyle}>
-                  <AnimatedPortalSvg
-                    size={100}
-                    colorA={item.colorA}
-                    colorB={item.colorB}
-                    coreColor={item.coreColor}
-                    dual={!!item.dual}
-                  />
-                </Animated.View>
-              ) : (
-                <View style={{ marginRight: 16 }}>
-                  <AnimatedPortalSvg
-                    size={100}
-                    colorA={item.colorA}
-                    colorB={item.colorB}
-                    coreColor={item.coreColor}
-                    dual={!!item.dual}
-                  />
-                </View>
-              )}
-
-              <LinearGradient
-                colors={item.gradient || gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.portalTextBg}
-              >
-                <Text style={styles.portalName}>{item.name}</Text>
-                <Text style={styles.portalDescription}>{item.description}</Text>
-                <Text style={styles.portalDiff}>
-                  Schwierigkeit: {item.difficulty}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-          )}
+          renderItem={renderPortalItem}
         />
         <View style={styles.headerRow}>
           <Pressable style={styles.backButton} onPress={onBack} hitSlop={18}>
@@ -309,7 +331,7 @@ export default function DimensionScreen() {
     );
   }
 
-  // BOSS-KAMPF + RewardModal
+  // --- Bosskampf + Reward ---
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -322,7 +344,6 @@ export default function DimensionScreen() {
           />
         </View>
       )}
-
       {mappedBoss && (
         <BattleScene
           boss={mappedBoss}
@@ -335,7 +356,7 @@ export default function DimensionScreen() {
           onBack={handleBackToPortals}
         />
       )}
-
+      {/* Drop-Reward */}
       <RewardModal
         visible={reward?.type === "drop"}
         title="🎉 Du hast gefunden:"
@@ -355,7 +376,7 @@ export default function DimensionScreen() {
           {reward?.drop?.description}
         </Text>
       </RewardModal>
-
+      {/* Neue Skills */}
       <RewardModal
         visible={reward?.type === "skills"}
         title="🎉 Neue Skills freigeschaltet!"
@@ -374,8 +395,11 @@ export default function DimensionScreen() {
       </RewardModal>
     </View>
   );
-}
+});
 
+export default DimensionScreen;
+
+// --- Styles ---
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1, padding: 22, backgroundColor: theme.bgColor },
@@ -394,8 +418,6 @@ function createStyles(theme) {
       padding: 16,
       marginVertical: 18,
       backgroundColor: "transparent",
-      elevation: 0,
-      shadowColor: "transparent",
     },
     portalName: { fontSize: 20, fontWeight: "700", color: "#fff" },
     portalDescription: { color: "#fff", fontSize: 13, marginTop: 2 },
@@ -405,11 +427,6 @@ function createStyles(theme) {
       padding: 10,
       marginLeft: 8,
       minWidth: 120,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.22,
-      shadowRadius: 4,
-      elevation: 4,
     },
     headerRow: {
       flexDirection: "row",
@@ -432,7 +449,7 @@ function createStyles(theme) {
   });
 }
 
-// DRY-Modal-Styles zentral
+// --- Modal Styles ---
 const stylesModal = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -451,11 +468,6 @@ const stylesModal = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
     borderColor: "#38bdf8",
-    shadowColor: "#38bdf8",
-    shadowOpacity: 0.14,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 13,
-    elevation: 3,
   },
   title: {
     fontSize: 20,

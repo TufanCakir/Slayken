@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,43 @@ import { useThemeContext } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
+// Memoisiertes Progress-Dot
+const ProgressDot = React.memo(function ProgressDot({ active, style }) {
+  return <View style={style(active)} />;
+});
+
+// Memoisierter Button
+const TutorialButton = React.memo(function TutorialButton({
+  onPress,
+  loading,
+  isLast,
+  theme,
+  styles,
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.button, loading && styles.buttonDisabled]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={loading}
+    >
+      <LinearGradient
+        colors={[
+          theme.borderGlowColor || theme.textColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.buttonGradient}
+      >
+        <Text style={styles.buttonText}>
+          {isLast ? "Los geht’s" : "Weiter"}
+        </Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+});
+
 export default function TutorialStartScreen() {
   const { theme } = useThemeContext();
   const navigation = useNavigation();
@@ -29,7 +66,9 @@ export default function TutorialStartScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startGame = async () => {
+  const styles = useMemo(() => createStyles(theme, width), [theme]);
+
+  const startGame = useCallback(async () => {
     setLoading(true);
     try {
       await AsyncStorage.setItem("tutorialPlayed", "true");
@@ -38,32 +77,33 @@ export default function TutorialStartScreen() {
       setLoading(false);
       console.error("Fehler beim Starten des Spiels:", error);
     }
-  };
+  }, [navigation]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (loading) return;
     if (step === tutorialData.length - 1) {
       startGame();
     } else {
       setStep((prev) => prev + 1);
     }
-  };
-
-  const styles = createStyles(theme, width);
+  }, [loading, step, startGame]);
 
   const currentStep = tutorialData[step];
   if (!currentStep) return null;
 
   const isLast = step === tutorialData.length - 1;
 
+  // Memoisierte Dot-Styles für ProgressDot
+  const dotStyle = useCallback(
+    (active) => [styles.progressDot, active && styles.progressDotActive],
+    [styles]
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.progressContainer}>
         {tutorialData.map((_, i) => (
-          <View
-            key={i}
-            style={[styles.progressDot, i <= step && styles.progressDotActive]}
-          />
+          <ProgressDot key={i} active={i <= step} style={dotStyle} />
         ))}
       </View>
       <LinearGradient
@@ -79,26 +119,13 @@ export default function TutorialStartScreen() {
         style={styles.overlay}
       >
         <Text style={styles.text}>{currentStep.text}</Text>
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <TutorialButton
           onPress={handleNext}
-          activeOpacity={0.85}
-          disabled={loading}
-        >
-          <LinearGradient
-            colors={[
-              theme.borderGlowColor || theme.textColor,
-              theme.accentColorDark,
-            ]}
-            start={[0.1, 0]}
-            end={[1, 1]}
-            style={styles.buttonGradient}
-          >
-            <Text style={styles.buttonText}>
-              {isLast ? "Los geht’s" : "Weiter"}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          loading={loading}
+          isLast={isLast}
+          theme={theme}
+          styles={styles}
+        />
       </LinearGradient>
     </SafeAreaView>
   );

@@ -1,33 +1,84 @@
+import React, { Suspense, memo } from "react";
 import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import GlassSpinner from "../components/GlassSpinner";
 
-// Alle Screens zentral importiert
-import StartScreen from "../screens/StartScreen";
-import HomeScreen from "../screens/HomeScreen";
-import StoryScreen from "../screens/StoryScreen";
-import ShowdownScreen from "../screens/ShowdownScreen";
-import EndlessModeScreen from "../screens/EndlessModeScreen";
-import EventScreen from "../screens/EventScreen";
-import NewsScreen from "../screens/NewsScreen";
-import SettingsScreen from "../screens/SettingsScreen";
-import GiftScreen from "../screens/GiftScreen";
-import MissionScreen from "../screens/MissionScreen";
-import ShopScreen from "../screens/ShopScreen";
-import ExchangeScreen from "../screens/ExchangeScreen";
-import CreateCharacterScreen from "../screens/CreateCharacterScreen";
-import CharacterSelectScreen from "../screens/CharacterSelectScreen";
-import TutorialStartScreen from "../screens/TutorialStartScreen";
-import VictoryScreen from "../screens/VictoryScreen";
-import ToSScreen from "../screens/ToSScreen";
-import LoginScreen from "../screens/LoginScreen";
-import PreBattleInfoScreen from "../screens/PreBattleInfoScreen";
-import TeaserScreen from "../screens/TeaserScreen";
-import InventoryScreen from "../screens/InventoryScreen";
-import CharacterOverviewScreen from "../screens/CharacterOverviewScreen";
-import ValuablesScreen from "../screens/ValuablesScreen";
-import DimensionScreen from "../screens/DimensionScreen";
+// Lazy-loaded Screens
+const screens = {
+  StartScreen: React.lazy(() => import("../screens/StartScreen")),
+  HomeScreen: React.lazy(() => import("../screens/HomeScreen")),
+  StoryScreen: React.lazy(() => import("../screens/StoryScreen")),
+  ShowdownScreen: React.lazy(() => import("../screens/ShowdownScreen")),
+  EndlessModeScreen: React.lazy(() => import("../screens/EndlessModeScreen")),
+  EventScreen: React.lazy(() => import("../screens/EventScreen")),
+  NewsScreen: React.lazy(() => import("../screens/NewsScreen")),
+  SettingsScreen: React.lazy(() => import("../screens/SettingsScreen")),
+  GiftScreen: React.lazy(() => import("../screens/GiftScreen")),
+  MissionScreen: React.lazy(() => import("../screens/MissionScreen")),
+  ShopScreen: React.lazy(() => import("../screens/ShopScreen")),
+  ExchangeScreen: React.lazy(() => import("../screens/ExchangeScreen")),
+  CreateCharacterScreen: React.lazy(() =>
+    import("../screens/CreateCharacterScreen")
+  ),
+  CharacterSelectScreen: React.lazy(() =>
+    import("../screens/CharacterSelectScreen")
+  ),
+  TutorialStartScreen: React.lazy(() =>
+    import("../screens/TutorialStartScreen")
+  ),
+  VictoryScreen: React.lazy(() => import("../screens/VictoryScreen")),
+  ToSScreen: React.lazy(() => import("../screens/ToSScreen")),
+  LoginScreen: React.lazy(() => import("../screens/LoginScreen")),
+  PreBattleInfoScreen: React.lazy(() =>
+    import("../screens/PreBattleInfoScreen")
+  ),
+  TeaserScreen: React.lazy(() => import("../screens/TeaserScreen")),
+  InventoryScreen: React.lazy(() => import("../screens/InventoryScreen")),
+  CharacterOverviewScreen: React.lazy(() =>
+    import("../screens/CharacterOverviewScreen")
+  ),
+  ValuablesScreen: React.lazy(() => import("../screens/ValuablesScreen")),
+  DimensionScreen: React.lazy(() => import("../screens/DimensionScreen")),
+};
+
+// Suspense HOC with memo for performance and stable props
+const withSuspense = (Component) =>
+  memo((props) => (
+    <Suspense fallback={<GlassSpinner size={48} />}>
+      <Component {...props} />
+    </Suspense>
+  ));
 
 const Stack = createNativeStackNavigator();
+
+// Screens that should be presented with default card style
+const defaultScreenNames = [
+  "StartScreen",
+  "HomeScreen",
+  "StoryScreen",
+  "ShowdownScreen",
+  "EndlessModeScreen",
+  "EventScreen",
+  "NewsScreen",
+  "SettingsScreen",
+  "GiftScreen",
+  "MissionScreen",
+  "ShopScreen",
+  "ExchangeScreen",
+  "CreateCharacterScreen",
+  "CharacterSelectScreen",
+  "ToSScreen",
+  "LoginScreen",
+  "PreBattleInfoScreen",
+  "TeaserScreen",
+  "InventoryScreen",
+  "CharacterOverviewScreen",
+  "ValuablesScreen",
+  "DimensionScreen",
+];
+
+// Screens that should be modals with transparent background
+const transparentModalScreenNames = ["TutorialStartScreen", "VictoryScreen"];
 
 export default function MainStackNavigator() {
   const defaultOptions = {
@@ -35,9 +86,13 @@ export default function MainStackNavigator() {
     gestureEnabled: true,
     animation: Platform.OS === "ios" ? "default" : "slide_from_right",
     presentation: "card",
-    contentStyle: {
-      backgroundColor: "transparent",
-    },
+  };
+
+  const transparentModalOptions = {
+    presentation: "transparentModal",
+    animation: "fade",
+    headerShown: false,
+    contentStyle: { backgroundColor: "transparent" },
   };
 
   return (
@@ -45,52 +100,22 @@ export default function MainStackNavigator() {
       initialRouteName="StartScreen"
       screenOptions={defaultOptions}
     >
-      <Stack.Screen name="StartScreen" component={StartScreen} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="StoryScreen" component={StoryScreen} />
-      <Stack.Screen name="ShowdownScreen" component={ShowdownScreen} />
-      <Stack.Screen name="EventScreen" component={EventScreen} />
-      <Stack.Screen name="EndlessModeScreen" component={EndlessModeScreen} />
-      <Stack.Screen name="NewsScreen" component={NewsScreen} />
-      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
-      <Stack.Screen name="GiftScreen" component={GiftScreen} />
-      <Stack.Screen name="MissionScreen" component={MissionScreen} />
-      <Stack.Screen name="ShopScreen" component={ShopScreen} />
-      <Stack.Screen name="ToSScreen" component={ToSScreen} />
-      <Stack.Screen name="ExchangeScreen" component={ExchangeScreen} />
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="TeaserScreen" component={TeaserScreen} />
-      <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
-      <Stack.Screen name="ValuablesScreen" component={ValuablesScreen} />
-      <Stack.Screen name="DimensionScreen" component={DimensionScreen} />
-      <Stack.Screen
-        name="PreBattleInfoScreen"
-        component={PreBattleInfoScreen}
-      />
-      <Stack.Screen
-        name="CreateCharacterScreen"
-        component={CreateCharacterScreen}
-      />
-      <Stack.Screen
-        name="CharacterSelectScreen"
-        component={CharacterSelectScreen}
-      />
-      <Stack.Screen
-        name="CharacterOverviewScreen"
-        component={CharacterOverviewScreen}
-      />
-      <Stack.Group
-        screenOptions={{
-          presentation: "transparentModal",
-          animation: "fade",
-          headerShown: false,
-        }}
-      >
+      {defaultScreenNames.map((name) => (
         <Stack.Screen
-          name="TutorialStartScreen"
-          component={TutorialStartScreen}
+          key={name}
+          name={name}
+          component={withSuspense(screens[name])}
         />
-        <Stack.Screen name="VictoryScreen" component={VictoryScreen} />
+      ))}
+
+      <Stack.Group screenOptions={transparentModalOptions}>
+        {transparentModalScreenNames.map((name) => (
+          <Stack.Screen
+            key={name}
+            name={name}
+            component={withSuspense(screens[name])}
+          />
+        ))}
       </Stack.Group>
     </Stack.Navigator>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -20,31 +20,59 @@ import { getItemImageUrl } from "../utils/item/itemUtils";
 const EXP_AMOUNT_PER_POTION = 1000;
 const MAX_MODAL_WIDTH = 430;
 
+// Memo-Komponente für einzelne Charakter-Row im Modal
+const CharSelectRow = React.memo(function CharSelectRow({
+  item,
+  onSelect,
+  styles,
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.charSelectBtn}
+      onPress={() => onSelect(item.id)}
+      activeOpacity={0.81}
+    >
+      <Image
+        source={{ uri: item.classUrl }}
+        style={styles.charAvatar}
+        contentFit="contain"
+      />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.charName}>{item.name}</Text>
+        <Text style={styles.charLevel}>
+          {t("valuablesNameLabels.levelShort") || "Lv."} {item.level}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
 export default function ValuablesScreen() {
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { potions, usePotion } = useInventory();
   const { classList, addXpToCharacter } = useClass();
-  const [selectCharModalOpen, setSelectCharModalOpen] = React.useState(false);
+  const [selectCharModalOpen, setSelectCharModalOpen] = useState(false);
 
-  // Potion-Modal öffnen
-  const handleUsePotion = () => setSelectCharModalOpen(true);
+  // Modal öffnen/schließen
+  const handleUsePotion = useCallback(() => setSelectCharModalOpen(true), []);
+  const handleCloseModal = useCallback(() => setSelectCharModalOpen(false), []);
 
   // Potion an Charakter geben
-  const handleGivePotionToChar = (charId) => {
-    if (potions > 0) {
-      usePotion();
-      addXpToCharacter(charId, EXP_AMOUNT_PER_POTION);
-    }
-    setSelectCharModalOpen(false);
-  };
-
-  const bgImage =
-    typeof theme.bgImage === "string" ? { uri: theme.bgImage } : theme.bgImage;
+  const handleGivePotionToChar = useCallback(
+    (charId) => {
+      if (potions > 0) {
+        usePotion();
+        addXpToCharacter(charId, EXP_AMOUNT_PER_POTION);
+      }
+      setSelectCharModalOpen(false);
+    },
+    [potions, usePotion, addXpToCharacter]
+  );
 
   // Dynamischer Potions-String (Singular/Plural)
-  function getPotionCountText(count) {
+  const getPotionCountText = useCallback((count) => {
     const potionWord =
       count === 1
         ? t("valuablesNameLabels.expPotion") || "EXP-Potion"
@@ -52,13 +80,31 @@ export default function ValuablesScreen() {
     return `${
       t("valuablesNameLabels.youOwn") || "You own:"
     } ${count} ${potionWord}`;
-  }
+  }, []);
 
-  const potionGradient = [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  const bgImage =
+    typeof theme.bgImage === "string" ? { uri: theme.bgImage } : theme.bgImage;
+
+  const potionGradient = useMemo(
+    () => [
+      theme.accentColorSecondary,
+      theme.accentColor,
+      theme.accentColorDark,
+    ],
+    [theme]
+  );
+
+  // Memoisiertes FlatList-Item
+  const renderCharItem = useCallback(
+    ({ item }) => (
+      <CharSelectRow
+        item={item}
+        onSelect={handleGivePotionToChar}
+        styles={styles}
+      />
+    ),
+    [handleGivePotionToChar, styles]
+  );
 
   return (
     <ScreenLayout style={styles.flex}>
@@ -124,7 +170,7 @@ export default function ValuablesScreen() {
         visible={selectCharModalOpen}
         animationType="slide"
         transparent
-        onRequestClose={() => setSelectCharModalOpen(false)}
+        onRequestClose={handleCloseModal}
       >
         <View style={styles.modalOverlay}>
           <LinearGradient
@@ -141,26 +187,7 @@ export default function ValuablesScreen() {
               data={classList}
               keyExtractor={(c) => c.id}
               contentContainerStyle={styles.flatListContent}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.charSelectBtn}
-                  onPress={() => handleGivePotionToChar(item.id)}
-                  activeOpacity={0.81}
-                >
-                  <Image
-                    source={{ uri: item.classUrl }}
-                    style={styles.charAvatar}
-                    contentFit="contain"
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.charName}>{item.name}</Text>
-                    <Text style={styles.charLevel}>
-                      {t("valuablesNameLabels.levelShort") || "Lv."}{" "}
-                      {item.level}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
+              renderItem={renderCharItem}
               ListEmptyComponent={
                 <Text style={styles.noCharactersText}>
                   {t("valuablesNameLabels.noCharacters") ||
@@ -175,10 +202,7 @@ export default function ValuablesScreen() {
                 index: i,
               })}
             />
-            <TouchableOpacity
-              onPress={() => setSelectCharModalOpen(false)}
-              activeOpacity={0.87}
-            >
+            <TouchableOpacity onPress={handleCloseModal} activeOpacity={0.87}>
               <LinearGradient
                 colors={potionGradient}
                 start={[0.12, 0]}
@@ -197,6 +221,7 @@ export default function ValuablesScreen() {
   );
 }
 
+// Styles: (wie gehabt)
 function createStyles(theme) {
   return StyleSheet.create({
     flex: { flex: 1 },
@@ -346,7 +371,6 @@ function createStyles(theme) {
     charLevel: {
       fontSize: 13,
       color: theme.borderGlowColor,
-      marginLeft: 0,
       fontWeight: "500",
     },
     noCharactersText: {

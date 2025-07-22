@@ -1,3 +1,4 @@
+import React, { useMemo, useCallback } from "react";
 import { Text, FlatList, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -9,6 +10,9 @@ import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import MissionItem from "../components/MissionItem";
 
+// Optional: MissionItem mit React.memo wrappen, falls noch nicht gemacht
+const MemoMissionItem = React.memo(MissionItem);
+
 export default function MissionScreen() {
   const { addCrystals } = useCrystals();
   const { addCoins } = useCoins();
@@ -16,52 +20,77 @@ export default function MissionScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Belohnungs-Logik als Utility
-  const handleCollect = (mission) => {
-    if (!mission.completed || mission.collected) return;
+  // Memoisierte Callback für Mission-Belohnung
+  const handleCollect = useCallback(
+    (mission) => {
+      if (!mission.completed || mission.collected) return;
 
-    switch (mission.reward.type) {
-      case "crystal":
-        addCrystals(mission.reward.amount);
-        break;
-      case "coin":
-        addCoins(mission.reward.amount);
-        break;
-      // Optional: falls neue Typen hinzukommen
-      default:
-        break;
-    }
-    collectReward(mission.id);
-  };
+      switch (mission.reward.type) {
+        case "crystal":
+          addCrystals(mission.reward.amount);
+          break;
+        case "coin":
+          addCoins(mission.reward.amount);
+          break;
+        default:
+          break;
+      }
+      collectReward(mission.id);
+    },
+    [addCrystals, addCoins, collectReward]
+  );
 
   // Prüfen, ob wirklich alle eingesammelt sind (sonst bleibt ListFooter leer)
-  const allCollected =
-    missions.length > 0 && missions.every((m) => m.completed && m.collected);
+  const allCollected = useMemo(
+    () =>
+      missions.length > 0 && missions.every((m) => m.completed && m.collected),
+    [missions]
+  );
 
   // Footer-Glass-Komponente für „Mehr Missionen kommen noch!“
-  const Footer = () =>
-    allCollected ? (
-      <View style={styles.footerWrap}>
-        <BlurView intensity={38} tint="light" style={StyleSheet.absoluteFill} />
-        <LinearGradient
-          colors={[
-            theme.accentColorSecondary + "cc",
-            theme.accentColor + "bb",
-            theme.accentColorDark + "a0",
-          ]}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <Text style={styles.footerText}>Mehr Missionen kommen noch!</Text>
-      </View>
-    ) : null;
+  const Footer = useMemo(
+    () =>
+      allCollected
+        ? () => (
+            <View style={styles.footerWrap}>
+              <BlurView
+                intensity={38}
+                tint="light"
+                style={StyleSheet.absoluteFill}
+              />
+              <LinearGradient
+                colors={[
+                  theme.accentColorSecondary + "cc",
+                  theme.accentColor + "bb",
+                  theme.accentColorDark + "a0",
+                ]}
+                start={{ x: 0.1, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={styles.footerText}>Mehr Missionen kommen noch!</Text>
+            </View>
+          )
+        : null,
+    [allCollected, styles, theme]
+  );
+
+  // Memoisiertes Render-Item für FlatList
+  const renderItem = useCallback(
+    ({ item }) => (
+      <MemoMissionItem
+        item={item}
+        onCollect={handleCollect}
+        imageMap={imageMap}
+      />
+    ),
+    [handleCollect, imageMap]
+  );
 
   return (
     <ScreenLayout style={styles.container}>
-      {/* Header mit Gradient */}
       <LinearGradient
         colors={[
           theme.accentColorSecondary,
@@ -78,13 +107,7 @@ export default function MissionScreen() {
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MissionItem
-            item={item}
-            onCollect={handleCollect}
-            imageMap={imageMap}
-          />
-        )}
+        renderItem={renderItem}
         ListEmptyComponent={
           <Text style={styles.empty}>Keine Missionen verfügbar</Text>
         }
@@ -108,11 +131,6 @@ function createStyles(theme) {
       marginBottom: 16,
       paddingVertical: 14,
       alignItems: "center",
-      shadowColor: theme.glowColor,
-      shadowRadius: 14,
-      shadowOpacity: 0.33,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 5,
     },
     header: {
       fontSize: 26,
@@ -120,9 +138,6 @@ function createStyles(theme) {
       letterSpacing: 1.0,
       color: theme.textColor,
       textAlign: "center",
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 10,
       textTransform: "uppercase",
     },
     listContainer: {
@@ -138,8 +153,6 @@ function createStyles(theme) {
       fontStyle: "italic",
       opacity: 0.7,
       letterSpacing: 0.3,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 4,
     },
     footerWrap: {
       alignSelf: "center",
@@ -152,11 +165,6 @@ function createStyles(theme) {
       minWidth: 210,
       borderWidth: 1.6,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.19,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: 5,
       position: "relative",
     },
     footerText: {
@@ -166,8 +174,6 @@ function createStyles(theme) {
       fontWeight: "600",
       letterSpacing: 0.19,
       opacity: 0.78,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 8,
     },
   });
 }

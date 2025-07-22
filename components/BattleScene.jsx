@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
@@ -19,7 +19,7 @@ import { scaleBossStats } from "../utils/combatUtils";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
-// Effekt Mapping
+// Effekt Mapping (wird nie neu erstellt, daher kein useMemo nötig)
 const EFFECT_MAP = {
   FireEffect,
   FrostEffect,
@@ -34,7 +34,7 @@ function extractNameFromUrl(url) {
   return match ? match[1].toLowerCase() : "";
 }
 
-export default function BattleScene({
+function BattleScene({
   boss,
   bossHp,
   bossMaxHp,
@@ -42,22 +42,29 @@ export default function BattleScene({
   onSkillPress,
   handleFight,
   skillDmg = 30,
-  onBack, // <-- hinzugefügt
+  onBack,
 }) {
   const { classList, activeClassId } = useClass();
   const [activeEffect, setActiveEffect] = useState(null);
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
   // Aktiver Charakter + Stats
-  const activeCharacter = classList.find((c) => c.id === activeClassId);
+  const activeCharacter = useMemo(
+    () => classList.find((c) => c.id === activeClassId),
+    [classList, activeClassId]
+  );
   const { stats: charStats = {} } = useMemo(
     () =>
       activeCharacter
@@ -65,14 +72,6 @@ export default function BattleScene({
         : { stats: {} },
     [activeCharacter]
   );
-
-  if (!activeCharacter) {
-    return (
-      <View style={styles.wrapper}>
-        <Text style={styles.textLight}>Kein aktiver Charakter gefunden.</Text>
-      </View>
-    );
-  }
 
   // Boss-Stats (mit Scaling, fallback-sicher)
   const scaledBoss = useMemo(
@@ -84,16 +83,23 @@ export default function BattleScene({
   );
 
   // Boss-Bild
-  const bossKey = scaledBoss?.image
-    ? `eventboss_${extractNameFromUrl(scaledBoss.image)}`
-    : null;
-  const bossImgSrc =
-    imageMap[bossKey] || scaledBoss?.image || getBossImageUrl(scaledBoss?.id);
+  const bossKey = useMemo(
+    () =>
+      scaledBoss?.image
+        ? `eventboss_${extractNameFromUrl(scaledBoss.image)}`
+        : null,
+    [scaledBoss]
+  );
+  const bossImgSrc = useMemo(
+    () =>
+      imageMap[bossKey] || scaledBoss?.image || getBossImageUrl(scaledBoss?.id),
+    [imageMap, bossKey, scaledBoss]
+  );
 
   // Charakter-Bild (Skin)
-  const charId = activeCharacter.baseId || activeCharacter.id;
-  let avatarSrc = activeCharacter.classUrl;
-  if (activeCharacter.activeSkin) {
+  const charId = activeCharacter?.baseId || activeCharacter?.id;
+  let avatarSrc = activeCharacter?.classUrl;
+  if (activeCharacter?.activeSkin) {
     const skin = skinData.find(
       (s) =>
         (s.characterId === charId || s.characterId === activeCharacter.id) &&
@@ -105,34 +111,43 @@ export default function BattleScene({
     typeof avatarSrc === "string"
       ? `class_${extractNameFromUrl(avatarSrc)}`
       : null;
-  const classImgSrc = imageMap[classKey] || avatarSrc;
+  const classImgSrc = useMemo(
+    () => imageMap[classKey] || avatarSrc,
+    [imageMap, classKey, avatarSrc]
+  );
 
   // Werte & Balken
-  const { name, level, exp, expToNextLevel } = activeCharacter;
+  const name = activeCharacter?.name;
+  const level = activeCharacter?.level;
+  const exp = activeCharacter?.exp;
+  const expToNextLevel = activeCharacter?.expToNextLevel;
   const maxHp = bossMaxHp ?? scaledBoss?.hp ?? 100;
   const bossHpPercent = Math.max(0, Math.min((bossHp / maxHp) * 100, 100));
   const bossName =
     scaledBoss?.name || scaledBoss?.eventName || "Unbekannter Boss";
   const expPercent = Math.min((exp / expToNextLevel) * 100, 100);
   const characterSkills =
-    activeCharacter.skills?.length > 0 ? activeCharacter.skills : skillPool;
+    activeCharacter?.skills?.length > 0 ? activeCharacter.skills : skillPool;
 
   // Skill-Handler
-  const handleSkill = (skill) => {
-    if (!skill) return;
-    onSkillPress?.(skill);
-    if (EFFECT_MAP[skill.effect]) {
-      setActiveEffect(skill.effect);
-    } else {
-      handleFight?.({
-        effect: skill.effect,
-        power:
-          typeof skill.power === "number"
-            ? skill.power
-            : charStats.attack ?? skillDmg,
-      });
-    }
-  };
+  const handleSkill = useCallback(
+    (skill) => {
+      if (!skill) return;
+      onSkillPress?.(skill);
+      if (EFFECT_MAP[skill.effect]) {
+        setActiveEffect(skill.effect);
+      } else {
+        handleFight?.({
+          effect: skill.effect,
+          power:
+            typeof skill.power === "number"
+              ? skill.power
+              : charStats.attack ?? skillDmg,
+        });
+      }
+    },
+    [onSkillPress, handleFight, charStats.attack, skillDmg]
+  );
 
   let EffectComponent = null;
   if (activeEffect && EFFECT_MAP[activeEffect]) {
@@ -147,6 +162,15 @@ export default function BattleScene({
           });
         }}
       />
+    );
+  }
+
+  // Kein aktiver Charakter
+  if (!activeCharacter) {
+    return (
+      <View style={styles.wrapper}>
+        <Text style={styles.textLight}>Kein aktiver Charakter gefunden.</Text>
+      </View>
     );
   }
 
@@ -270,7 +294,7 @@ export default function BattleScene({
   );
 }
 
-// -------- Styles --------
+// Styles unverändert – nur einmal pro Theme berechnen!
 function createStyles(theme) {
   const text = theme.textColor || "#fff";
   const hpBg = theme.shadowColor || "#222";
@@ -306,10 +330,6 @@ function createStyles(theme) {
       fontSize: 13,
       color: text,
       marginBottom: 5,
-    },
-    hpValue: {
-      fontSize: 12,
-      color: text,
     },
     barContainer: {
       width: "100%",
@@ -415,3 +435,6 @@ function createStyles(theme) {
     },
   });
 }
+
+// React.memo für volle Performance!
+export default React.memo(BattleScene);

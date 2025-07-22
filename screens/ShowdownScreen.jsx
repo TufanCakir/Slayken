@@ -28,7 +28,8 @@ import { useStage } from "../context/StageContext";
 import ScreenLayout from "../components/ScreenLayout";
 import { getEquipmentImageUrl } from "../utils/equipment/equipment";
 
-// Hilfsfunktionen (zentral)
+// ... Helper-Funktionen wie gehabt ...
+
 const COIN_REWARD = 100;
 const CRYSTAL_REWARD = 30;
 
@@ -45,8 +46,14 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-// Modal Komponente (vermeidet Duplikate)
-function InfoModal({ visible, children, onClose, styles, theme }) {
+// ----------- MEMOIZED MODAL --------------
+const InfoModal = React.memo(function InfoModal({
+  visible,
+  children,
+  onClose,
+  styles,
+  theme,
+}) {
   if (!visible) return null;
   return (
     <Modal transparent visible={!!visible} animationType="fade">
@@ -66,10 +73,17 @@ function InfoModal({ visible, children, onClose, styles, theme }) {
       </View>
     </Modal>
   );
-}
+});
 
-// StageNode ist jetzt 100% stateless, alles Status wird extern gemappt
-function StageNode({ stage, progress, onPress, theme, styles, imageMap }) {
+// ----------- MEMOIZED STAGENODE --------------
+const StageNode = React.memo(function StageNode({
+  stage,
+  progress,
+  onPress,
+  theme,
+  styles,
+  imageMap,
+}) {
   const isBoss = stage.type === "boss";
   const isUnlocked = progress.unlocked;
   const isCompleted = progress.completed;
@@ -137,11 +151,10 @@ function StageNode({ stage, progress, onPress, theme, styles, imageMap }) {
       </Pressable>
     </LinearGradient>
   );
-}
+});
 
-// Duplikate im Haupt-Render vermeiden: Alle stage-progress-Kombinationen zentral berechnen
+// ----------- Stage Progress Mapping wie gehabt --------------
 function mapStageProgress(stagesData, stageProgress) {
-  // Liefert ein Array: [{stage, progress}, ...] in Reihenfolge
   return stagesData.map((stage) => ({
     stage,
     progress: stageProgress.find((p) => p.id === stage.id) || {
@@ -152,7 +165,7 @@ function mapStageProgress(stagesData, stageProgress) {
   }));
 }
 
-// Hauptkomponente
+// ----------- Hauptkomponente --------------
 export default function ShowdownScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
@@ -169,7 +182,6 @@ export default function ShowdownScreen() {
   const [battleActive, setBattleActive] = useState(false);
   const [modalContent, setModalContent] = useState(null);
 
-  // Basisdaten zentral berechnen, kein Duplikat im Kampf oder Modal
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
@@ -206,14 +218,13 @@ export default function ShowdownScreen() {
     setBossHp(scaledBoss?.hp || 100);
   }, [scaledBoss, battleActive]);
 
-  // Zentrale Stage/Progress Map
   const stageMap = useMemo(
     () => mapStageProgress(stagesData, stageProgress),
     [stagesData, stageProgress]
   );
 
-  // Modal-Renderlogik DRY
-  const renderModal = () => {
+  // Modal-Renderlogik
+  const renderModal = useCallback(() => {
     if (!modalContent) return null;
     if (modalContent.type === "drop")
       return (
@@ -229,7 +240,6 @@ export default function ShowdownScreen() {
             style={{ width: 60, height: 60, margin: 12 }}
             contentFit="contain"
           />
-
           <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
             {modalContent.drop?.label}
           </Text>
@@ -259,7 +269,7 @@ export default function ShowdownScreen() {
         </InfoModal>
       );
     return null;
-  };
+  }, [modalContent, styles, theme]);
 
   const handleFight = useCallback(
     (skill = {}) => {
@@ -349,7 +359,6 @@ export default function ShowdownScreen() {
         </View>
       )}
 
-      {/* Stage-Map */}
       {!battleActive && (
         <ScreenLayout>
           <LinearGradient
@@ -400,7 +409,6 @@ export default function ShowdownScreen() {
         />
       )}
 
-      {/* Modal-Block (DRY) */}
       {renderModal()}
     </View>
   );
@@ -416,11 +424,7 @@ function createStyles(theme) {
       marginBottom: 12,
       minHeight: 130,
       padding: 2,
-      shadowColor: theme.accentColorDark,
-      shadowOpacity: 0.17,
-      shadowRadius: 14,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 5,
+      // Schatten und Elevation entfernt
       marginTop: 40,
     },
     stageMapRow: {
@@ -442,14 +446,14 @@ function createStyles(theme) {
       position: "relative",
       borderRadius: 18,
       overflow: "hidden",
-      shadowColor: theme.accentColorDark,
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: 4,
+      // Schatten und Elevation entfernt
     },
-    bossNode: { borderColor: "#e8413c" },
-    completedNode: { borderColor: "#ffd700" },
+    bossNode: {
+      // borderColor nur wenn wirklich sichtbar sein soll
+    },
+    completedNode: {
+      // borderColor nur wenn wirklich sichtbar sein soll
+    },
     iconWrapper: {
       width: 74,
       height: 74,
@@ -459,11 +463,7 @@ function createStyles(theme) {
       justifyContent: "center",
       marginBottom: 4,
       position: "relative",
-      shadowColor: "#000",
-      shadowOpacity: 0.2,
-      shadowRadius: 7,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 3,
+      // Schatten entfernt
     },
     bossImage: { width: "100%", height: "100%", borderRadius: 37 },
     lockOverlay: {
@@ -484,16 +484,14 @@ function createStyles(theme) {
       zIndex: 3,
       borderWidth: 1,
       borderColor: "#fff",
-      shadowColor: "#000",
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 2,
+      // Schatten entfernt
     },
     bossBadgeText: {
       color: "#fff",
       fontSize: 11,
       fontWeight: "bold",
       letterSpacing: 1,
+      // Textschatten entfernt
     },
     numberBadge: {
       position: "absolute",
@@ -506,13 +504,13 @@ function createStyles(theme) {
       zIndex: 3,
       borderWidth: 1,
       borderColor: "#fff",
+      // Schatten entfernt
     },
     numberText: {
       color: "#ffd700",
       fontWeight: "bold",
       fontSize: 13,
-      textShadowColor: "#000c",
-      textShadowRadius: 2,
+      // Textschatten entfernt
       letterSpacing: 1,
     },
     stageName: {
@@ -533,8 +531,7 @@ function createStyles(theme) {
       fontSize: 17,
       marginHorizontal: 1,
       marginBottom: -2,
-      textShadowColor: "#000a",
-      textShadowRadius: 2,
+      // Textschatten entfernt
     },
     starFilled: { color: "#ffd700" },
     starEmpty: { color: "#444" },
@@ -568,11 +565,7 @@ function createStyles(theme) {
       alignItems: "center",
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.12,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 13,
-      elevation: 3,
+      // Schatten und Elevation entfernt
     },
     skillModalTitle: {
       fontSize: 20,

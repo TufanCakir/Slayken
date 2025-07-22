@@ -1,22 +1,27 @@
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { t } from "../../i18n";
 import ThemeSwitcher from "../ThemeSwitcher";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function UIThemeSection() {
+function UIThemeSectionComponent() {
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
 
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  // Styles & Gradients memoisiert für extra Performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
   return (
     <View style={styles.section}>
-      {/* Gradient-Hintergrund */}
       <LinearGradient
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
@@ -29,16 +34,18 @@ export default function UIThemeSection() {
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+export default React.memo(UIThemeSectionComponent);
+
+// Styles Factory
+function createStyles(theme) {
+  return StyleSheet.create({
     section: {
       marginBottom: 32,
       paddingHorizontal: 8,
       paddingVertical: 10,
       borderRadius: 14,
-      overflow: "hidden", // Gradient bleibt im Container!
-      position: "relative", // Für absoluteFill
-      // backgroundColor: theme.accentColor,   <-- wird NICHT mehr gebraucht
+      overflow: "hidden",
+      position: "relative",
     },
     title: {
       fontSize: 17,
@@ -52,3 +59,4 @@ const createStyles = (theme) =>
       zIndex: 1,
     },
   });
+}

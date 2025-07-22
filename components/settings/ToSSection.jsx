@@ -1,28 +1,38 @@
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function ToSSection() {
+function ToSSectionComponent() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
 
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  // Memoisiert: Styles & Gradient, damit kein Re-Render bei jedem Tipper!
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
+
+  const handlePress = () => {
+    navigation.navigate("ToSScreen");
+  };
 
   return (
     <View style={styles.section}>
       <Pressable
         accessibilityRole="button"
-        onPress={() => navigation.navigate("ToSScreen")}
+        onPress={handlePress}
         style={({ pressed }) => [
           styles.linkButton,
-          { opacity: pressed ? 0.85 : 1 },
+          pressed && { opacity: 0.85 },
         ]}
       >
         <LinearGradient
@@ -37,8 +47,11 @@ export default function ToSSection() {
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+export default React.memo(ToSSectionComponent);
+
+// ---- Styles Factory ----
+function createStyles(theme) {
+  return StyleSheet.create({
     section: {
       marginBottom: 30,
       alignItems: "center",
@@ -51,8 +64,8 @@ const createStyles = (theme) =>
       marginTop: 48,
       borderWidth: 2,
       borderColor: theme.textColor + "33",
-      overflow: "hidden", // Wichtig für den Gradient!
-      position: "relative", // Wichtig für den Gradient!
+      overflow: "hidden",
+      position: "relative",
     },
     linkText: {
       fontSize: 16,
@@ -62,3 +75,4 @@ const createStyles = (theme) =>
       zIndex: 1,
     },
   });
+}

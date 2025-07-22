@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -15,7 +21,14 @@ import { useAssets } from "../../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { getSkillImageUrl } from "../../utils/skillUtils";
 
-function TooltipModal({ skill, visible, onClose, styles, gradientColors }) {
+// --- Tooltip Modal ---
+const TooltipModal = React.memo(function TooltipModal({
+  skill,
+  visible,
+  onClose,
+  styles,
+  gradientColors,
+}) {
   if (!skill || !visible) return null;
   return (
     <Modal transparent animationType="fade" visible>
@@ -37,9 +50,10 @@ function TooltipModal({ skill, visible, onClose, styles, gradientColors }) {
       </TouchableOpacity>
     </Modal>
   );
-}
+});
 
-function UnlockModal({
+// --- Unlock Modal ---
+const UnlockModal = React.memo(function UnlockModal({
   skill,
   visible,
   onClose,
@@ -71,7 +85,7 @@ function UnlockModal({
       </View>
     </Modal>
   );
-}
+});
 
 export default function ActionBar({
   skills = [],
@@ -87,33 +101,48 @@ export default function ActionBar({
   const prevLevel = useRef(activeCharacter?.level);
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
+
+  // Styles und Gradient memoisiert
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
-  // Status-Check für Skills (einmalig definiert)
-  const isUnlocked = (skill) => {
-    if (!skill || !activeCharacter) return false;
-    if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
-    if (
-      skill.allowedElements &&
-      !skill.allowedElements.includes(activeCharacter.element)
-    )
-      return false;
-    if (skill.element) {
-      if (Array.isArray(skill.element)) {
-        if (!skill.element.includes(activeCharacter.element)) return false;
-      } else if (skill.element !== activeCharacter.element) {
+  // Skillbild laden (memoisiert)
+  const getSkillImage = useCallback((skill) => {
+    if (!skill || !skill.id) return require("../../assets/logo.png");
+    return getSkillImageUrl(skill.id);
+  }, []);
+
+  // Skill freigeschaltet?
+  const isUnlocked = useCallback(
+    (skill) => {
+      if (!skill || !activeCharacter) return false;
+      if ((activeCharacter.level || 1) < (skill.level || 1)) return false;
+      if (
+        skill.allowedElements &&
+        !skill.allowedElements.includes(activeCharacter.element)
+      )
         return false;
+      if (skill.element) {
+        if (Array.isArray(skill.element)) {
+          if (!skill.element.includes(activeCharacter.element)) return false;
+        } else if (skill.element !== activeCharacter.element) {
+          return false;
+        }
       }
-    }
-    return true;
-  };
+      return true;
+    },
+    [activeCharacter]
+  );
 
-  // Bei Level-Up: Neue Skills erkennen
+  // Bei Level-Up neue Skills anzeigen (memoisiert)
   useEffect(() => {
     if (!activeCharacter) return;
     if (activeCharacter.level > prevLevel.current) {
@@ -126,13 +155,7 @@ export default function ActionBar({
       });
     }
     prevLevel.current = activeCharacter.level;
-  }, [activeCharacter.level, activeCharacter.element, skills]);
-
-  // Skillbild laden
-  const getSkillImage = (skill) => {
-    if (!skill || !skill.id) return require("../../assets/logo.png");
-    return getSkillImageUrl(skill.id);
-  };
+  }, [activeCharacter, skills, isUnlocked]);
 
   // Status aller Skills vorberechnen (Memo für Performance)
   const skillStatuses = useMemo(
@@ -143,26 +166,31 @@ export default function ActionBar({
         const isCoolingDown = cooldownEnd > Date.now();
         return { skill, unlocked, isCoolingDown, cooldownEnd };
       }),
-    [skills, activeCharacter, cooldowns]
+    [skills, isUnlocked, cooldowns]
   );
 
-  const handlePress = (skill, unlocked, isCoolingDown) => {
-    if (!unlocked || isCoolingDown) return;
-    onSkillPress?.(skill);
-    if (skill.cooldown) {
-      setCooldowns((prev) => ({
-        ...prev,
-        [skill.id]: Date.now() + skill.cooldown,
-      }));
-    }
-  };
+  // Skill-Tap-Handler memoisiert
+  const handlePress = useCallback(
+    (skill, unlocked, isCoolingDown) => {
+      if (!unlocked || isCoolingDown) return;
+      onSkillPress?.(skill);
+      if (skill.cooldown) {
+        setCooldowns((prev) => ({
+          ...prev,
+          [skill.id]: Date.now() + skill.cooldown,
+        }));
+      }
+    },
+    [onSkillPress]
+  );
 
-  const handleLongPress = (skill, idx) => {
+  const handleLongPress = useCallback((skill, idx) => {
     Vibration.vibrate(12);
     setTooltipSkill(skill);
     setPressedIndex(idx);
-  };
+  }, []);
 
+  // Kein aktiver Charakter
   if (!activeCharacter) {
     return (
       <View style={styles.barContainer}>
@@ -181,6 +209,7 @@ export default function ActionBar({
       >
         {skillStatuses.map(
           ({ skill, unlocked, isCoolingDown, cooldownEnd }, index) => {
+            // Cooldown-Timer pro Skill (Memo!)
             const seconds = useCooldownTimer(cooldownEnd, 100, () =>
               setCooldowns((prev) => ({ ...prev, [skill.id]: 0 }))
             );
@@ -260,6 +289,7 @@ export default function ActionBar({
   );
 }
 
+// --- Styles ---
 function createStyles(theme) {
   const glow = theme.glowColor || theme.shadowColor || "#ffbb00";
   const borderGlow = theme.borderGlowColor || theme.borderColor || "#ffbb00";
@@ -277,7 +307,6 @@ function createStyles(theme) {
       margin: 12,
       maxWidth: 512,
       alignSelf: "center",
-      // backgroundColor wird durch Gradient ersetzt!
       overflow: "hidden",
       top: 100,
     },
@@ -291,7 +320,6 @@ function createStyles(theme) {
       margin: 4,
       borderWidth: 2.5,
       borderColor: borderGlow,
-      // backgroundColor wird durch Gradient ersetzt!
       overflow: "hidden",
     },
     skillIcon: {
@@ -357,7 +385,6 @@ function createStyles(theme) {
       borderWidth: 3,
       borderColor: borderGlow,
       width: 270,
-      // backgroundColor durch LinearGradient ersetzt
       overflow: "hidden",
     },
     unlockTitle: {

@@ -1,17 +1,23 @@
+import React, { useEffect, useRef, useMemo } from "react";
 import { StyleSheet, Animated, Easing, View } from "react-native";
-import { useEffect, useRef } from "react";
 import { useLoading } from "../context/LoadingContext";
 import { useAssets } from "../context/AssetsContext";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 
-export default function LoadingOverlay() {
+const LoadingOverlay = React.memo(function LoadingOverlay() {
   const { loading } = useLoading();
   const { imageMap } = useAssets();
 
+  // Animation Refs
   const spinAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const spinLoopRef = useRef();
+
+  const spinnerSource = useMemo(
+    () => imageMap?.spinner || require("../assets/loading.png"),
+    [imageMap]
+  );
 
   useEffect(() => {
     if (loading) {
@@ -54,30 +60,23 @@ export default function LoadingOverlay() {
 
   if (!loading) return null;
 
-  const spinnerSource = imageMap?.spinner || require("../assets/loading.png");
-
   return (
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
       {/* Glassy BlurView Layer */}
-      <BlurView intensity={84} tint="light" style={StyleSheet.absoluteFill} />
-      {/* Gradient-Overlay für weiches Licht */}
+      <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+      {/* Optional transparenter Overlay */}
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Animated.View
           style={{
             ...StyleSheet.absoluteFillObject,
-            backgroundColor: "rgba(255,255,255,0.09)",
-            borderRadius: 0,
+            backgroundColor: "rgba(255,255,255,0.08)",
           }}
         />
       </View>
-      {/* Spinner Card mit Glass-Effekt */}
+      {/* Spinner Card */}
       <View style={styles.center}>
         <View style={styles.glassCard}>
-          {/* Glasrand */}
           <View style={styles.glassBorder} pointerEvents="none" />
-          {/* Glow */}
-          <View style={styles.glow} pointerEvents="none" />
-          {/* Spinner */}
           <Animated.View style={{ transform: [{ rotate: spin }] }}>
             <Image
               source={spinnerSource}
@@ -90,8 +89,11 @@ export default function LoadingOverlay() {
       </View>
     </Animated.View>
   );
-}
+});
 
+export default LoadingOverlay;
+
+// --- Styles ohne unnötige Shadows ---
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -110,29 +112,15 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.18)", // Mehr Weiß = mehr Milchglas
+    backgroundColor: "rgba(255,255,255,0.17)",
     overflow: "visible",
-    shadowColor: "#fff",
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 3 },
   },
   glassBorder: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 26,
-    borderWidth: 1.7,
-    borderColor: "#ffffff60", // Glasrand, weiß und halbtransparent
+    borderWidth: 1.3,
+    borderColor: "#ffffff60",
     zIndex: 2,
-  },
-  glow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 28,
-    borderWidth: 0,
-    shadowColor: "#d0e8ff",
-    shadowOpacity: 0.35,
-    shadowRadius: 25,
-    elevation: 10,
-    zIndex: 1,
   },
   spinner: {
     width: 82,

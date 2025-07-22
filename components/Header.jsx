@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { View, Text, StyleSheet, Animated, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCoins } from "../context/CoinContext";
@@ -11,7 +11,64 @@ import { useAssets } from "../context/AssetsContext";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function Header({ gradientColors }) {
+// Memoized CurrencyItem
+const CurrencyItem = React.memo(function CurrencyItem({
+  image,
+  value,
+  label,
+  theme,
+}) {
+  return (
+    <View
+      style={[
+        stylesCurrency(theme).currencyItem,
+        {
+          borderColor: theme.borderGlowColor + "36",
+          backgroundColor: theme.accentColor + "0A",
+        },
+      ]}
+      accessible
+      accessibilityLabel={`${label}: ${value}`}
+    >
+      <Image
+        source={image}
+        style={stylesCurrency(theme).icon}
+        contentFit="contain"
+        transition={250}
+      />
+      <Text style={stylesCurrency(theme).currencyText}>{value}</Text>
+    </View>
+  );
+});
+
+function stylesCurrency(theme) {
+  return StyleSheet.create({
+    currencyItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 8,
+      paddingVertical: 7,
+      borderRadius: 12,
+      marginLeft: 6,
+      borderWidth: 1.2,
+    },
+    currencyText: {
+      fontSize: 14.5,
+      marginLeft: 4,
+      letterSpacing: 0.19,
+      color: theme.textColor,
+      fontWeight: "bold",
+    },
+    icon: {
+      width: 36,
+      height: 36,
+      marginRight: 2,
+      borderRadius: 8,
+    },
+  });
+}
+
+const Header = React.memo(function Header({ gradientColors }) {
   const { coins } = useCoins();
   const { crystals } = useCrystals();
   const { level, xp, xpToNextLevel } = useAccountLevel();
@@ -21,7 +78,10 @@ export default function Header({ gradientColors }) {
   const [username, setUsername] = useState("Spieler");
 
   // Progress als Wert zwischen 0 und 1
-  const progress = xpToNextLevel > 0 ? Math.min(1, xp / xpToNextLevel) : 0;
+  const progress = useMemo(
+    () => (xpToNextLevel > 0 ? Math.min(1, xp / xpToNextLevel) : 0),
+    [xp, xpToNextLevel]
+  );
   const animatedXpBar = useRef(new Animated.Value(progress)).current;
 
   // Username aus AsyncStorage holen
@@ -45,42 +105,52 @@ export default function Header({ gradientColors }) {
       useNativeDriver: false,
       easing: (t) => t * (2 - t),
     }).start();
-  }, [progress]);
+  }, [progress, animatedXpBar]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const colors = gradientColors ||
-    theme.linearGradient || [
-      theme.accentColorSecondary,
-      theme.accentColor,
-      theme.accentColorDark,
-    ];
+  const colors = useMemo(
+    () =>
+      gradientColors ||
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [gradientColors, theme]
+  );
 
   // Fallback-Images falls imageMap noch nicht geladen
   const coinIcon = imageMap?.coinIcon || getItemImageUrl("coin1");
   const crystalIcon = imageMap?.crystalIcon || getItemImageUrl("crystal1");
 
-  const currencyList = [
-    {
-      key: "coins",
-      image: coinIcon,
-      value: coins,
-      accessibilityLabel: "Coins",
-    },
-    {
-      key: "crystals",
-      image: crystalIcon,
-      value: crystals,
-      accessibilityLabel: "Crystals",
-    },
-  ];
+  const currencyList = useMemo(
+    () => [
+      {
+        key: "coins",
+        image: coinIcon,
+        value: coins,
+        label: "Coins",
+      },
+      {
+        key: "crystals",
+        image: crystalIcon,
+        value: crystals,
+        label: "Crystals",
+      },
+    ],
+    [coinIcon, coins, crystalIcon, crystals]
+  );
 
   // Highlight für "Admin"-User
-  const isSpecialUser =
-    typeof username === "string" &&
-    ["tufan", "admin", "tc", "tcakir", "tufancakir"].some((n) =>
-      username.toLowerCase().includes(n)
-    );
+  const isSpecialUser = useMemo(
+    () =>
+      typeof username === "string" &&
+      ["tufan", "admin", "tc", "tcakir", "tufancakir"].some((n) =>
+        username.toLowerCase().includes(n)
+      ),
+    [username]
+  );
 
   return (
     <View style={styles.headerContainer} accessible accessibilityRole="header">
@@ -114,8 +184,7 @@ export default function Header({ gradientColors }) {
                 inputRange: [0, 1],
                 outputRange: ["0%", "100%"],
               }),
-              borderColor: theme.borderGlowColor + "36",
-              backgroundColor: theme.accentColor + "1A",
+              backgroundColor: theme.borderGlowColor + "52",
             },
           ]}
         />
@@ -126,33 +195,23 @@ export default function Header({ gradientColors }) {
 
       {/* Rechts: Währungen */}
       <View style={styles.rightBlock}>
-        {currencyList.map(({ key, image, value, accessibilityLabel }) => (
-          <View
+        {currencyList.map(({ key, image, value, label }) => (
+          <CurrencyItem
             key={key}
-            style={[
-              styles.currencyItem,
-              {
-                borderColor: theme.borderGlowColor + "36",
-                backgroundColor: theme.accentColor + "1A",
-              },
-            ]}
-            accessible
-            accessibilityLabel={`${accessibilityLabel}: ${value}`}
-          >
-            <Image
-              source={image}
-              style={styles.icon}
-              contentFit="contain"
-              transition={250}
-            />
-            <Text style={styles.currencyText}>{value}</Text>
-          </View>
+            image={image}
+            value={value}
+            label={label}
+            theme={theme}
+          />
         ))}
       </View>
     </View>
   );
-}
+});
 
+export default Header;
+
+// --- Styles ohne unnötigen Overhead ---
 function createStyles(theme) {
   return StyleSheet.create({
     headerContainer: {
@@ -186,8 +245,6 @@ function createStyles(theme) {
       borderWidth: 2.2,
       color: theme.accentColor,
       backgroundColor: theme.textColor,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 5,
     },
     level: {
       fontSize: 13,
@@ -205,13 +262,9 @@ function createStyles(theme) {
       overflow: "hidden",
       justifyContent: "center",
       position: "relative",
-      borderWidth: 1.7,
-      borderColor: theme.borderGlowColor + "36",
-      backgroundColor: theme.accentColor + "1A",
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.09,
-      shadowRadius: 10,
-      elevation: 3,
+      borderWidth: 1,
+      borderColor: theme.borderGlowColor + "22",
+      backgroundColor: theme.accentColor + "10",
     },
     xpBarFill: {
       position: "absolute",
@@ -220,10 +273,6 @@ function createStyles(theme) {
       height: "100%",
       borderRadius: 13,
       zIndex: 1,
-      shadowRadius: 6,
-      shadowOpacity: 0.17,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
     },
     xpText: {
       fontSize: 11.5,
@@ -239,34 +288,6 @@ function createStyles(theme) {
       alignItems: "center",
       minWidth: 88,
       marginLeft: 2,
-    },
-    currencyItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 8,
-      paddingVertical: 7,
-      borderRadius: 12,
-      marginLeft: 6,
-      elevation: 7,
-      borderWidth: 1.2,
-      shadowRadius: 8,
-      shadowOpacity: 0.23,
-      shadowOffset: { width: 0, height: 3 },
-    },
-    currencyText: {
-      fontSize: 14.5,
-      marginLeft: 4,
-      letterSpacing: 0.19,
-      color: theme.textColor,
-      fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 2,
-    },
-    icon: {
-      width: 36,
-      height: 36,
-      marginRight: 2,
-      borderRadius: 8,
     },
   });
 }

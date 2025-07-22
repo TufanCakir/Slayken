@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,13 +12,77 @@ import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function MusicSection() {
-  const { theme } = useThemeContext(); // <-- ZUERST!
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+// ---- TRACK BUTTON ----
+const TrackButton = React.memo(function TrackButton({
+  label,
+  onPress,
+  disabled,
+  theme,
+}) {
+  // Gradient-Colors per Theme, memoisiert
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          flex: 1,
+          borderRadius: 9,
+          marginHorizontal: 6,
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          position: "relative",
+        },
+        disabled && { opacity: 0.55 },
+        pressed && !disabled && { opacity: 0.7 },
+      ]}
+    >
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <Text
+        style={{
+          color: disabled ? "#cbd5e1" : theme.textColor,
+          fontWeight: "bold",
+          fontSize: 14,
+          letterSpacing: 0.2,
+          zIndex: 1,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+});
+
+// ---- MUSIC SECTION ----
+function MusicSectionComponent() {
+  const { theme } = useThemeContext();
+
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const {
     volume,
@@ -31,26 +95,27 @@ export default function MusicSection() {
     allTracks,
     playMusic,
   } = useMusic();
-  const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Track navigation handlers
+  // Navigation Handler werden gememoized für weniger re-renders
   const prevDisabled = currentIndex === 0 || isLoading;
   const nextDisabled = isLoading;
-  const handlePrev = async () => {
+
+  const handlePrev = useCallback(async () => {
     if (!prevDisabled) {
       setIsLoading(true);
       await playMusic(allTracks[currentIndex - 1]);
       setIsLoading(false);
     }
-  };
-  const handleNext = async () => {
+  }, [prevDisabled, allTracks, currentIndex, playMusic]);
+
+  const handleNext = useCallback(async () => {
     if (!nextDisabled) {
       setIsLoading(true);
       await playMusic(allTracks[(currentIndex + 1) % allTracks.length]);
       setIsLoading(false);
     }
-  };
+  }, [nextDisabled, allTracks, currentIndex, playMusic]);
 
   return (
     <>
@@ -64,7 +129,6 @@ export default function MusicSection() {
           pressed && styles.buttonPressed,
         ]}
       >
-        {/* Gradient-Hintergrund */}
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -125,57 +189,12 @@ export default function MusicSection() {
   );
 }
 
-function TrackButton({ label, onPress, disabled, theme }) {
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+export default React.memo(MusicSectionComponent);
 
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        {
-          flex: 1,
-          borderRadius: 9,
-          marginHorizontal: 6,
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          position: "relative",
-        },
-        disabled && { opacity: 0.55 },
-        pressed && !disabled && { opacity: 0.7 },
-      ]}
-    >
-      {/* Gradient-Hintergrund */}
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <Text
-        style={{
-          color: disabled ? "#cbd5e1" : theme.textColor,
-          fontWeight: "bold",
-          fontSize: 14,
-          letterSpacing: 0.2,
-          zIndex: 1,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
+// ---- Styles ----
 function createStyles(theme) {
   return StyleSheet.create({
     linkButtonWrap: {
-      // <--- Wichtig! So wie im Render verwendet!
       padding: 14,
       borderRadius: 10,
       alignItems: "center",

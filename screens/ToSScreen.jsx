@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   ScrollView,
   Text,
@@ -49,8 +49,13 @@ const TOS_SECTIONS = [
   },
 ];
 
-// Einzelne Section als Subkomponente – mit LinearGradient
-function TosSection({ title, content, styles, theme }) {
+// Einzelne Section als **memoisierte** Subkomponente – mit LinearGradient
+const TosSection = React.memo(function TosSection({
+  title,
+  content,
+  styles,
+  theme,
+}) {
   return (
     <LinearGradient
       colors={theme.linearGradient}
@@ -62,15 +67,29 @@ function TosSection({ title, content, styles, theme }) {
       <Text style={styles.paragraph}>{content}</Text>
     </LinearGradient>
   );
-}
+});
 
 export default function ToSScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Halbtransparenter Shadow für Hintergrund bleibt
   const overlayColor = theme.shadowColor + "cc";
+
+  // Memoisierte renderSection-Funktion (z. B. falls du in Zukunft FlatList nutzen willst)
+  const renderSection = useCallback(
+    ({ title, content }, idx) => (
+      <TosSection
+        key={idx}
+        title={title}
+        content={content}
+        styles={styles}
+        theme={theme}
+      />
+    ),
+    [styles, theme]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,15 +115,7 @@ export default function ToSScreen() {
       {/* Content */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.updated}>Letzte Aktualisierung: Mai 2025</Text>
-        {TOS_SECTIONS.map(({ title, content }, idx) => (
-          <TosSection
-            key={idx}
-            title={title}
-            content={content}
-            styles={styles}
-            theme={theme}
-          />
-        ))}
+        {TOS_SECTIONS.map(renderSection)}
       </ScrollView>
     </SafeAreaView>
   );
@@ -129,7 +140,6 @@ function createStyles(theme) {
       paddingTop: 52,
       paddingBottom: 14,
       zIndex: 2,
-      // Kein backgroundColor, weil Gradient
     },
     backButton: {
       paddingRight: 10,
@@ -166,12 +176,7 @@ function createStyles(theme) {
       marginBottom: 20,
       borderRadius: 12,
       padding: 15,
-      // kein backgroundColor, weil Gradient!
-      shadowColor: theme.accentColorDark,
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
+      // Schatten entfernt für schlankeren Stil
     },
     sectionTitle: {
       fontSize: 17,

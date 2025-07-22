@@ -19,7 +19,6 @@ import { Image } from "expo-image";
 
 import { buildImageMap } from "./utils/imageMapBuilder";
 import { getImportantImages } from "./utils/imageHelper";
-
 import { AppProviders } from "./providers/AppProviders";
 import useUpdateChecker from "./hooks/useUpdateChecker";
 import MainStackNavigator from "./navigation/MainStackNavigator";
@@ -31,103 +30,130 @@ import OnlineGuard from "./components/OnlineGuard";
 import UpdateOverlay from "./components/UpdateOverlay";
 import useImagePreloader from "./hooks/useImagePreloader";
 
-// ProgressBar als eigene Komponente, damit sie nicht bei jedem Render neu erzeugt wird
-const ProgressBar = ({ percent }) => (
+// --- Memoized ProgressBar ---
+const ProgressBar = React.memo(({ percent }) => (
   <View style={styles.progressBarBackground}>
     <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
   </View>
+));
+
+// --- Memoized Background Image ---
+const BackgroundImage = React.memo(({ source }) =>
+  source ? (
+    <Image
+      source={source}
+      style={StyleSheet.absoluteFill}
+      contentFit="cover"
+      transition={300}
+      cachePolicy="memory"
+    />
+  ) : null
 );
 
+// --- Memoized Error Screen ---
+const ErrorScreen = React.memo(({ errorText, accentColor, bgImage }) => (
+  <SafeAreaView style={styles.errorContainer} edges={["top", "right", "left"]}>
+    <BackgroundImage source={bgImage} />
+    <StatusBar
+      translucent
+      backgroundColor="transparent"
+      barStyle="light-content"
+    />
+    <View style={styles.errorOverlay}>
+      <Text style={[styles.errorText, { color: accentColor }]}>
+        {errorText}
+      </Text>
+    </View>
+  </SafeAreaView>
+));
+
+// --- Memoized Loading Screen ---
+const LoadingScreen = React.memo(({ percent, bgImage, themeType }) => (
+  <SafeAreaView
+    style={styles.loadingContainer}
+    edges={["top", "right", "left"]}
+  >
+    <BackgroundImage source={bgImage} />
+    <StatusBar
+      translucent
+      backgroundColor="transparent"
+      barStyle={themeType === "dark" ? "light-content" : "dark-content"}
+    />
+    <View style={styles.loadingContent}>
+      <ActivityIndicator size="large" color="#fff" />
+      <Text style={styles.loadingText}>Lädt Assets… {percent}%</Text>
+      <ProgressBar percent={percent} />
+    </View>
+  </SafeAreaView>
+));
+
+// --- Main App Content ---
 function AppContent() {
   const [updateVisible, setUpdateVisible] = useState(false);
   const [updateDone, setUpdateDone] = useState(false);
+
   const { theme, uiThemeType } = useThemeContext();
   const { error } = useDataLoader();
   const onNavigationStateChange = useNavigationLoading({ delay: 700 });
 
   useUpdateChecker(setUpdateVisible, setUpdateDone);
 
-  // Navigation Theme dynamisch
-  const baseNavTheme = useMemo(
-    () => (uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme),
-    [uiThemeType]
-  );
-  const navigationTheme = useMemo(
-    () => ({
-      ...baseNavTheme,
-      colors: { ...baseNavTheme.colors, background: "transparent" },
-    }),
-    [baseNavTheme]
-  );
+  // Navigation theme setup
+  const navigationTheme = useMemo(() => {
+    const baseTheme = uiThemeType === "dark" ? NavDarkTheme : NavDefaultTheme;
+    return {
+      ...baseTheme,
+      colors: { ...baseTheme.colors, background: "transparent" },
+    };
+  }, [uiThemeType]);
 
-  // Wichtige Bilder für Preload
+  // Preload important images
   const { images: importantImages, newsImages } = useMemo(
     () => getImportantImages(theme.bgImage),
     [theme.bgImage]
   );
+
   const { loaded, progress, localUris } = useImagePreloader(importantImages, 5);
 
   const imageMap = useMemo(
     () => buildImageMap(localUris, newsImages),
     [localUris, newsImages]
   );
+
   const localBgImage = useMemo(
     () => imageMap[theme.bgImage] || theme.bgImage,
     [imageMap, theme.bgImage]
   );
 
-  // Progressbar für Ladeanzeige
   const progressPercent = Math.min(Math.round(progress * 100), 100);
 
-  // --- Lade- und Fehler-Layout ---
-  if (!loaded || error) {
+  // Show loading screen while assets load
+  if (!loaded) {
     return (
-      <SafeAreaView
-        style={error ? styles.errorContainer : styles.loadingContainer}
-        edges={["top", "right", "left"]}
-      >
-        {localBgImage ? (
-          <Image
-            source={localBgImage}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            transition={300}
-          />
-        ) : null}
-        <StatusBar
-          translucent
-          backgroundColor="transparent"
-          barStyle={uiThemeType === "dark" ? "light-content" : "dark-content"}
-        />
-        <View style={error ? styles.errorOverlay : undefined}>
-          {error ? (
-            <Text style={[styles.errorText, { color: theme.accentColor }]}>
-              Oops, da ist etwas schiefgelaufen…
-            </Text>
-          ) : (
-            <>
-              <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.loadingText}>
-                Lädt Assets… {progressPercent}%
-              </Text>
-              <ProgressBar percent={progressPercent} />
-            </>
-          )}
-        </View>
-      </SafeAreaView>
+      <LoadingScreen
+        percent={progressPercent}
+        bgImage={localBgImage}
+        themeType={uiThemeType}
+      />
     );
   }
 
-  // --- Main-App ---
+  // Show error screen if loading data failed
+  if (error) {
+    return (
+      <ErrorScreen
+        errorText="Oops, da ist etwas schiefgelaufen…"
+        accentColor={theme.accentColor}
+        bgImage={localBgImage}
+      />
+    );
+  }
+
+  // Main app rendering
   return (
     <OnlineGuard>
-      <SafeAreaView style={styles.safeArea}>
-        <Image
-          source={localBgImage}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={300}
-        />
+      <SafeAreaView style={styles.safeArea} edges={["top", "right", "left"]}>
+        <BackgroundImage source={localBgImage} />
         <StatusBar
           translucent
           backgroundColor="transparent"
@@ -146,6 +172,7 @@ function AppContent() {
   );
 }
 
+// --- Root App ---
 export default function App() {
   return (
     <AppProviders>
@@ -154,6 +181,7 @@ export default function App() {
   );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -177,6 +205,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0f172a",
     justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingContent: {
     alignItems: "center",
   },
   loadingText: {

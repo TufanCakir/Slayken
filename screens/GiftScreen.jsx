@@ -20,10 +20,60 @@ import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useInventory } from "../context/InventoryContext";
 
+// --- Memoized GiftItem ---
+const GiftItem = React.memo(function GiftItem({
+  item,
+  isCollected,
+  theme,
+  styles,
+  onCollect,
+}) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.giftItem,
+        isCollected && styles.giftItemCollected,
+        {
+          borderColor: theme.borderGlowColor,
+          shadowColor: theme.glowColor,
+        },
+      ]}
+      activeOpacity={isCollected ? 1 : 0.85}
+      onPress={() => !isCollected && onCollect(item)}
+      disabled={isCollected}
+    >
+      <View style={styles.iconWrapper}>
+        <Image
+          source={item.imageUrl}
+          style={styles.giftIcon}
+          contentFit="contain"
+          transition={300}
+        />
+      </View>
+      <Text
+        style={[
+          styles.giftName,
+          isCollected && styles.giftNameCollected,
+          {
+            color: isCollected ? theme.borderGlowColor : theme.textColor,
+            textShadowColor: isCollected
+              ? theme.glowColor
+              : theme.borderGlowColor,
+            textShadowRadius: 7,
+          },
+        ]}
+      >
+        {isCollected ? "✓ " : ""}
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
 export default function GiftScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { addCoins } = useCoins();
   const { addCrystals } = useCrystals();
@@ -32,13 +82,16 @@ export default function GiftScreen() {
   const { collectedGifts, collectGift, collectMultipleGifts } = useGifts();
 
   // Typen-Mapping, damit alles eindeutig ist!
-  const ICON_TYPE_MAP = {
-    coins: "coin1",
-    crystals: "crystal1",
-    "exp-potion": "exp-potion",
-    exp: "exp",
-    // weitere Typen einfach ergänzen!
-  };
+  const ICON_TYPE_MAP = useMemo(
+    () => ({
+      coins: "coin1",
+      crystals: "crystal1",
+      "exp-potion": "exp-potion",
+      exp: "exp",
+      // weitere Typen einfach ergänzen!
+    }),
+    []
+  );
 
   // Gifts vorbereiten und Memoisieren (nutzt das Mapping!)
   const gifts = useMemo(
@@ -47,7 +100,7 @@ export default function GiftScreen() {
         ...gift,
         imageUrl: getItemImageUrl(ICON_TYPE_MAP[gift.type] || gift.type),
       })),
-    []
+    [ICON_TYPE_MAP]
   );
 
   const remainingGifts = useMemo(
@@ -66,7 +119,7 @@ export default function GiftScreen() {
       if (gift.type === "exp-potion") addPotion(gift.amount || 1);
       // weitere Typen bei Bedarf ergänzen!
     },
-    [addCoins, addCrystals, addXp]
+    [addCoins, addCrystals, addXp, addPotion]
   );
 
   const handleCollect = useCallback(
@@ -85,50 +138,17 @@ export default function GiftScreen() {
     remainingGifts.forEach(applyReward);
   }, [remainingGifts, collectMultipleGifts, applyReward]);
 
+  // RenderItem Memoized Callback
   const renderItem = useCallback(
-    ({ item }) => {
-      const isCollected = collectedGifts[item.id];
-      return (
-        <TouchableOpacity
-          style={[
-            styles.giftItem,
-            isCollected && styles.giftItemCollected,
-            {
-              borderColor: theme.borderGlowColor,
-              shadowColor: theme.glowColor,
-            },
-          ]}
-          activeOpacity={isCollected ? 1 : 0.85}
-          onPress={() => !isCollected && handleCollect(item)}
-          disabled={isCollected}
-        >
-          <View style={styles.iconWrapper}>
-            <Image
-              source={item.imageUrl}
-              style={styles.giftIcon}
-              contentFit="contain"
-              transition={300}
-            />
-          </View>
-          <Text
-            style={[
-              styles.giftName,
-              isCollected && styles.giftNameCollected,
-              {
-                color: isCollected ? theme.borderGlowColor : theme.textColor,
-                textShadowColor: isCollected
-                  ? theme.glowColor
-                  : theme.borderGlowColor,
-                textShadowRadius: 7,
-              },
-            ]}
-          >
-            {isCollected ? "✓ " : ""}
-            {item.name}
-          </Text>
-        </TouchableOpacity>
-      );
-    },
+    ({ item }) => (
+      <GiftItem
+        item={item}
+        isCollected={!!collectedGifts[item.id]}
+        theme={theme}
+        styles={styles}
+        onCollect={handleCollect}
+      />
+    ),
     [collectedGifts, handleCollect, styles, theme]
   );
 
@@ -205,11 +225,6 @@ function createStyles(theme) {
       width: "83%",
       paddingVertical: 13,
       paddingHorizontal: 8,
-      shadowColor: theme.glowColor,
-      shadowRadius: 14,
-      shadowOpacity: 0.33,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 5,
     },
     header: {
       fontSize: 26,
@@ -217,9 +232,6 @@ function createStyles(theme) {
       letterSpacing: 0.9,
       color: theme.textColor,
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 10,
-      textShadowOffset: { width: 0, height: 3 },
       textTransform: "uppercase",
     },
     listContainer: {
@@ -235,10 +247,7 @@ function createStyles(theme) {
       marginBottom: 12,
       borderWidth: 2,
       backgroundColor: theme.accentColor,
-      shadowOpacity: 0.13,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
+      borderColor: theme.borderGlowColor,
     },
     giftItemCollected: {
       opacity: 0.47,
@@ -264,8 +273,7 @@ function createStyles(theme) {
       flex: 1,
       letterSpacing: 0.28,
       fontWeight: "700",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 7,
+      color: theme.textColor,
     },
     giftNameCollected: {
       opacity: 0.7,
@@ -283,10 +291,6 @@ function createStyles(theme) {
       overflow: "hidden",
       width: "70%",
       alignSelf: "center",
-      shadowColor: theme.glowColor,
-      shadowRadius: 12,
-      shadowOpacity: 0.23,
-      elevation: 5,
     },
     glowButton: {
       borderRadius: 16,
@@ -300,8 +304,6 @@ function createStyles(theme) {
       letterSpacing: 0.36,
       color: theme.textColor,
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 7,
     },
     empty: {
       textAlign: "center",
@@ -310,8 +312,6 @@ function createStyles(theme) {
       color: theme.textColor,
       opacity: 0.85,
       fontWeight: "700",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 5,
     },
   });
 }

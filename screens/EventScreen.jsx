@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useThemeContext } from "../context/ThemeContext";
 import { useAccountLevel } from "../context/AccountLevelContext";
 import { useCoins } from "../context/CoinContext";
@@ -17,10 +16,8 @@ import { useClass } from "../context/ClassContext";
 import { useLevelSystem } from "../hooks/useLevelSystem";
 import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
-
 import eventData from "../data/eventData.json";
 import classData from "../data/classData.json";
-
 import EventList from "../components/EventList";
 import BattleView from "../components/BattleView";
 import { Image } from "expo-image";
@@ -28,7 +25,7 @@ import { getClassImageUrl } from "../utils/classUtils";
 import { calculateSkillDamage, scaleBossStats } from "../utils/combatUtils";
 import { getCharacterStatsWithEquipment } from "../utils/combat/statUtils";
 
-// Helper
+// --- Helpers ---
 const getEventBossKey = (url) => {
   if (!url) return null;
   const match = /\/([\w-]+)\.png$/i.exec(url);
@@ -47,7 +44,55 @@ const tabOptions = [
   { key: "skill", label: "Fähigkeit" },
 ];
 
-export default function EventScreen() {
+// --- Memoized Tabs ---
+const Tabs = React.memo(function Tabs({ activeTab, setActiveTab, theme }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <View style={styles.stickyHeader}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsRow}
+      >
+        {tabOptions.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              activeOpacity={0.86}
+              style={styles.tabTouchable}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={[
+                    theme.accentColorSecondary,
+                    theme.accentColor,
+                    theme.accentColorDark,
+                  ]}
+                  start={[0, 0]}
+                  end={[1, 1]}
+                  style={styles.tabGradient}
+                >
+                  <Text style={[styles.tabText, styles.tabTextActive]}>
+                    {tab.label}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.tab}>
+                  <Text style={styles.tabText}>{tab.label}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+});
+
+// --- Main Screen ---
+const EventScreen = React.memo(function EventScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
@@ -64,7 +109,6 @@ export default function EventScreen() {
   );
 
   const [activeTab, setActiveTab] = useState(tabOptions[0].key);
-  const [unlockedItemIds, setUnlockedItemIds] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [bossHp, setBossHp] = useState(null);
   const [bossMaxHp, setBossMaxHp] = useState(null);
@@ -73,22 +117,7 @@ export default function EventScreen() {
   // Modal states für Zukunft (Rewards, etc.)
   const [reward, setReward] = useState(null);
 
-  // Unlocked Items
-  const loadUnlocked = useCallback(async () => {
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      const itemKeys = keys.filter((k) => k.startsWith("unlocked_item_"));
-      setUnlockedItemIds(itemKeys.map((k) => k.replace("unlocked_item_", "")));
-    } catch {}
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadUnlocked();
-    }, [loadUnlocked])
-  );
-
-  // Events filtern + Image-Map
+  // ----- Events filtern + Memoized Image-Map -----
   const availableEvents = useMemo(
     () =>
       eventData
@@ -106,7 +135,7 @@ export default function EventScreen() {
     [activeTab, imageMap]
   );
 
-  // Skalierter Event-Boss – und MaxHP holen!
+  // --- Event-Boss-Skalierung ---
   const scaledEvent = useMemo(() => {
     if (!selectedEvent || !activeCharacter) return null;
     return scaleBossStats(selectedEvent, activeCharacter.level || 1);
@@ -121,7 +150,7 @@ export default function EventScreen() {
     }
   }, [scaledEvent]);
 
-  // Event-Auswahl-Handler
+  // --- Memoized-Handler für Tabwechsel & Event-Auswahl ---
   const handleSelectEvent = useCallback((event) => setSelectedEvent(event), []);
 
   // Kampf-Handler: Damage-Berechnung und HP reduzieren
@@ -205,22 +234,11 @@ export default function EventScreen() {
         });
       })();
     }
-  }, [
-    bossDefeated,
-    scaledEvent,
-    activeCharacter,
-    classList,
-    addCharacter,
-    gainExp,
-    updateCharacter,
-    addCoins,
-    addCrystals,
-    addXp,
-    navigation,
-  ]);
+  }, [bossDefeated, scaledEvent, activeCharacter, classList, addCharacter, gainExp, updateCharacter, addCoins, addCrystals, addXp, navigation]);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // --- Render ---
   return (
     <View style={styles.container}>
       {selectedEvent?.background && (
@@ -236,46 +254,7 @@ export default function EventScreen() {
       )}
 
       {!selectedEvent && (
-        <View style={styles.stickyHeader}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabsRow}
-          >
-            {tabOptions.map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <TouchableOpacity
-                  key={tab.key}
-                  onPress={() => setActiveTab(tab.key)}
-                  activeOpacity={0.86}
-                  style={styles.tabTouchable}
-                >
-                  {isActive ? (
-                    <LinearGradient
-                      colors={[
-                        theme.accentColorSecondary,
-                        theme.accentColor,
-                        theme.accentColorDark,
-                      ]}
-                      start={[0, 0]}
-                      end={[1, 1]}
-                      style={styles.tabGradient}
-                    >
-                      <Text style={[styles.tabText, styles.tabTextActive]}>
-                        {tab.label}
-                      </Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={styles.tab}>
-                      <Text style={styles.tabText}>{tab.label}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+        <Tabs activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} />
       )}
 
       {selectedEvent ? (
@@ -302,8 +281,11 @@ export default function EventScreen() {
       {/* {reward && <EventRewardModal reward={reward} onClose={() => setReward(null)} />} */}
     </View>
   );
-}
+});
 
+export default EventScreen;
+
+// --- Styles ---
 function createStyles(theme) {
   return StyleSheet.create({
     container: { flex: 1 },

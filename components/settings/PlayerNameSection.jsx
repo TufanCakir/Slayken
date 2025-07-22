@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,17 +12,30 @@ import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function PlayerNameSection() {
+function PlayerNameSectionComponent() {
   const { theme } = useThemeContext();
   const [username, setUsername] = useState("");
 
+  // Memoisiere Styles & Gradient für beste Performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
+
   useEffect(() => {
+    // Username nur beim Mount einmal laden
     AsyncStorage.getItem("user").then((savedUser) => {
       if (savedUser) setUsername(savedUser);
     });
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const trimmed = username.trim();
     if (!trimmed) {
       Alert.alert(
@@ -36,9 +49,7 @@ export default function PlayerNameSection() {
       t("playerNameLabels.savedTitle"),
       t("playerNameLabels.nameSaved")
     );
-  };
-
-  const styles = createStyles(theme);
+  }, [username]);
 
   return (
     <View style={styles.section}>
@@ -52,20 +63,16 @@ export default function PlayerNameSection() {
         }
         value={username}
         onChangeText={setUsername}
+        autoCapitalize="words"
+        returnKeyType="done"
+        maxLength={22}
       />
       <Pressable
         onPress={handleSave}
-        style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
+        style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
       >
-        {/* Gradient-Hintergrund */}
         <LinearGradient
-          colors={
-            theme.linearGradient || [
-              theme.accentColorSecondary,
-              theme.accentColor,
-              theme.accentColorDark,
-            ]
-          }
+          colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -78,8 +85,11 @@ export default function PlayerNameSection() {
   );
 }
 
-const createStyles = (theme) =>
-  StyleSheet.create({
+export default React.memo(PlayerNameSectionComponent);
+
+// ---- Styles als Factory (immer per useMemo einbinden!) ----
+function createStyles(theme) {
+  return StyleSheet.create({
     section: {
       marginBottom: 30,
       borderRadius: 12,
@@ -112,10 +122,9 @@ const createStyles = (theme) =>
       borderRadius: 10,
       alignItems: "center",
       marginTop: 6,
-      overflow: "hidden", // Gradient bleibt im Button!
-      position: "relative", // Für absoluteFill
+      overflow: "hidden",
+      position: "relative",
     },
-
     buttonText: {
       fontSize: 16,
       color: theme.textColor,
@@ -123,3 +132,4 @@ const createStyles = (theme) =>
       fontWeight: "bold",
     },
   });
+}

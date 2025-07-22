@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -21,152 +21,45 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const CARD_WIDTH = Dimensions.get("window").width / 2 - 22;
 
-export default function CharacterOverviewScreen() {
-  const {
-    classList,
-    activeClassId,
-    setActiveClassId,
-    deleteClass,
-    updateCharacter,
-  } = useClass();
-  const { theme } = useThemeContext();
-  const { isUnlocked } = useShop();
-  const styles = createStyles(theme);
-
-  function getUnlockedSkinsForChar(item) {
-    const charId = item.baseId || item.id;
-    return SHOP_ITEMS.filter(
-      (skin) =>
-        skin.category?.toLowerCase().includes("skin") &&
-        skin.characterId === charId &&
-        isUnlocked(skin)
-    );
-  }
-
-  const handleEquipSkin = async (char, skinId) => {
-    await updateCharacter({ ...char, activeSkin: skinId });
-  };
-
-  const renderCharacter = ({ item }) => {
-    const isActive = item.id === activeClassId;
-    const element = elementData[item.element] || {};
-    const availableSkins = getUnlockedSkinsForChar(item);
-    const currentSkin =
-      availableSkins.find((s) => s.id === item.activeSkin) || null;
-    const avatarSrc = currentSkin?.skinImage || item.classUrl;
-
-    return (
-      <LinearGradient
-        colors={
-          isActive
-            ? [
-                theme.accentColorSecondary,
-                theme.accentColor,
-                theme.accentColorDark,
-                "#000",
-              ]
-            : [theme.accentColor, theme.accentColorDark, "#191919"]
-        }
-        start={[0, 0]}
-        end={[1, 0]}
-        style={[styles.card, isActive && styles.cardActive]}
-      >
-        {item.eventReward && (
-          <Badge icon="crown" text="Exklusiv" theme={theme} />
-        )}
-        <Image
-          source={{ uri: avatarSrc }}
-          style={styles.avatar}
-          contentFit="contain"
-        />
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.level}>Level {item.level}</Text>
-        <View style={styles.elementTag}>
-          <Text style={[styles.element, { color: element.color }]}>
-            {element.icon} {element.label}
-          </Text>
-        </View>
-        <Text style={styles.classText}>{item.type}</Text>
-
-        <SkinsRow
-          availableSkins={availableSkins}
-          activeSkin={item.activeSkin}
-          onEquipSkin={(skinId) => handleEquipSkin(item, skinId)}
-          theme={theme}
-        />
-
-        <Text style={styles.skillTitle}>Skills:</Text>
-        {item.skills.map((skill, i) => (
-          <SkillInfo key={i} skill={skill} theme={theme} />
-        ))}
-
-        {!isActive ? (
-          <>
-            <ActionButton
-              label="Als Klasse aktivieren"
-              onPress={() => setActiveClassId(item.id)}
-              style={styles.buttonPrimary}
-              textStyle={styles.buttonTextPrimary}
-              testID="activate-class"
-            />
-            <ActionButton
-              label="Löschen"
-              onPress={() =>
-                Alert.alert(
-                  "Charakter löschen?",
-                  `${item.name} wirklich dauerhaft entfernen?`,
-                  [
-                    { text: "Abbrechen", style: "cancel" },
-                    {
-                      text: "Löschen",
-                      style: "destructive",
-                      onPress: () => deleteClass(item.id),
-                    },
-                  ]
-                )
-              }
-              style={styles.buttonDanger}
-              textStyle={styles.buttonTextDanger}
-              testID="delete-class"
-            />
-          </>
-        ) : (
-          <Text style={styles.activeLabel}>🎖️ Aktive Klasse</Text>
-        )}
-      </LinearGradient>
-    );
-  };
-
-  return (
-    <ScreenLayout style={styles.container}>
-      <FlatList
-        data={classList}
-        renderItem={renderCharacter}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.grid}
-        ListEmptyComponent={
-          <Text style={styles.empty}>Keine Charaktere vorhanden.</Text>
-        }
-      />
-    </ScreenLayout>
-  );
-}
-
-// --- UI Helper Components ---
-
-function Badge({ icon, text, theme }) {
+const Badge = React.memo(function Badge({ icon, text }) {
   return (
     <View style={badgeStyles.badge}>
       <MaterialCommunityIcons name={icon} size={14} color="#111" />
       <Text style={badgeStyles.text}>{text}</Text>
     </View>
   );
-}
+});
 
-function SkinsRow({ availableSkins = [], activeSkin, onEquipSkin, theme }) {
+const SkinButton = React.memo(function SkinButton({
+  active,
+  onPress,
+  icon,
+  label,
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[skinButtonStyles.btn, active && skinButtonStyles.btnActive]}
+      activeOpacity={0.85}
+    >
+      {icon}
+      <Text
+        style={[skinButtonStyles.label, active && skinButtonStyles.labelActive]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
+const SkinsRow = React.memo(function SkinsRow({
+  availableSkins = [],
+  activeSkin,
+  onEquipSkin,
+  theme,
+}) {
   if (availableSkins.length === 0) return null;
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.skinsWrapper}>
       <Text style={styles.skinsTitle}>Skins:</Text>
@@ -209,27 +102,10 @@ function SkinsRow({ availableSkins = [], activeSkin, onEquipSkin, theme }) {
       </ScrollView>
     </View>
   );
-}
+});
 
-function SkinButton({ active, onPress, icon, label }) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[skinButtonStyles.btn, active && skinButtonStyles.btnActive]}
-      activeOpacity={0.85}
-    >
-      {icon}
-      <Text
-        style={[skinButtonStyles.label, active && skinButtonStyles.labelActive]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-function SkillInfo({ skill, theme }) {
-  const styles = createStyles(theme);
+const SkillInfo = React.memo(function SkillInfo({ skill, theme }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.skillItem}>
       <Text style={styles.skillName}>{skill.name}</Text>
@@ -237,9 +113,15 @@ function SkillInfo({ skill, theme }) {
       <Text style={styles.skillPower}>Power: {skill.power}</Text>
     </View>
   );
-}
+});
 
-function ActionButton({ label, onPress, style, textStyle, testID }) {
+const ActionButton = React.memo(function ActionButton({
+  label,
+  onPress,
+  style,
+  textStyle,
+  testID,
+}) {
   return (
     <TouchableOpacity
       style={style}
@@ -250,9 +132,156 @@ function ActionButton({ label, onPress, style, textStyle, testID }) {
       <Text style={textStyle}>{label}</Text>
     </TouchableOpacity>
   );
+});
+
+// ---------- Hauptscreen mit memoisiertem RenderItem ----------
+
+function CharacterOverviewScreen() {
+  const {
+    classList,
+    activeClassId,
+    setActiveClassId,
+    deleteClass,
+    updateCharacter,
+  } = useClass();
+  const { theme } = useThemeContext();
+  const { isUnlocked } = useShop();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Memoize helper so FlatList nicht bei jedem Render alles neu erstellt
+  const getUnlockedSkinsForChar = useCallback(
+    (item) => {
+      const charId = item.baseId || item.id;
+      return SHOP_ITEMS.filter(
+        (skin) =>
+          skin.category?.toLowerCase().includes("skin") &&
+          skin.characterId === charId &&
+          isUnlocked(skin)
+      );
+    },
+    [isUnlocked]
+  );
+
+  const handleEquipSkin = useCallback(
+    async (char, skinId) => {
+      await updateCharacter({ ...char, activeSkin: skinId });
+    },
+    [updateCharacter]
+  );
+
+  const renderCharacter = useCallback(
+    ({ item }) => {
+      const isActive = item.id === activeClassId;
+      const element = elementData[item.element] || {};
+      const availableSkins = getUnlockedSkinsForChar(item);
+      const currentSkin =
+        availableSkins.find((s) => s.id === item.activeSkin) || null;
+      const avatarSrc = currentSkin?.skinImage || item.classUrl;
+
+      return (
+        <LinearGradient
+          colors={
+            isActive
+              ? [
+                  theme.accentColorSecondary,
+                  theme.accentColor,
+                  theme.accentColorDark,
+                  "#000",
+                ]
+              : [theme.accentColor, theme.accentColorDark, "#191919"]
+          }
+          start={[0, 0]}
+          end={[1, 0]}
+          style={[styles.card, isActive && styles.cardActive]}
+        >
+          {item.eventReward && <Badge icon="crown" text="Exklusiv" />}
+          <Image
+            source={{ uri: avatarSrc }}
+            style={styles.avatar}
+            contentFit="contain"
+          />
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.level}>Level {item.level}</Text>
+          <View style={styles.elementTag}>
+            <Text style={[styles.element, { color: element.color }]}>
+              {element.icon} {element.label}
+            </Text>
+          </View>
+          <Text style={styles.classText}>{item.type}</Text>
+          <SkinsRow
+            availableSkins={availableSkins}
+            activeSkin={item.activeSkin}
+            onEquipSkin={(skinId) => handleEquipSkin(item, skinId)}
+            theme={theme}
+          />
+          <Text style={styles.skillTitle}>Skills:</Text>
+          {item.skills.map((skill, i) => (
+            <SkillInfo key={i} skill={skill} theme={theme} />
+          ))}
+          {!isActive ? (
+            <>
+              <ActionButton
+                label="Als Klasse aktivieren"
+                onPress={() => setActiveClassId(item.id)}
+                style={styles.buttonPrimary}
+                textStyle={styles.buttonTextPrimary}
+                testID="activate-class"
+              />
+              <ActionButton
+                label="Löschen"
+                onPress={() =>
+                  Alert.alert(
+                    "Charakter löschen?",
+                    `${item.name} wirklich dauerhaft entfernen?`,
+                    [
+                      { text: "Abbrechen", style: "cancel" },
+                      {
+                        text: "Löschen",
+                        style: "destructive",
+                        onPress: () => deleteClass(item.id),
+                      },
+                    ]
+                  )
+                }
+                style={styles.buttonDanger}
+                textStyle={styles.buttonTextDanger}
+                testID="delete-class"
+              />
+            </>
+          ) : (
+            <Text style={styles.activeLabel}>🎖️ Aktive Klasse</Text>
+          )}
+        </LinearGradient>
+      );
+    },
+    [
+      styles,
+      activeClassId,
+      setActiveClassId,
+      deleteClass,
+      getUnlockedSkinsForChar,
+      handleEquipSkin,
+      theme,
+    ]
+  );
+
+  return (
+    <ScreenLayout style={styles.container}>
+      <FlatList
+        data={classList}
+        renderItem={renderCharacter}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={styles.grid}
+        ListEmptyComponent={
+          <Text style={styles.empty}>Keine Charaktere vorhanden.</Text>
+        }
+      />
+    </ScreenLayout>
+  );
 }
 
-// --- Styles (aufgeteilt für Klarheit) ---
+export default React.memo(CharacterOverviewScreen);
 
 function createStyles(theme) {
   return StyleSheet.create({
@@ -271,18 +300,12 @@ function createStyles(theme) {
       borderWidth: 2.5,
       borderColor: theme.shadowColor,
       justifyContent: "flex-start",
-      elevation: 8,
-      shadowColor: theme.glowColor,
-      shadowRadius: 17,
-      shadowOpacity: 0.2,
-      shadowOffset: { width: 0, height: 5 },
+      // shadows entfernt!
+      backgroundColor: theme.accentColor + "10",
     },
     cardActive: {
       borderColor: theme.borderGlowColor || "gold",
-      shadowColor: theme.borderGlowColor,
-      shadowOpacity: 0.31,
-      shadowRadius: 21,
-      elevation: 16,
+      // shadows entfernt!
     },
     avatar: {
       width: 86,
@@ -292,7 +315,6 @@ function createStyles(theme) {
       backgroundColor: theme.shadowColor,
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
-      elevation: 6,
     },
     name: {
       fontSize: 18,
@@ -301,16 +323,12 @@ function createStyles(theme) {
       color: theme.textColor,
       textAlign: "center",
       letterSpacing: 0.3,
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
     },
     level: {
       fontSize: 15,
       color: theme.textColor,
       marginBottom: 2,
       fontWeight: "700",
-      opacity: 0.96,
       letterSpacing: 0.08,
     },
     elementTag: {
@@ -328,8 +346,7 @@ function createStyles(theme) {
       fontWeight: "bold",
       letterSpacing: 0.14,
       textAlign: "center",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 5,
+      color: theme.glowColor,
     },
     classText: {
       fontSize: 13,
@@ -409,10 +426,6 @@ function createStyles(theme) {
       borderWidth: 2,
       borderColor: theme.borderGlowColor,
       backgroundColor: theme.accentColor,
-      elevation: 3,
-      shadowColor: theme.glowColor,
-      shadowRadius: 8,
-      shadowOpacity: 0.14,
     },
     buttonTextPrimary: {
       color: theme.textColor,
@@ -430,10 +443,6 @@ function createStyles(theme) {
       paddingVertical: 8,
       alignSelf: "stretch",
       alignItems: "center",
-      elevation: 2,
-      shadowColor: "#c00",
-      shadowRadius: 8,
-      shadowOpacity: 0.07,
     },
     buttonTextDanger: {
       color: "#FF5252",
@@ -450,9 +459,8 @@ function createStyles(theme) {
       paddingHorizontal: 14,
       paddingVertical: 5,
       borderRadius: 8,
-      backgroundColor: theme.accentColor + "88",
+      backgroundColor: theme.accentColor + "44",
       textAlign: "center",
-      overflow: "hidden",
       alignSelf: "center",
     },
     empty: {
@@ -465,7 +473,7 @@ function createStyles(theme) {
   });
 }
 
-// Separat für Badge/SkinButton
+// Badge Styles – Shadows entfernt
 const badgeStyles = StyleSheet.create({
   badge: {
     position: "absolute",
@@ -478,10 +486,6 @@ const badgeStyles = StyleSheet.create({
     zIndex: 10,
     flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 3,
   },
   text: {
     fontWeight: "bold",
@@ -492,6 +496,7 @@ const badgeStyles = StyleSheet.create({
   },
 });
 
+// SkinButton Styles – Shadows entfernt
 const skinButtonStyles = StyleSheet.create({
   btn: {
     borderWidth: 1.3,

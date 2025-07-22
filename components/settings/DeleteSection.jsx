@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Updates from "expo-updates";
@@ -7,17 +7,21 @@ import { t } from "../../i18n";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function DeleteSection() {
+function DeleteSectionComponent() {
   const { clearAllClasses } = useClass();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
 
-  // Gradient-Farben: Aus Theme oder fallback
-  const colors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  // Styles und Farben werden nur neu berechnet, wenn sich Theme ändert
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const colors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
   const confirmReset = useCallback(() => {
     Alert.alert(
@@ -52,7 +56,6 @@ export default function DeleteSection() {
           pressed && styles.resetButtonPressed,
         ]}
       >
-        {/* LinearGradient als Button-Hintergrund */}
         <LinearGradient
           colors={colors}
           start={{ x: 0, y: 0 }}
@@ -65,7 +68,12 @@ export default function DeleteSection() {
   );
 }
 
-// Styles
+// React.memo verhindert unnötige Re-Renders
+const DeleteSection = React.memo(DeleteSectionComponent);
+
+export default DeleteSection;
+
+// Styles ausgelagert, memoisiert über useMemo im Component!
 function createStyles(theme) {
   const accent = theme.accentColor;
   const text = theme.textColor;
@@ -75,8 +83,8 @@ function createStyles(theme) {
       alignItems: "center",
     },
     resetButton: {
-      position: "relative", // Für Gradient-Layer
-      overflow: "hidden", // Für runde Ecken beim Gradient!
+      position: "relative",
+      overflow: "hidden",
       borderRadius: 14,
       paddingVertical: 15,
       paddingHorizontal: 36,
@@ -91,7 +99,7 @@ function createStyles(theme) {
       fontSize: 17,
       fontWeight: "bold",
       letterSpacing: 0.12,
-      zIndex: 1, // Falls nötig, um über Gradient zu liegen
+      zIndex: 1,
     },
   });
 }

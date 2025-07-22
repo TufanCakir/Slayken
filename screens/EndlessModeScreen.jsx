@@ -33,7 +33,125 @@ const getBackgroundKey = (url) => {
   return match ? "bg_" + match[1].toLowerCase() : null;
 };
 
-export default function EndlessModeScreen() {
+// --- Memoized Modal-Komponenten ---
+const DropModal = React.memo(function DropModal({
+  visible,
+  drop,
+  onClose,
+  theme,
+}) {
+  if (!visible || !drop) return null;
+  return (
+    <Modal transparent visible={!!visible} animationType="fade">
+      <View style={modalStyles.modalOverlay}>
+        <View
+          style={[
+            modalStyles.skillModal,
+            {
+              backgroundColor: theme.accentColor,
+              borderColor: theme.borderGlowColor,
+              shadowColor: theme.glowColor,
+            },
+          ]}
+        >
+          <Text
+            style={[modalStyles.skillModalTitle, { color: theme.textColor }]}
+          >
+            🎉 Du hast gefunden:
+          </Text>
+          <Image
+            source={getEquipmentImageUrl(drop.id)}
+            style={{ width: 60, height: 60, margin: 12 }}
+            contentFit="contain"
+          />
+          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
+            {drop.label}
+          </Text>
+          <Text style={{ color: theme.textColor, fontSize: 14 }}>
+            {drop.description}
+          </Text>
+          <Pressable style={modalStyles.okButton} onPress={onClose}>
+            <Text style={[modalStyles.okText, { color: theme.textColor }]}>
+              OK
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+});
+
+const SkillUnlockModal = React.memo(function SkillUnlockModal({
+  visible,
+  skills,
+  onClose,
+  theme,
+}) {
+  if (!visible || !skills) return null;
+  return (
+    <Modal transparent animationType="fade" visible={!!visible}>
+      <View style={modalStyles.modalOverlay}>
+        <View
+          style={[
+            modalStyles.skillModal,
+            {
+              backgroundColor: theme.accentColor,
+              borderColor: theme.borderGlowColor,
+              shadowColor: theme.glowColor,
+            },
+          ]}
+        >
+          <Text
+            style={[modalStyles.skillModalTitle, { color: theme.textColor }]}
+          >
+            🎉 Neue Skills freigeschaltet!
+          </Text>
+          {skills.map((s, i) => (
+            <View
+              key={i}
+              style={[
+                modalStyles.skillItem,
+                {
+                  backgroundColor: theme.accentColor,
+                  borderColor: theme.borderGlowColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  modalStyles.skillName,
+                  { color: theme.borderGlowColor },
+                ]}
+              >
+                {s.name}
+              </Text>
+              <Text
+                style={[
+                  modalStyles.skillDescription,
+                  { color: theme.textColor },
+                ]}
+              >
+                {s.description}
+              </Text>
+              <Text
+                style={[modalStyles.skillPower, { color: theme.glowColor }]}
+              >
+                Power: {s.power}
+              </Text>
+            </View>
+          ))}
+          <Pressable style={modalStyles.okButton} onPress={onClose}>
+            <Text style={[modalStyles.okText, { color: theme.textColor }]}>
+              OK
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+});
+
+const EndlessModeScreen = React.memo(function EndlessModeScreen() {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
   const navigation = useNavigation();
@@ -50,19 +168,16 @@ export default function EndlessModeScreen() {
   const [bossMaxHp, setBossMaxHp] = useState(100);
   const [newUnlockedSkills, setNewUnlockedSkills] = useState(null);
 
-  // Aktiver Charakter
   const baseCharacter = useMemo(
     () => classList.find((c) => c.id === activeClassId),
     [classList, activeClassId]
   );
 
-  // Charakter-Stats
   const { stats: charStats, percentBonuses } = useMemo(() => {
     if (!baseCharacter) return { stats: {}, percentBonuses: {} };
     return getCharacterStatsWithEquipment(baseCharacter);
   }, [baseCharacter]);
 
-  // GESCALETE Bossdaten (Level)
   const scaledBoss = useMemo(() => {
     if (!currentBoss || !baseCharacter) return null;
     return scaleBossStats(currentBoss, baseCharacter.level || 1);
@@ -182,54 +297,6 @@ export default function EndlessModeScreen() {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // MODAL SHARED-COMPONENT für weniger Duplikat
-  const DropModal = ({ visible, drop, onClose }) => (
-    <Modal transparent visible={!!visible} animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>🎉 Du hast gefunden:</Text>
-
-          <Image
-            source={getEquipmentImageUrl(drop.id)}
-            style={{ width: 60, height: 60, margin: 12 }}
-            contentFit="contain"
-          />
-          <Text style={{ color: theme.borderGlowColor, fontSize: 18 }}>
-            {drop.label}
-          </Text>
-          <Text style={{ color: theme.textColor, fontSize: 14 }}>
-            {drop.description}
-          </Text>
-          <Pressable onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const SkillUnlockModal = ({ visible, skills, onClose }) => (
-    <Modal transparent animationType="fade" visible={!!visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.skillModal}>
-          <Text style={styles.skillModalTitle}>
-            🎉 Neue Skills freigeschaltet!
-          </Text>
-          {skills.map((s, i) => (
-            <View key={i} style={styles.skillItem}>
-              <Text style={styles.skillName}>{s.name}</Text>
-              <Text style={styles.skillDescription}>{s.description}</Text>
-              <Text style={styles.skillPower}>Power: {s.power}</Text>
-            </View>
-          ))}
-          <Pressable style={styles.okButton} onPress={onClose}>
-            <Text style={styles.okText}>OK</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-
   return (
     <View style={styles.container}>
       {bossBgSrc && (
@@ -256,93 +323,82 @@ export default function EndlessModeScreen() {
         />
       )}
 
-      {newDrop && (
-        <DropModal
-          visible={!!newDrop}
-          drop={newDrop}
-          onClose={() => {
-            setNewDrop(null);
-            setTimeout(spawnNewBoss, 500);
-          }}
-        />
-      )}
+      <DropModal
+        visible={!!newDrop}
+        drop={newDrop}
+        onClose={() => {
+          setNewDrop(null);
+          setTimeout(spawnNewBoss, 500);
+        }}
+        theme={theme}
+      />
 
-      {newUnlockedSkills && (
-        <SkillUnlockModal
-          visible={!!newUnlockedSkills}
-          skills={newUnlockedSkills}
-          onClose={handleCloseSkillModal}
-        />
-      )}
+      <SkillUnlockModal
+        visible={!!newUnlockedSkills}
+        skills={newUnlockedSkills || []}
+        onClose={handleCloseSkillModal}
+        theme={theme}
+      />
     </View>
   );
-}
+});
+
+export default EndlessModeScreen;
 
 function createStyles(theme) {
   return StyleSheet.create({
-    container: { flex: 1 },
-
-    modalOverlay: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.74)",
-      paddingHorizontal: 12,
-    },
-    skillModal: {
-      backgroundColor: theme.accentColor,
-      borderRadius: 18,
-      paddingVertical: 24,
-      paddingHorizontal: 22,
-      minWidth: 270,
-      maxWidth: 350,
-      alignItems: "center",
-      borderWidth: 2,
-      borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.12,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 13,
-      elevation: 3,
-    },
-    skillModalTitle: {
-      fontSize: 20,
-      color: theme.textColor,
-      marginBottom: 18,
-      textAlign: "center",
-      letterSpacing: 0.1,
-    },
-    skillItem: {
-      marginBottom: 13,
-      backgroundColor: theme.accentColor,
-      padding: 8,
-      borderRadius: 8,
-      width: "100%",
-      borderWidth: 1,
-      borderColor: theme.borderGlowColor,
-    },
-    skillName: {
-      fontSize: 16,
-      color: theme.borderGlowColor,
-      marginBottom: 4,
-      fontWeight: "bold",
-    },
-    skillDescription: { fontSize: 14, color: theme.textColor, marginBottom: 4 },
-    skillPower: { fontSize: 12, color: theme.glowColor },
-    okButton: {
-      marginTop: 16,
-      backgroundColor: theme.accentColor,
-      paddingVertical: 10,
-      paddingHorizontal: 34,
-      borderRadius: 13,
-      borderWidth: 1.2,
-      borderColor: theme.borderGlowColor,
-    },
-    okText: {
-      color: theme.textColor,
-      fontSize: 16,
-      letterSpacing: 0.06,
-      fontWeight: "600",
-    },
+    container: { flex: 1, backgroundColor: theme.bgColor },
   });
 }
+
+const modalStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.74)",
+    paddingHorizontal: 12,
+  },
+  skillModal: {
+    borderRadius: 18,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    minWidth: 270,
+    maxWidth: 350,
+    alignItems: "center",
+    borderWidth: 2,
+  },
+  skillModalTitle: {
+    fontSize: 20,
+    marginBottom: 18,
+    textAlign: "center",
+    letterSpacing: 0.1,
+  },
+  skillItem: {
+    marginBottom: 13,
+    padding: 8,
+    borderRadius: 8,
+    width: "100%",
+    borderWidth: 1,
+  },
+  skillName: {
+    fontSize: 16,
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
+  skillDescription: { fontSize: 14, marginBottom: 4 },
+  skillPower: { fontSize: 12 },
+  okButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 34,
+    borderRadius: 13,
+    borderWidth: 1,
+  },
+  okText: {
+    fontSize: 16,
+    letterSpacing: 0.06,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+});

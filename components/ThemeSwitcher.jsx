@@ -1,17 +1,18 @@
+import React, { useMemo } from "react";
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
 
-export default function ThemeSwitcher() {
+const ThemeSwitcher = React.memo(function ThemeSwitcher() {
   const { uiThemeType, setUiThemeType, availableThemes, theme } =
     useThemeContext();
-  const styles = createStyles(theme);
-  const gradient = theme.linearGradient || [
-    "#000000",
-    "#000000",
-    "#FF2D00",
-    "#FF2D00",
-  ];
+
+  // Styles und Gradient nur neu, wenn Theme sich ändert
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradient = useMemo(
+    () => theme.linearGradient || ["#000000", "#000000", "#FF2D00", "#FF2D00"],
+    [theme]
+  );
 
   return (
     <View style={styles.wrapper}>
@@ -30,8 +31,9 @@ export default function ThemeSwitcher() {
               key={key}
               onPress={() => setUiThemeType(key)}
               style={[styles.buttonWrap, isActive && styles.buttonWrapActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
             >
-              {/* Gradient Hintergrund */}
               <LinearGradient
                 colors={gradient}
                 start={{ x: 0.08, y: 0 }}
@@ -53,7 +55,9 @@ export default function ThemeSwitcher() {
       </ScrollView>
     </View>
   );
-}
+});
+
+export default ThemeSwitcher;
 
 function createStyles(theme) {
   return StyleSheet.create({
@@ -80,24 +84,14 @@ function createStyles(theme) {
       marginRight: 10,
       borderRadius: 12,
       overflow: "hidden",
-      shadowColor: theme.shadowColor,
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 2 },
       minWidth: 70,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 2,
       borderColor: theme.borderColor,
-      opacity: 0.82,
     },
     buttonWrapActive: {
       borderColor: theme.glowColor || theme.borderGlowColor,
-      opacity: 1,
-      shadowColor: theme.glowColor || theme.accentColorDark,
-      shadowOpacity: 0.22,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 3 },
     },
     button: {
       paddingVertical: 9,
@@ -109,16 +103,13 @@ function createStyles(theme) {
     },
     buttonText: {
       fontWeight: "bold",
-      color: theme.textColor + "cc",
+      color: theme.textColor,
       fontSize: 15,
       letterSpacing: 0.5,
       textAlign: "center",
     },
     buttonTextActive: {
       color: theme.bgColor || "#fff",
-      textShadowColor: theme.borderGlowColor,
-      textShadowRadius: 5,
-      textShadowOffset: { width: 0, height: 1 },
     },
   });
 }

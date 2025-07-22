@@ -1,34 +1,34 @@
-import React, { useRef, useEffect } from "react";
-import {
-  View,
-  Animated,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Pressable,
-} from "react-native";
+import React, { useRef, useEffect, useMemo } from "react";
+import { View, Animated, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { getItemImageUrl } from "../utils/item/itemUtils";
 import { useThemeContext } from "../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 
-function RewardIcon({ type, style }) {
+// RewardIcon als memoized Component
+const RewardIcon = React.memo(function RewardIcon({ type, style }) {
   const imgSrc = getItemImageUrl(type);
   return <Image source={imgSrc} style={style} contentFit="contain" />;
-}
+});
 
-export default function MissionItem({ item, onCollect, gradientColors }) {
+const MissionItem = React.memo(function MissionItem({
+  item,
+  onCollect,
+  gradientColors,
+}) {
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
-
-  // Gradientfarben: Von Prop oder aus Theme
-  const colors = gradientColors ||
-    theme.linearGradient || [
-      theme.accentColorSecondary,
-      theme.accentColor,
-      theme.accentColorDark,
-    ];
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const colors = useMemo(
+    () =>
+      gradientColors ||
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [gradientColors, theme]
+  );
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -79,11 +79,10 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
         {
           transform: [{ scale: scaleAnim }],
           opacity: opacityAnim,
-          shadowOpacity: isCollectable ? 0.22 : 0.12,
           borderColor: isCollectable
             ? theme.glowColor
             : isCollected
-            ? theme.shadowColor + "55"
+            ? theme.shadowColor + "33"
             : theme.borderGlowColor,
         },
       ]}
@@ -126,7 +125,7 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
           onPress={() => onCollect(item)}
           style={({ pressed }) => [
             styles.collectButton,
-            pressed && { transform: [{ scale: 0.97 }], opacity: 0.9 },
+            pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Belohnung für ${item.title} einsammeln`}
@@ -146,43 +145,36 @@ export default function MissionItem({ item, onCollect, gradientColors }) {
             { transform: [{ scale: checkScale }] },
           ]}
         >
-          <Ionicons name="checkmark-circle" size={30} color={theme.glowColor} />
+          <Ionicons name="checkmark-circle" size={28} color={theme.glowColor} />
           <Text style={styles.collectedLabel}>Eingesammelt</Text>
         </Animated.View>
       )}
     </Animated.View>
   );
-}
+});
+
+export default MissionItem;
 
 // ---------- DYNAMISCHE STYLES ----------
 function createStyles(theme) {
   return StyleSheet.create({
     missionItem: {
-      marginBottom: 16,
-      borderRadius: 15,
-      padding: 19,
-      borderWidth: 2,
+      marginBottom: 15,
+      borderRadius: 13,
+      padding: 15,
+      borderWidth: 1.5,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 10,
-      elevation: 3,
-      position: "relative",
-      overflow: "hidden",
+      // KEINE shadow*, elevation etc!
       backgroundColor: "transparent",
     },
     collectedItem: {
-      backgroundColor: theme.shadowColor + "B8",
-      opacity: 0.83,
+      backgroundColor: theme.shadowColor + "22",
+      opacity: 0.7,
     },
     missionText: {
-      fontSize: 17,
-      letterSpacing: 0.7,
+      fontSize: 16,
+      letterSpacing: 0.3,
       color: theme.textColor,
-      textShadowColor: theme.shadowColor,
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 1,
       marginBottom: 7,
     },
     missionTextCollected: {
@@ -191,7 +183,7 @@ function createStyles(theme) {
     },
     progressBarContainer: {
       height: 8,
-      backgroundColor: theme.shadowColor + "60",
+      backgroundColor: theme.shadowColor + "20",
       borderRadius: 5,
       overflow: "hidden",
       marginBottom: 11,
@@ -201,15 +193,11 @@ function createStyles(theme) {
       borderRadius: 5,
     },
     collectButton: {
-      marginTop: 7,
+      marginTop: 6,
       backgroundColor: theme.glowColor,
-      paddingVertical: 11,
-      borderRadius: 9,
+      paddingVertical: 9,
+      borderRadius: 8,
       alignItems: "center",
-      shadowColor: theme.borderGlowColor,
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 2,
     },
     rewardRow: {
       flexDirection: "row",
@@ -219,8 +207,8 @@ function createStyles(theme) {
     collectText: {
       color: theme.textColor,
       fontSize: 15,
-      letterSpacing: 0.1,
       fontWeight: "bold",
+      letterSpacing: 0.1,
     },
     collectedCheck: {
       flexDirection: "row",

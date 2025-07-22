@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,61 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const SLOT_WIDTH = Math.round(Dimensions.get("window").width * 0.93);
 
-export default function CharacterSelectScreen() {
-  const navigation = useNavigation();
-  const { classList, activeClassId, setActiveClassId } = useClass();
-  const { theme } = useThemeContext();
-  const { imageMap } = useAssets();
-  const styles = createStyles(theme);
-
-  const [selectedId, setSelectedId] = useState(activeClassId);
-  const maxSlots = 15;
-  const fullCharacterList = [
-    ...classList,
-    ...Array(Math.max(maxSlots - classList.length, 0)).fill(null),
-  ];
-
-  const handleStart = () => {
-    const selectedCharacter = classList.find((c) => c.id === selectedId);
-    if (selectedCharacter) {
-      setActiveClassId(selectedId);
-      navigation.navigate("TutorialStartScreen");
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <GradientHeader theme={theme} />
-      <FlatList
-        data={fullCharacterList}
-        keyExtractor={(_, idx) => idx.toString()}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) =>
-          item ? (
-            <CharacterCard
-              item={item}
-              isSelected={selectedId === item.id}
-              onPress={() => setSelectedId(item.id)}
-              imageMap={imageMap}
-              theme={theme}
-            />
-          ) : (
-            <EmptySlot
-              onPress={() => navigation.navigate("CreateCharacterScreen")}
-              theme={theme}
-            />
-          )
-        }
-      />
-      <StartButton visible={!!selectedId} onPress={handleStart} theme={theme} />
-    </View>
-  );
-}
-
-// ---------- Mini-Komponenten ----------
-
-function GradientHeader({ theme }) {
-  const styles = createStyles(theme);
+// --- Memo-Komponenten ---
+const GradientHeader = React.memo(function GradientHeader({ theme }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <LinearGradient
       colors={[
@@ -86,10 +34,16 @@ function GradientHeader({ theme }) {
       <Text style={styles.title}>Wähle deinen Kämpfer</Text>
     </LinearGradient>
   );
-}
+});
 
-function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
-  const styles = createStyles(theme);
+const CharacterCard = React.memo(function CharacterCard({
+  item,
+  isSelected,
+  onPress,
+  imageMap,
+  theme,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const element = elementData[item.element] || {};
   return (
     <TouchableOpacity
@@ -125,10 +79,10 @@ function CharacterCard({ item, isSelected, onPress, imageMap, theme }) {
       </LinearGradient>
     </TouchableOpacity>
   );
-}
+});
 
-function EmptySlot({ theme, onPress }) {
-  const styles = createStyles(theme);
+const EmptySlot = React.memo(function EmptySlot({ theme, onPress }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       style={styles.emptySlotOuter}
@@ -151,10 +105,14 @@ function EmptySlot({ theme, onPress }) {
       </LinearGradient>
     </TouchableOpacity>
   );
-}
+});
 
-function StartButton({ visible, onPress, theme }) {
-  const styles = createStyles(theme);
+const StartButton = React.memo(function StartButton({
+  visible,
+  onPress,
+  theme,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   if (!visible) return null;
   return (
     <TouchableOpacity
@@ -177,14 +135,80 @@ function StartButton({ visible, onPress, theme }) {
       </LinearGradient>
     </TouchableOpacity>
   );
+});
+
+// --- Hauptscreen ---
+function CharacterSelectScreen() {
+  const navigation = useNavigation();
+  const { classList, activeClassId, setActiveClassId } = useClass();
+  const { theme } = useThemeContext();
+  const { imageMap } = useAssets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const [selectedId, setSelectedId] = useState(activeClassId);
+  const maxSlots = 15;
+
+  // Memoize Liste für FlatList
+  const fullCharacterList = useMemo(
+    () => [
+      ...classList,
+      ...Array(Math.max(maxSlots - classList.length, 0)).fill(null),
+    ],
+    [classList]
+  );
+
+  const handleStart = useCallback(() => {
+    const selectedCharacter = classList.find((c) => c.id === selectedId);
+    if (selectedCharacter) {
+      setActiveClassId(selectedId);
+      navigation.navigate("TutorialStartScreen");
+    }
+  }, [selectedId, classList, setActiveClassId, navigation]);
+
+  const handleCreate = useCallback(() => {
+    navigation.navigate("CreateCharacterScreen");
+  }, [navigation]);
+
+  // Memoisiertes renderItem
+  const renderItem = useCallback(
+    ({ item }) =>
+      item ? (
+        <CharacterCard
+          item={item}
+          isSelected={selectedId === item.id}
+          onPress={() => setSelectedId(item.id)}
+          imageMap={imageMap}
+          theme={theme}
+        />
+      ) : (
+        <EmptySlot onPress={handleCreate} theme={theme} />
+      ),
+    [selectedId, imageMap, theme, handleCreate]
+  );
+
+  return (
+    <View style={styles.container}>
+      <GradientHeader theme={theme} />
+      <FlatList
+        data={fullCharacterList}
+        keyExtractor={(_, idx) => idx.toString()}
+        contentContainerStyle={styles.list}
+        renderItem={renderItem}
+      />
+      <StartButton visible={!!selectedId} onPress={handleStart} theme={theme} />
+    </View>
+  );
 }
 
-// ---------- Styles ----------
+export default React.memo(CharacterSelectScreen);
+
+// --- Styles ---
 function createStyles(theme) {
   const accent = theme.accentColor;
   const text = theme.textColor;
   const shadow = theme.shadowColor;
   const highlight = theme.borderGlowColor;
+
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -199,11 +223,6 @@ function createStyles(theme) {
       width: "90%",
       paddingVertical: 13,
       paddingHorizontal: 10,
-      shadowColor: theme.glowColor,
-      shadowRadius: 13,
-      shadowOpacity: 0.34,
-      shadowOffset: { width: 0, height: 5 },
-      elevation: 7,
     },
     title: {
       fontSize: 26,
@@ -221,17 +240,11 @@ function createStyles(theme) {
       alignItems: "center",
       borderWidth: 2,
       borderColor: "transparent",
-      shadowColor: theme.glowColor,
-      shadowRadius: 9,
-      shadowOpacity: 0.11,
-      elevation: 3,
       width: SLOT_WIDTH,
       alignSelf: "center",
     },
     selectedCardOuter: {
       borderColor: highlight,
-      shadowOpacity: 0.22,
-      elevation: 5,
     },
     card: {
       borderRadius: 17,
@@ -244,7 +257,6 @@ function createStyles(theme) {
       height: 160,
       borderRadius: 14,
       marginBottom: 10,
-      shadowRadius: 8,
       backgroundColor: shadow,
     },
     name: {
@@ -254,16 +266,12 @@ function createStyles(theme) {
       marginBottom: 2,
       textAlign: "center",
       letterSpacing: 0.17,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 6,
     },
     level: {
       fontSize: 15,
       color: highlight,
       fontWeight: "700",
       marginBottom: 2,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 5,
     },
     element: {
       fontSize: 14,
@@ -271,8 +279,6 @@ function createStyles(theme) {
       marginBottom: 4,
       letterSpacing: 0.1,
       color: text,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
     },
     classText: {
       fontSize: 13,
@@ -287,10 +293,6 @@ function createStyles(theme) {
       borderWidth: 1.5,
       borderColor: highlight,
       opacity: 0.93,
-      shadowColor: theme.glowColor,
-      shadowRadius: 7,
-      shadowOpacity: 0.09,
-      elevation: 2,
       width: SLOT_WIDTH,
       alignSelf: "center",
     },
@@ -309,8 +311,6 @@ function createStyles(theme) {
       fontWeight: "bold",
       letterSpacing: 0.16,
       opacity: 0.82,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 4,
     },
     startButton: {
       marginTop: 10,
@@ -319,10 +319,6 @@ function createStyles(theme) {
       width: "81%",
       borderRadius: 21,
       overflow: "hidden",
-      shadowColor: theme.glowColor,
-      shadowRadius: 14,
-      shadowOpacity: 0.17,
-      elevation: 6,
       borderWidth: 2,
       borderColor: highlight,
     },
@@ -338,8 +334,6 @@ function createStyles(theme) {
       fontSize: 21,
       fontWeight: "bold",
       letterSpacing: 0.2,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 7,
     },
   });
 }

@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -10,6 +11,7 @@ import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
+// Info-Textpunkte bleiben so!
 const INFO_POINTS = [
   "Im Kampf kannst du je nach Charakter-Level neue Fähigkeiten freischalten.",
   "Du verdienst Münzen und Kristalle, wenn du Gegner besiegst.",
@@ -19,17 +21,39 @@ const INFO_POINTS = [
   "Nutze Skills taktisch, sammle Erfahrung, steigere dein Level und werde stärker!",
 ];
 
+// --- InfoPoint einzeln als React.memo für pure Performance
+const InfoPoint = React.memo(function InfoPoint({ text, gradient, styles }) {
+  return (
+    <LinearGradient
+      colors={gradient}
+      start={{ x: 0, y: 0.2 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.infoGradient}
+    >
+      <Text style={styles.infoText}>{text}</Text>
+    </LinearGradient>
+  );
+});
+
 export default function PreBattleInfoScreen() {
   const navigation = useNavigation();
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
 
-  const gradient = theme.linearGradient || [
-    "#000000",
-    "#000000",
-    "#FF2D00",
-    "#FF2D00",
-  ];
+  // Styles und Gradient sind nur bei Theme-Wechsel neu
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradient = useMemo(
+    () => theme.linearGradient || ["#000000", "#000000", "#FF2D00", "#FF2D00"],
+    [theme.linearGradient]
+  );
+
+  // Memoisierte InfoPoints
+  const renderInfoPoints = useMemo(
+    () =>
+      INFO_POINTS.map((text, i) => (
+        <InfoPoint key={i} text={text} gradient={gradient} styles={styles} />
+      )),
+    [gradient, styles]
+  );
 
   return (
     <View style={styles.container}>
@@ -53,17 +77,7 @@ export default function PreBattleInfoScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {INFO_POINTS.map((text, i) => (
-          <LinearGradient
-            key={i}
-            colors={gradient}
-            start={{ x: 0, y: 0.2 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.infoGradient}
-          >
-            <Text style={styles.infoText}>{text}</Text>
-          </LinearGradient>
-        ))}
+        {renderInfoPoints}
       </ScrollView>
 
       <TouchableOpacity
@@ -85,7 +99,6 @@ export default function PreBattleInfoScreen() {
 }
 
 function createStyles(theme) {
-  const accent = theme.accentColor || "#0f172a";
   const textMain = theme.textColor || "#c7dfff";
   const highlight = theme.borderGlowColor || "#38bdf8";
 
@@ -100,11 +113,6 @@ function createStyles(theme) {
       borderRadius: 15,
       width: "90%",
       alignSelf: "center",
-      shadowColor: highlight,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.13,
-      shadowRadius: 12,
-      elevation: 3,
       paddingVertical: 8,
       paddingHorizontal: 8,
     },
@@ -126,11 +134,6 @@ function createStyles(theme) {
       paddingVertical: 11,
       paddingHorizontal: 10,
       marginBottom: 8,
-      shadowColor: highlight,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.09,
-      shadowRadius: 6,
-      elevation: 2,
     },
     infoText: {
       fontSize: 18,
@@ -140,9 +143,6 @@ function createStyles(theme) {
       letterSpacing: 0.09,
       backgroundColor: "transparent",
       fontWeight: "500",
-      textShadowColor: theme.accentColorDark,
-      textShadowRadius: 2,
-      textShadowOffset: { width: 0, height: 1 },
     },
     buttonOuter: {
       marginTop: 16,
@@ -151,11 +151,6 @@ function createStyles(theme) {
       width: "82%",
       alignSelf: "center",
       overflow: "hidden",
-      shadowColor: highlight,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.14,
-      shadowRadius: 12,
-      elevation: 3,
     },
     button: {
       paddingVertical: 18,
@@ -170,15 +165,11 @@ function createStyles(theme) {
       left: 22,
       zIndex: 10,
     },
-
     buttonText: {
       color: theme.textColor,
       fontSize: 20,
       fontWeight: "bold",
       letterSpacing: 0.16,
-      textShadowColor: theme.accentColorDark,
-      textShadowRadius: 3,
-      textShadowOffset: { width: 0, height: 1 },
     },
   });
 }

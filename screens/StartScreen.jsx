@@ -61,7 +61,8 @@ const SOCIALS = [
   },
 ];
 
-function SocialIcons({ theme, styles }) {
+// -- SOCIAL ICONS: PURE MEMO-KOMPONENTE --
+const SocialIcons = React.memo(function SocialIcons({ theme, styles }) {
   return (
     <View style={styles.socialIcons}>
       {SOCIALS.map((social) => (
@@ -77,7 +78,7 @@ function SocialIcons({ theme, styles }) {
       ))}
     </View>
   );
-}
+});
 
 export default function StartScreen() {
   const navigation = useNavigation();
@@ -174,6 +175,7 @@ export default function StartScreen() {
               <Text style={styles.modalItemText}>Assets neu laden</Text>
             </TouchableOpacity>
 
+            {/* Memoized Social Icons */}
             <SocialIcons theme={theme} styles={styles} />
 
             <TouchableOpacity
@@ -217,11 +219,11 @@ function createStyles(theme) {
       ...Platform.select({
         ios: {
           shadowColor: theme.glowColor,
-          shadowRadius: 15,
-          shadowOpacity: 0.84,
-          shadowOffset: { width: 0, height: 8 },
+          shadowRadius: 10,
+          shadowOpacity: 0.6,
+          shadowOffset: { width: 0, height: 6 },
         },
-        android: { elevation: 14 },
+        android: { elevation: 10 },
       }),
     },
     startButton: {
@@ -238,15 +240,13 @@ function createStyles(theme) {
       color: theme.textColor,
       fontWeight: "800",
       textTransform: "uppercase",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 9,
-      textShadowOffset: { width: 0, height: 3 },
+      // Textschatten entfernt
     },
     copyright: {
       width: "100%",
       alignItems: "center",
       paddingVertical: 8,
-      backgroundColor: theme.accentColor + "db",
+      backgroundColor: theme.accentColor + "cc",
       borderTopLeftRadius: 17,
       borderTopRightRadius: 17,
       position: "absolute",
@@ -257,9 +257,7 @@ function createStyles(theme) {
       color: theme.textColor,
       fontSize: 14.5,
       fontWeight: "500",
-      textShadowColor: theme.shadowColor + "87",
-      textShadowRadius: 3,
-      textShadowOffset: { width: 0, height: 2 },
+      // Textschatten entfernt
     },
     settingsIcon: {
       position: "absolute",
@@ -271,18 +269,18 @@ function createStyles(theme) {
       ...Platform.select({
         ios: {
           shadowColor: theme.glowColor,
-          shadowRadius: 8,
-          shadowOpacity: 0.59,
+          shadowRadius: 6,
+          shadowOpacity: 0.4,
           shadowOffset: { width: 0, height: 2 },
         },
-        android: { elevation: 8 },
+        android: { elevation: 6 },
       }),
     },
     modalOverlay: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(16,16,24,0.80)",
+      backgroundColor: "rgba(16,16,24,0.8)",
     },
     modalContent: {
       width: "90%",
@@ -291,29 +289,27 @@ function createStyles(theme) {
       paddingHorizontal: 28,
       alignItems: "center",
       shadowColor: theme.glowColor,
-      shadowRadius: 12,
-      shadowOpacity: 0.18,
-      elevation: 7,
+      shadowRadius: 10,
+      shadowOpacity: 0.15,
+      elevation: 5,
     },
     modalTitle: {
       fontSize: 24,
       color: theme.textColor,
       marginBottom: 25,
       fontWeight: "bold",
-      letterSpacing: 0.34,
+      letterSpacing: 0.3,
       textTransform: "uppercase",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 7,
+      // Textschatten entfernt
     },
     modalItem: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 23,
-      marginTop: 7,
+      marginVertical: 12,
       paddingVertical: 7,
       paddingHorizontal: 8,
       borderRadius: 9,
-      backgroundColor: theme.shadowColor + "25",
+      backgroundColor: theme.shadowColor + "22",
     },
     modalItemText: {
       fontSize: 18,
@@ -343,8 +339,7 @@ function createStyles(theme) {
       marginTop: 9,
       letterSpacing: 0.8,
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
+      // Textschatten entfernt
     },
   });
 }

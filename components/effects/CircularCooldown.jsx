@@ -1,19 +1,25 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { Animated, Easing } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export default function CircularCooldown({
+const CircularCooldown = React.memo(function CircularCooldown({
   duration,
   size = 36,
   strokeWidth = 3,
+  color = "#3b82f6",
+  bgColor = "#1e293b",
 }) {
   const progress = useRef(new Animated.Value(0)).current;
 
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+  // Stable memoized geometry
+  const { radius, circumference } = useMemo(() => {
+    const r = (size - strokeWidth) / 2;
+    return { radius: r, circumference: 2 * Math.PI * r };
+  }, [size, strokeWidth]);
 
+  // Run animation when duration changes
   useEffect(() => {
     progress.setValue(0);
     Animated.timing(progress, {
@@ -22,8 +28,9 @@ export default function CircularCooldown({
       easing: Easing.linear,
       useNativeDriver: false,
     }).start();
-  }, [duration]);
+  }, [duration, progress]);
 
+  // Animated offset
   const strokeDashoffset = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [circumference, 0],
@@ -31,18 +38,18 @@ export default function CircularCooldown({
 
   return (
     <Svg width={size} height={size}>
-      {/* Hintergrundkreis */}
+      {/* Background circle */}
       <Circle
-        stroke="#1e293b"
+        stroke={bgColor}
         fill="none"
         cx={size / 2}
         cy={size / 2}
         r={radius}
         strokeWidth={strokeWidth}
       />
-      {/* Animierter Fortschrittskreis */}
+      {/* Animated cooldown circle */}
       <AnimatedCircle
-        stroke="#3b82f6"
+        stroke={color}
         fill="none"
         cx={size / 2}
         cy={size / 2}
@@ -54,4 +61,6 @@ export default function CircularCooldown({
       />
     </Svg>
   );
-}
+});
+
+export default CircularCooldown;

@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -13,18 +19,82 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 
-export default function OnlineGuard({ children }) {
+// Memoisiertes Overlay für Offline-Status
+const OfflineOverlay = React.memo(function OfflineOverlay({
+  fadeAnim,
+  theme,
+  onRetry,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = theme.linearGradient || [
+    "#000000",
+    "#000000",
+    "#FF2D00",
+    "#FF2D00",
+  ];
+
+  return (
+    <Animated.View
+      style={[StyleSheet.absoluteFillObject, { opacity: fadeAnim, zIndex: 20 }]}
+    >
+      <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={styles.centered}>
+        <View style={styles.glassCard}>
+          <BlurView
+            intensity={18}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.cardContent}>
+            <Feather
+              name="wifi-off"
+              size={46}
+              color={theme.glowColor}
+              style={{ marginBottom: 10 }}
+              accessibilityLabel="Offline-Icon"
+              accessibilityRole="image"
+            />
+            <Text style={styles.message}>
+              {t("noInternetMessage") || "Keine Internetverbindung"}
+            </Text>
+            <TouchableOpacity
+              style={styles.buttonOuter}
+              onPress={onRetry}
+              activeOpacity={0.89}
+              accessibilityRole="button"
+              accessibilityLabel={t("retryButton") || "Erneut versuchen"}
+            >
+              <LinearGradient
+                colors={gradientColors}
+                start={{ x: 0.1, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>
+                  {t("retryButton") || "Erneut versuchen"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Animated.View>
+  );
+});
+
+const OnlineGuard = React.memo(function OnlineGuard({ children }) {
   const { theme } = useThemeContext();
   const [isConnected, setIsConnected] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Internet-Check
+  // NetInfo-Check als useCallback, damit die Referenz stabil bleibt
   const checkConnection = useCallback(() => {
     NetInfo.fetch().then((state) => {
       setIsConnected(!!state.isConnected && !!state.isInternetReachable);
     });
   }, []);
 
+  // Setup Listener bei Mount
   useEffect(() => {
     checkConnection();
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -33,6 +103,7 @@ export default function OnlineGuard({ children }) {
     return () => unsubscribe();
   }, [checkConnection]);
 
+  // Animation bei Verbindungswechsel
   useEffect(() => {
     if (!isConnected) {
       fadeAnim.setValue(0);
@@ -50,73 +121,22 @@ export default function OnlineGuard({ children }) {
     }
   }, [isConnected, fadeAnim]);
 
-  const styles = createStyles(theme);
-
   if (!isConnected) {
     return (
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFillObject,
-          { opacity: fadeAnim, zIndex: 20 },
-        ]}
-      >
-        {/* Blur Glass-Overlay */}
-        <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={styles.centered}>
-          {/* Glassmorphic Card */}
-          <View style={styles.glassCard}>
-            <BlurView
-              intensity={28}
-              tint="light"
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.cardContent}>
-              <Feather
-                name="wifi-off"
-                size={56}
-                color={theme.glowColor}
-                style={{ marginBottom: 13 }}
-                accessibilityLabel="Offline-Icon"
-                accessibilityRole="image"
-              />
-              <Text style={styles.message}>
-                {t("noInternetMessage") || "Keine Internetverbindung"}
-              </Text>
-              <TouchableOpacity
-                style={styles.buttonOuter}
-                onPress={checkConnection}
-                activeOpacity={0.89}
-                accessibilityRole="button"
-                accessibilityLabel={t("retryButton") || "Erneut versuchen"}
-              >
-                <LinearGradient
-                  colors={
-                    theme.linearGradient || [
-                      "#000000",
-                      "#000000",
-                      "#FF2D00",
-                      "#FF2D00",
-                    ]
-                  }
-                  start={{ x: 0.1, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.button}
-                >
-                  <Text style={styles.buttonText}>
-                    {t("retryButton") || "Erneut versuchen"}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Animated.View>
+      <OfflineOverlay
+        fadeAnim={fadeAnim}
+        theme={theme}
+        onRetry={checkConnection}
+      />
     );
   }
 
   return <>{children}</>;
-}
+});
 
+export default OnlineGuard;
+
+// Styles – nur das Wesentliche, keine Shadows/Elevation/TextShadow!
 function createStyles(theme) {
   return StyleSheet.create({
     centered: {
@@ -125,58 +145,45 @@ function createStyles(theme) {
       alignItems: "center",
     },
     glassCard: {
-      minWidth: 270,
-      borderRadius: 24,
+      minWidth: 220,
+      borderRadius: 20,
       overflow: "hidden",
       position: "relative",
-      borderWidth: 1.4,
-      borderColor: "#fff6",
-      backgroundColor: "rgba(30, 41, 59, 0.30)", // Dunkler, glasiger Hintergrund
-      elevation: 12,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.24,
-      shadowRadius: 32,
-      shadowOffset: { width: 0, height: 5 },
+      borderWidth: 1,
+      borderColor: "#fff2",
+      backgroundColor: "rgba(30,41,59,0.15)",
     },
     cardContent: {
       alignItems: "center",
-      padding: 36,
+      padding: 24,
       zIndex: 2,
     },
     message: {
-      fontSize: 21,
+      fontSize: 18,
       textAlign: "center",
-      marginBottom: 22,
-      letterSpacing: 0.17,
+      marginBottom: 16,
+      letterSpacing: 0.1,
       fontWeight: "bold",
       color: theme.textColor,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 4,
-      textShadowOffset: { width: 0, height: 2 },
     },
     buttonOuter: {
-      borderRadius: 13,
-      marginTop: 10,
+      borderRadius: 10,
+      marginTop: 6,
       overflow: "hidden",
-      minWidth: 170,
+      minWidth: 110,
       alignSelf: "center",
-      shadowColor: theme.glowColor,
-      shadowRadius: 15,
-      shadowOpacity: 0.32,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 4,
     },
     button: {
-      paddingVertical: 14,
-      paddingHorizontal: 36,
+      paddingVertical: 11,
+      paddingHorizontal: 26,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 13,
+      borderRadius: 10,
       width: "100%",
     },
     buttonText: {
-      fontSize: 17,
-      letterSpacing: 0.34,
+      fontSize: 15,
+      letterSpacing: 0.2,
       textAlign: "center",
       color: theme.textColor,
       fontWeight: "bold",

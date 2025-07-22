@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 
-// Countdown-Hook wie gehabt
+// Countdown-Hook (unverändert)
 function useCountdown(targetDateString) {
-  const [timeLeft, setTimeLeft] = useState(() =>
+  const [timeLeft, setTimeLeft] = React.useState(() =>
     calcTimeLeft(targetDateString)
   );
-  useEffect(() => {
+  React.useEffect(() => {
     if (!targetDateString) return;
     const targetDate = new Date(targetDateString);
     if (isNaN(targetDate.getTime())) return;
+    setTimeLeft(calcTimeLeft(targetDate));
     const interval = setInterval(() => {
       setTimeLeft(calcTimeLeft(targetDate));
     }, 60000);
@@ -21,7 +22,6 @@ function useCountdown(targetDateString) {
   }, [targetDateString]);
   return timeLeft;
 }
-
 function calcTimeLeft(targetDateString) {
   if (!targetDateString) return null;
   const target = new Date(targetDateString);
@@ -34,7 +34,6 @@ function calcTimeLeft(targetDateString) {
     minutes: Math.floor((diff / (1000 * 60)) % 60),
   };
 }
-
 function formatCountdown(countdown) {
   if (!countdown) return "✅ Jetzt verfügbar";
   const { days, hours, minutes } = countdown;
@@ -43,28 +42,43 @@ function formatCountdown(countdown) {
   }, ${hours} Std, ${minutes} Min`;
 }
 
-export default function TeaserCard({ item }) {
+// --------------------
+// Memoized TeaserCard
+// --------------------
+const TeaserCard = React.memo(function TeaserCard({ item }) {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
+
+  // Statischer Style only when theme changes
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Gradient nur neu berechnen, wenn Theme wechselt
+  const gradient = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+        "#000000",
+      ],
+    [theme]
+  );
+
+  // Countdown aktualisiert sich über den Hook
+  const countdown = useCountdown(item?.unlockDate);
+  const countdownText = useMemo(() => formatCountdown(countdown), [countdown]);
+
+  // Bildquelle optimiert & memoisiert
+  const assetKey = `class_${item?.id}`;
+  const fallbackUri = item?.id
+    ? `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`
+    : undefined;
+  const imageSource = useMemo(
+    () => imageMap[assetKey] || { uri: fallbackUri },
+    [assetKey, fallbackUri, imageMap]
+  );
+
   if (!item) return null;
-
-  // Nimm überall dein zentrales Gradient aus dem Theme!
-  const gradient = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-    "#000000",
-  ];
-
-  const countdown = useCountdown(item.unlockDate);
-  const countdownText = formatCountdown(countdown);
-
-  // Bildquelle logisch und fallback
-  const assetKey = `class_${item.id}`;
-  const fallbackUri = `https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/classes/${item.id}.png`;
-  const imageSource = imageMap[assetKey] || { uri: fallbackUri };
-
-  const styles = createStyles(theme);
 
   return (
     <LinearGradient
@@ -84,7 +98,7 @@ export default function TeaserCard({ item }) {
           <Text style={styles.date}>{countdownText}</Text>
         </LinearGradient>
 
-        <View colors={gradient} style={styles.iconGlow}>
+        <View style={styles.iconGlow}>
           <Image
             source={imageSource}
             style={styles.image}
@@ -99,7 +113,9 @@ export default function TeaserCard({ item }) {
       </View>
     </LinearGradient>
   );
-}
+});
+
+export default TeaserCard;
 
 function createStyles(theme) {
   return StyleSheet.create({

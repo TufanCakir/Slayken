@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import { t } from "../../i18n";
@@ -7,17 +7,21 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const LANGUAGES = ["de", "en"];
 
-export default function LanguageSection() {
+function LanguageSectionComponent() {
   const { theme } = useThemeContext();
   const { language, setLanguage } = useLanguage();
-  const styles = createStyles(theme);
 
-  // Farben für Gradient
-  const gradientColors = theme.linearGradient || [
-    theme.accentColorSecondary,
-    theme.accentColor,
-    theme.accentColorDark,
-  ];
+  // Styles und Farben nur neu berechnen, wenn sich Theme ändert
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = useMemo(
+    () =>
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [theme]
+  );
 
   return (
     <View style={styles.section}>
@@ -63,6 +67,11 @@ export default function LanguageSection() {
   );
 }
 
+// React.memo verhindert Re-Renders bei gleichem Theme/Language!
+const LanguageSection = React.memo(LanguageSectionComponent);
+export default LanguageSection;
+
+// Styles werden in useMemo erstellt
 function createStyles(theme) {
   const accent = theme.accentColor;
   const text = theme.textColor;
@@ -95,11 +104,11 @@ function createStyles(theme) {
       marginRight: 8,
       marginBottom: 5,
       opacity: 1,
-      position: "relative", // Wichtig für absoluteFill des Gradients!
-      overflow: "hidden", // Gradient bleibt im Button!
+      position: "relative",
+      overflow: "hidden",
     },
     langButtonActive: {
-      // Keine separate BG, Gradient übernimmt
+      // Der Gradient ist der Hintergrund
     },
     langButtonPressed: {
       opacity: 0.7,
@@ -110,10 +119,10 @@ function createStyles(theme) {
       letterSpacing: 0.5,
       textAlign: "center",
       color: text,
-      zIndex: 1, // Immer über Gradient
+      zIndex: 1,
     },
     langButtonTextActive: {
-      color: accent, // Text hebt sich von Gradient ab
+      color: accent, // Optional: Text hebt sich von Gradient ab
     },
   });
 }

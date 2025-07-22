@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -15,13 +21,86 @@ import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
+// ---- Memoized Input Component ----
+const UsernameInput = React.memo(function UsernameInput({
+  value,
+  onChange,
+  placeholder,
+  theme,
+  inputRef,
+  onClear,
+  onSubmit,
+  isDisabled,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <View style={styles.inputWrapper}>
+      <TextInput
+        ref={inputRef}
+        placeholder={placeholder}
+        placeholderTextColor={
+          theme.placeholderTextColor || theme.textColor + "77"
+        }
+        style={styles.input}
+        value={value}
+        onChangeText={onChange}
+        autoCapitalize="words"
+        autoCorrect={false}
+        maxLength={24}
+        returnKeyType="done"
+        onSubmitEditing={isDisabled ? undefined : onSubmit}
+      />
+      {!!value && (
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={onClear}
+          hitSlop={16}
+        >
+          <Ionicons name="close-circle" size={22} color={theme.glowColor} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
+
+// ---- Memoized Button Component ----
+const GradientButton = React.memo(function GradientButton({
+  title,
+  onPress,
+  disabled,
+  theme,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <TouchableOpacity
+      style={[styles.buttonOuter, disabled && styles.buttonDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.85}
+    >
+      <LinearGradient
+        colors={[
+          theme.accentColorSecondary,
+          theme.accentColor,
+          theme.accentColorDark,
+        ]}
+        start={[0.1, 0]}
+        end={[1, 1]}
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>{title}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+});
+
 export default function LoginScreen() {
   const { theme } = useThemeContext();
   const [username, setUsername] = useState("");
   const navigation = useNavigation();
   const inputRef = useRef();
 
-  // Bei Mount: Ist schon eingeloggt? Dann skip!
+  // Ist schon eingeloggt? Dann skip!
   useEffect(() => {
     AsyncStorage.getItem("user").then((savedUser) => {
       if (savedUser) navigation.replace("HomeScreen");
@@ -57,7 +136,11 @@ export default function LoginScreen() {
     ]);
   }, [username, navigation]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Memoisierte Callbacks, damit UsernameInput nicht neu rendert
+  const handleClear = useCallback(() => setUsername(""), []);
+  const handleChange = useCallback((val) => setUsername(val), []);
 
   return (
     <View style={styles.container}>
@@ -75,55 +158,23 @@ export default function LoginScreen() {
         <Text style={styles.title}>{t("loginTitle")}</Text>
       </LinearGradient>
 
-      <View style={styles.inputWrapper}>
-        <TextInput
-          ref={inputRef}
-          placeholder={t("playerNameLabels.newNamePlaceholder")}
-          placeholderTextColor={
-            theme.placeholderTextColor || theme.textColor + "77"
-          }
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="words"
-          autoCorrect={false}
-          maxLength={24}
-          returnKeyType="done"
-          onSubmitEditing={isDisabled ? undefined : handleLogin}
-        />
-        {!!username && (
-          <TouchableOpacity
-            style={styles.clearButton}
-            onPress={() => setUsername("")}
-            hitSlop={16}
-          >
-            <Ionicons name="close-circle" size={22} color={theme.glowColor} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <UsernameInput
+        value={username}
+        onChange={handleChange}
+        placeholder={t("playerNameLabels.newNamePlaceholder")}
+        theme={theme}
+        inputRef={inputRef}
+        onClear={handleClear}
+        onSubmit={handleLogin}
+        isDisabled={isDisabled}
+      />
 
-      {/* Button mit Gradient */}
-      <TouchableOpacity
-        style={[styles.buttonOuter, isDisabled && styles.buttonDisabled]}
+      <GradientButton
+        title={t("playerNameLabels.saveButton")}
         onPress={handleLogin}
         disabled={isDisabled}
-        activeOpacity={0.85}
-      >
-        <LinearGradient
-          colors={[
-            theme.accentColorSecondary,
-            theme.accentColor,
-            theme.accentColorDark,
-          ]}
-          start={[0.1, 0]}
-          end={[1, 1]}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>
-            {t("playerNameLabels.saveButton")}
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
+        theme={theme}
+      />
     </View>
   );
 }
@@ -144,11 +195,6 @@ function createStyles(theme) {
       paddingVertical: 20,
       paddingHorizontal: 40,
       alignSelf: "center",
-      shadowColor: theme.glowColor,
-      shadowRadius: 17,
-      shadowOpacity: 0.35,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 7,
       minWidth: 200,
       maxWidth: 380,
       width: "95%",
@@ -159,9 +205,6 @@ function createStyles(theme) {
       textAlign: "center",
       letterSpacing: 1,
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 11,
-      textShadowOffset: { width: 0, height: 2 },
       textTransform: "uppercase",
     },
     inputWrapper: {
@@ -181,10 +224,6 @@ function createStyles(theme) {
       paddingHorizontal: 20,
       borderWidth: 1.4,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.09,
-      shadowRadius: 8,
-      elevation: 3,
       paddingRight: 40, // Platz für das X
     },
     clearButton: {
@@ -196,10 +235,6 @@ function createStyles(theme) {
       width: "100%",
       borderRadius: 14,
       overflow: "hidden",
-      shadowColor: theme.glowColor,
-      shadowRadius: 10,
-      shadowOpacity: 0.3,
-      elevation: 5,
     },
     button: {
       borderRadius: 14,
@@ -216,8 +251,6 @@ function createStyles(theme) {
       fontWeight: "bold",
       fontSize: 19,
       letterSpacing: 0.19,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 7,
     },
   });
 }

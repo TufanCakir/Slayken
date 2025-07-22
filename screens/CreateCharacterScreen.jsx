@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,64 +16,13 @@ import { useThemeContext } from "../context/ThemeContext";
 import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function CreateCharacterScreen({ navigation }) {
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
-  const { theme } = useThemeContext();
-  const { setActiveClassId, updateCharacter } = useClass();
-  const { imageMap } = useAssets();
-  const styles = createStyles(theme);
-
-  const goToNext = () => setStep(2);
-
-  const finishCreation = async (selectedClass) => {
-    const newChar = {
-      ...selectedClass,
-      baseId: selectedClass.id,
-      id: `${selectedClass.id}-${Date.now()}`,
-      label: name,
-      name,
-      level: 1,
-      exp: 0,
-      skills: selectedClass.skills ?? [],
-      classUrl: getClassImageUrl(selectedClass.id),
-    };
-    await updateCharacter(newChar);
-    await setActiveClassId(newChar.id);
-    navigation.replace("CharacterSelectScreen");
-  };
-
-  return (
-    <View style={styles.container}>
-      {step === 1 ? (
-        <NameStep
-          name={name}
-          setName={setName}
-          onNext={goToNext}
-          theme={theme}
-        />
-      ) : (
-        <ClassSelectStep
-          name={name}
-          classes={classes}
-          imageMap={imageMap}
-          onSelect={finishCreation}
-          theme={theme}
-        />
-      )}
-      <BackButton
-        onPress={() => (step === 1 ? navigation.goBack() : setStep(1))}
-        label="Zurück"
-        theme={theme}
-      />
-    </View>
-  );
-}
-
-// ---------- Step-Komponenten ----------
-
-function NameStep({ name, setName, onNext, theme }) {
-  const styles = createStyles(theme);
+const NameStep = React.memo(function NameStep({
+  name,
+  setName,
+  onNext,
+  theme,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <>
       <GradientHeader theme={theme} title="Wie soll dein Held heißen?" />
@@ -95,14 +44,78 @@ function NameStep({ name, setName, onNext, theme }) {
       />
     </>
   );
-}
+});
 
-function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
-  const styles = createStyles(theme);
+const ClassSelectStep = React.memo(function ClassSelectStep({
+  classes,
+  imageMap,
+  onSelect,
+  theme,
+  name,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const filteredClasses = (classes ?? []).filter((cls) => !cls.eventReward);
+  const filteredClasses = useMemo(
+    () => (classes ?? []).filter((cls) => !cls.eventReward),
+    [classes]
+  );
 
-  console.log("elementData", elementData);
+  const renderItem = useCallback(
+    ({ item }) => {
+      if (!item) return null;
+      const element = elementData[item.element];
+
+      return (
+        <TouchableOpacity
+          onPress={() => onSelect(item)}
+          style={styles.classCardOuter}
+          activeOpacity={0.87}
+          accessibilityRole="button"
+          accessibilityLabel={`Klasse auswählen: ${item.label || "Unbekannt"}`}
+        >
+          <LinearGradient
+            colors={[
+              theme.accentColorSecondary,
+              theme.accentColor,
+              theme.accentColorDark,
+            ]}
+            start={[0, 0]}
+            end={[1, 0]}
+            style={styles.classCard}
+          >
+            <View style={styles.classRow}>
+              <Image
+                source={
+                  imageMap[`class_${item.id}`] || {
+                    uri: getClassImageUrl(item.id),
+                  }
+                }
+                style={styles.avatar}
+                contentFit="contain"
+                transition={300}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.optionTitle}>
+                  {item.label ?? "Unbekannt"}
+                </Text>
+                <Text style={styles.optionDescription}>
+                  {item.description ?? "Keine Beschreibung vorhanden."}
+                </Text>
+                {element ? (
+                  <Text style={styles.elementLabel}>
+                    {element.icon} {element.label}
+                  </Text>
+                ) : (
+                  <Text style={styles.elementLabel}>🌟 Unbekannt</Text>
+                )}
+              </View>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    },
+    [imageMap, theme]
+  );
 
   return (
     <>
@@ -111,62 +124,7 @@ function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
         data={filteredClasses}
         keyExtractor={(item) => item?.id ?? Math.random().toString()}
         contentContainerStyle={styles.classList}
-        renderItem={({ item }) => {
-          if (!item) return null;
-
-          const element = elementData[item.element];
-
-          return (
-            <TouchableOpacity
-              onPress={() => onSelect(item)}
-              style={styles.classCardOuter}
-              activeOpacity={0.87}
-              accessibilityRole="button"
-              accessibilityLabel={`Klasse auswählen: ${
-                item.label || "Unbekannt"
-              }`}
-            >
-              <LinearGradient
-                colors={[
-                  theme.accentColorSecondary,
-                  theme.accentColor,
-                  theme.accentColorDark,
-                ]}
-                start={[0, 0]}
-                end={[1, 0]}
-                style={styles.classCard}
-              >
-                <View style={styles.classRow}>
-                  <Image
-                    source={
-                      imageMap[`class_${item.id}`] || {
-                        uri: getClassImageUrl(item.id),
-                      }
-                    }
-                    style={styles.avatar}
-                    contentFit="contain"
-                    transition={300}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.optionTitle}>
-                      {item.label ?? "Unbekannt"}
-                    </Text>
-                    <Text style={styles.optionDescription}>
-                      {item.description ?? "Keine Beschreibung vorhanden."}
-                    </Text>
-                    {element ? (
-                      <Text style={styles.elementLabel}>
-                        {element.icon} {element.label}
-                      </Text>
-                    ) : (
-                      <Text style={styles.elementLabel}>🌟 Unbekannt</Text>
-                    )}
-                  </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={renderItem}
         getItemLayout={(_, index) => ({
           length: 138,
           offset: 138 * index,
@@ -175,12 +133,10 @@ function ClassSelectStep({ classes, imageMap, onSelect, theme }) {
       />
     </>
   );
-}
+});
 
-// ---------- Mini-Komponenten ----------
-
-function GradientHeader({ theme, title }) {
-  const styles = createStyles(theme);
+const GradientHeader = React.memo(function GradientHeader({ theme, title }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <LinearGradient
       colors={[
@@ -195,10 +151,10 @@ function GradientHeader({ theme, title }) {
       <Text style={styles.title}>{title}</Text>
     </LinearGradient>
   );
-}
+});
 
-function BackButton({ onPress, label, theme }) {
-  const styles = createStyles(theme);
+const BackButton = React.memo(function BackButton({ onPress, label, theme }) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -210,10 +166,15 @@ function BackButton({ onPress, label, theme }) {
       <Text style={styles.backText}>{label}</Text>
     </TouchableOpacity>
   );
-}
+});
 
-function NextButton({ onPress, label, disabled, theme }) {
-  const styles = createStyles(theme);
+const NextButton = React.memo(function NextButton({
+  onPress,
+  label,
+  disabled,
+  theme,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -237,7 +198,68 @@ function NextButton({ onPress, label, disabled, theme }) {
       </LinearGradient>
     </TouchableOpacity>
   );
+});
+
+// --- Main Screen ---
+
+function CreateCharacterScreen({ navigation }) {
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState("");
+  const { theme } = useThemeContext();
+  const { setActiveClassId, updateCharacter } = useClass();
+  const { imageMap } = useAssets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const goToNext = useCallback(() => setStep(2), []);
+  const goBack = useCallback(
+    () => (step === 1 ? navigation.goBack() : setStep(1)),
+    [navigation, step]
+  );
+
+  const finishCreation = useCallback(
+    async (selectedClass) => {
+      const newChar = {
+        ...selectedClass,
+        baseId: selectedClass.id,
+        id: `${selectedClass.id}-${Date.now()}`,
+        label: name,
+        name,
+        level: 1,
+        exp: 0,
+        skills: selectedClass.skills ?? [],
+        classUrl: getClassImageUrl(selectedClass.id),
+      };
+      await updateCharacter(newChar);
+      await setActiveClassId(newChar.id);
+      navigation.replace("CharacterSelectScreen");
+    },
+    [name, updateCharacter, setActiveClassId, navigation]
+  );
+
+  return (
+    <View style={styles.container}>
+      {step === 1 ? (
+        <NameStep
+          name={name}
+          setName={setName}
+          onNext={goToNext}
+          theme={theme}
+        />
+      ) : (
+        <ClassSelectStep
+          name={name}
+          classes={classes}
+          imageMap={imageMap}
+          onSelect={finishCreation}
+          theme={theme}
+        />
+      )}
+      <BackButton onPress={goBack} label="Zurück" theme={theme} />
+    </View>
+  );
 }
+
+export default React.memo(CreateCharacterScreen);
 
 // ---------- Styles ----------
 function createStyles(theme) {
@@ -253,11 +275,6 @@ function createStyles(theme) {
       width: "90%",
       paddingVertical: 13,
       paddingHorizontal: 10,
-      shadowColor: theme.glowColor,
-      shadowRadius: 11,
-      shadowOpacity: 0.29,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 7,
       marginTop: 14,
     },
     title: {
@@ -266,9 +283,6 @@ function createStyles(theme) {
       color: theme.textColor,
       textAlign: "center",
       letterSpacing: 0.6,
-      textShadowColor: theme.glowColor,
-      textShadowOffset: { width: 0, height: 3 },
-      textShadowRadius: 11,
     },
     input: {
       backgroundColor: theme.accentColor,
@@ -281,19 +295,11 @@ function createStyles(theme) {
       borderRadius: 13,
       borderWidth: 1.6,
       borderColor: theme.borderGlowColor,
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.13,
-      shadowRadius: 8,
-      elevation: 3,
     },
     nextButton: {
       borderRadius: 15,
       marginTop: 6,
       overflow: "hidden",
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.22,
-      shadowRadius: 9,
-      elevation: 4,
     },
     nextButtonInner: {
       paddingVertical: 14,
@@ -307,8 +313,6 @@ function createStyles(theme) {
       fontWeight: "bold",
       fontSize: 18,
       letterSpacing: 0.15,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 5,
     },
     nextButtonDisabled: {
       opacity: 0.4,
@@ -320,10 +324,6 @@ function createStyles(theme) {
     classCardOuter: {
       borderRadius: 14,
       marginBottom: 16,
-      shadowColor: theme.glowColor,
-      shadowRadius: 6,
-      shadowOpacity: 0.12,
-      elevation: 2,
     },
     classCard: {
       borderRadius: 14,
@@ -351,8 +351,6 @@ function createStyles(theme) {
       fontWeight: "bold",
       color: theme.textColor,
       marginBottom: 2,
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
     },
     optionDescription: {
       fontSize: 13,
@@ -369,10 +367,7 @@ function createStyles(theme) {
       borderRadius: 7,
       marginTop: 2,
       marginBottom: 1,
-      overflow: "hidden",
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
     },
     backButton: {
       position: "absolute",
@@ -383,10 +378,6 @@ function createStyles(theme) {
       paddingHorizontal: 22,
       borderRadius: 14,
       zIndex: 20,
-      shadowColor: theme.glowColor,
-      shadowRadius: 6,
-      shadowOpacity: 0.1,
-      elevation: 2,
     },
     backText: {
       color: theme.textColor,
@@ -394,8 +385,6 @@ function createStyles(theme) {
       letterSpacing: 0.12,
       textAlign: "center",
       fontWeight: "bold",
-      textShadowColor: theme.glowColor,
-      textShadowRadius: 3,
     },
   });
 }

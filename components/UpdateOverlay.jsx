@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,18 @@ import {
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function UpdateOverlay({
+const UpdateOverlay = React.memo(function UpdateOverlay({
   done = false,
   text = "Update wird geladen…",
 }) {
   const { theme } = useThemeContext();
-  const styles = createStyles(theme);
+
+  // Styles und Gradient optimiert memoized
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const gradientColors = useMemo(
+    () => theme.linearGradient || ["#000000", "#000000", "#FF2D00", "#FF2D00"],
+    [theme]
+  );
 
   const progressAnim = useRef(new Animated.Value(0)).current;
 
@@ -27,7 +33,8 @@ export default function UpdateOverlay({
         useNativeDriver: false,
       }).start();
     }
-  }, []);
+    // eslint-disable-next-line
+  }, []); // Nur beim Mount (nicht auf done reagieren!)
 
   useEffect(() => {
     if (done) {
@@ -37,19 +44,12 @@ export default function UpdateOverlay({
         useNativeDriver: false,
       }).start();
     }
-  }, [done]);
+  }, [done, progressAnim]);
 
   const widthInterpolate = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
-
-  const gradientColors = theme.linearGradient || [
-    "#000000",
-    "#000000",
-    "#FF2D00",
-    "#FF2D00",
-  ];
 
   return (
     <View style={styles.overlay} pointerEvents="auto">
@@ -59,7 +59,7 @@ export default function UpdateOverlay({
       />
       <Text style={styles.text}>{text}</Text>
       <View style={styles.progressBar}>
-        {/* --- Gradient ProgressBar --- */}
+        {/* Gradient ProgressBar */}
         <Animated.View style={{ width: widthInterpolate, height: "100%" }}>
           <LinearGradient
             colors={gradientColors}
@@ -68,20 +68,13 @@ export default function UpdateOverlay({
             style={StyleSheet.absoluteFill}
           />
         </Animated.View>
-        {/* 
-        // Alternativ NUR einfarbig, wenn du willst:
-        <Animated.View
-          style={[
-            styles.progressFill,
-            { width: widthInterpolate },
-          ]}
-        />
-        */}
       </View>
       {done && <Text style={styles.doneText}>✓ Update abgeschlossen!</Text>}
     </View>
   );
-}
+});
+
+export default UpdateOverlay;
 
 function createStyles(theme) {
   return StyleSheet.create({

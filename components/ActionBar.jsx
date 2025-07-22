@@ -1,66 +1,82 @@
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Platform,
-} from "react-native";
+import React, { useMemo, useCallback } from "react";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons, Feather, FontAwesome5, Entypo } from "@expo/vector-icons";
 import { useThemeContext } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 
-export default function ActionBar({ navigation, t, gradientColors }) {
+// Buttons als konstantes Array (unverändert)
+const BUTTONS = [
+  {
+    Icon: Ionicons,
+    iconProps: { name: "gift-outline", size: 24 },
+    screen: "GiftScreen",
+    labelKey: "giftLabel",
+  },
+  {
+    Icon: Entypo,
+    iconProps: { name: "news", size: 24 },
+    screen: "NewsScreen",
+    labelKey: "newsLabel",
+  },
+  {
+    Icon: FontAwesome5,
+    iconProps: { name: "tasks", size: 24 },
+    screen: "MissionScreen",
+    labelKey: "missionsLabel",
+  },
+  {
+    Icon: Feather,
+    iconProps: { name: "settings", size: 24 },
+    screen: "SettingsScreen",
+    labelKey: "settingsLabel",
+  },
+];
+
+function ActionBar({ navigation, t, gradientColors }) {
   const { theme } = useThemeContext();
-  const iconColor = theme.textColor;
 
-  const buttons = [
-    {
-      Icon: Ionicons,
-      iconProps: { name: "gift-outline", size: 24, color: iconColor },
-      screen: "GiftScreen",
-      label: t("giftLabel"),
-    },
-    {
-      Icon: Entypo,
-      iconProps: { name: "news", size: 24, color: iconColor },
-      screen: "NewsScreen",
-      label: t("newsLabel"),
-    },
-    {
-      Icon: FontAwesome5,
-      iconProps: { name: "tasks", size: 24, color: iconColor },
-      screen: "MissionScreen",
-      label: t("missionsLabel"),
-    },
-    {
-      Icon: Feather,
-      iconProps: { name: "settings", size: 24, color: iconColor },
-      screen: "SettingsScreen",
-      label: t("settingsLabel"),
-    },
-  ];
+  // Styles & Gradient nur neu wenn Theme/Colors sich ändern
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const colors = useMemo(
+    () =>
+      gradientColors ||
+      theme.linearGradient || [
+        theme.accentColorSecondary,
+        theme.accentColor,
+        theme.accentColorDark,
+      ],
+    [gradientColors, theme]
+  );
 
-  const styles = createStyles(theme);
+  const buttons = useMemo(
+    () =>
+      BUTTONS.map((btn) => ({
+        ...btn,
+        label: t(btn.labelKey),
+        iconProps: {
+          ...btn.iconProps,
+          color: theme.textColor,
+        },
+      })),
+    [t, theme.textColor]
+  );
 
-  // Gradientfarben: Von Prop oder aus Theme
-  const colors = gradientColors ||
-    theme.linearGradient || [
-      theme.accentColorSecondary,
-      theme.accentColor,
-      theme.accentColorDark,
-    ];
+  const handlePress = useCallback(
+    (screen) => {
+      navigation.navigate(screen);
+    },
+    [navigation]
+  );
 
   return (
     <View style={styles.row}>
-      {/* BlurView für Glass-Effekt */}
+      {/* Glass-Effekt Layer */}
       <BlurView
         intensity={28}
         tint={theme.mode === "dark" ? "dark" : "light"}
         style={StyleSheet.absoluteFill}
       />
-
-      {/* Gradient als Overlay */}
       <LinearGradient
         colors={colors}
         start={[0, 0]}
@@ -71,7 +87,7 @@ export default function ActionBar({ navigation, t, gradientColors }) {
         <TouchableOpacity
           key={screen}
           style={styles.button}
-          onPress={() => navigation.navigate(screen)}
+          onPress={() => handlePress(screen)}
           activeOpacity={0.88}
         >
           <View style={styles.inner}>
@@ -84,6 +100,7 @@ export default function ActionBar({ navigation, t, gradientColors }) {
   );
 }
 
+// Styles ohne Shadow/Elevation/TextShadow
 function createStyles(theme) {
   return StyleSheet.create({
     row: {
@@ -94,20 +111,15 @@ function createStyles(theme) {
       paddingBottom: 16,
       marginTop: 24,
       width: "100%",
-      position: "relative", // Wichtig für absoluteFill!
+      position: "relative",
       overflow: "hidden",
       minHeight: 74,
       bottom: 15,
-      borderRadius: 26, // mehr Curve!
+      borderRadius: 26,
       borderWidth: 1.5,
       borderColor: theme.borderGlowColor + "55",
-      // Schatten für Glass-Look
-      shadowColor: theme.glowColor,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.19,
-      shadowRadius: 13,
-      elevation: 5,
-      backgroundColor: theme.accentColor + "33", // leichte Transparenz für fallback
+      backgroundColor: theme.accentColor + "33",
+      // Kein shadow, kein elevation!
     },
     button: {
       flex: 1,
@@ -118,12 +130,8 @@ function createStyles(theme) {
       alignItems: "center",
       borderWidth: 1.7,
       borderColor: theme.borderGlowColor + "36",
-      backgroundColor: theme.accentColor + "1A", // Glasiger Button
-      shadowColor: theme.shadowColor,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.09,
-      shadowRadius: 6,
-      elevation: 2,
+      backgroundColor: theme.accentColor + "1A",
+      // Kein shadow, kein elevation!
       top: 7,
     },
     inner: {
@@ -137,9 +145,10 @@ function createStyles(theme) {
       color: theme.textColor,
       letterSpacing: 0.4,
       fontWeight: "600",
-      textShadowColor: theme.shadowColor + "88",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 2,
+      // Kein textShadow!
     },
   });
 }
+
+// React.memo für volle Optimierung!
+export default React.memo(ActionBar);

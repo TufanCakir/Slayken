@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   FlatList,
   TouchableOpacity,
@@ -13,6 +13,7 @@ import { useAssets } from "../context/AssetsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 
+// --- Hilfsfunktion für Enddatum-Formatierung ---
 function formatEndDate(iso) {
   const date = new Date(iso);
   return `Endet am: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
@@ -21,11 +22,80 @@ function formatEndDate(iso) {
   })}`;
 }
 
-export default function EventList({ availableEvents = [], onSelectEvent }) {
+// --- Einzelnes EventCard als Memo-Komponente ---
+const EventCard = React.memo(function EventCard({
+  item,
+  imageMap,
+  theme,
+  onPress,
+}) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const imageKey = `event_${item.id}`;
+  const imageSource = imageMap[imageKey] || { uri: item.image };
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => onPress(item)}
+      activeOpacity={0.92}
+    >
+      <View style={styles.absoluteFill}>
+        <LinearGradient
+          colors={theme.linearGradient || ["#000", "#FF2D00"]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+      <View style={styles.glassBorder} pointerEvents="none" />
+
+      {/* Card-Content */}
+      <View style={styles.bannerContainer}>
+        <Image
+          source={imageSource}
+          style={styles.imageBackground}
+          contentFit="contain"
+          transition={300}
+        />
+        <View style={styles.topRow}>
+          {item.info ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.info}</Text>
+            </View>
+          ) : (
+            <View style={{ width: 1 }} />
+          )}
+          <View style={styles.progressStatus}>
+            {item.completed && (
+              <Text style={styles.completedBadge}>Geschafft!</Text>
+            )}
+            {item.star && <Text style={styles.starIcon}>★</Text>}
+          </View>
+        </View>
+        <View style={styles.dateBox}>
+          <Text style={styles.dateText}>{formatEndDate(item.activeTo)}</Text>
+        </View>
+        <LinearGradient
+          colors={[theme.accentColor + "d0", theme.accentColor + "00"]}
+          start={{ x: 0, y: 0.7 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.textOverlay}
+        >
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+        </LinearGradient>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+function EventList({ availableEvents = [], onSelectEvent }) {
   const { theme } = useThemeContext();
   const { imageMap } = useAssets();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Memoisiert: Nur aktuelle Events
   const activeEvents = useMemo(
     () =>
       availableEvents.filter(
@@ -34,6 +104,19 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
           new Date() <= new Date(e.activeTo)
       ),
     [availableEvents]
+  );
+
+  // Memoisiertes RenderItem
+  const renderItem = useCallback(
+    ({ item }) => (
+      <EventCard
+        item={item}
+        imageMap={imageMap}
+        theme={theme}
+        onPress={onSelectEvent}
+      />
+    ),
+    [imageMap, theme, onSelectEvent]
   );
 
   if (activeEvents.length === 0) {
@@ -45,74 +128,6 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
       </ScreenLayout>
     );
   }
-
-  const renderItem = ({ item }) => {
-    const imageKey = `event_${item.id}`;
-    const imageSource = imageMap[imageKey] || { uri: item.image };
-
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => onSelectEvent(item)}
-        activeOpacity={0.92}
-      >
-        {/* 3D/Glass Effekt */}
-        <View style={styles.absoluteFill}>
-          <LinearGradient
-            colors={theme.linearGradient || ["#000", "#FF2D00"]}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-        {/* Glass Card */}
-        <BlurView intensity={46} tint="light" style={StyleSheet.absoluteFill} />
-        <View style={styles.glassBorder} pointerEvents="none" />
-        {/* Card-Content */}
-        <View style={styles.bannerContainer}>
-          <Image
-            source={imageSource}
-            style={styles.imageBackground}
-            contentFit="contain"
-            transition={300}
-          />
-
-          {/* Badges und Status */}
-          <View style={styles.topRow}>
-            {item.info ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{item.info}</Text>
-              </View>
-            ) : (
-              <View style={{ width: 1 }} />
-            )}
-            <View style={styles.progressStatus}>
-              {item.completed && (
-                <Text style={styles.completedBadge}>Geschafft!</Text>
-              )}
-              {item.star && <Text style={styles.starIcon}>★</Text>}
-            </View>
-          </View>
-
-          {/* Enddatum */}
-          <View style={styles.dateBox}>
-            <Text style={styles.dateText}>{formatEndDate(item.activeTo)}</Text>
-          </View>
-
-          {/* Text-Overlay mit Gradient */}
-          <LinearGradient
-            colors={[theme.accentColor + "d0", theme.accentColor + "00"]}
-            start={{ x: 0, y: 0.7 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.textOverlay}
-          >
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-          </LinearGradient>
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <ScreenLayout style={styles.container}>
@@ -126,6 +141,7 @@ export default function EventList({ availableEvents = [], onSelectEvent }) {
   );
 }
 
+// --- Styles (clean, performant) ---
 function createStyles(theme) {
   const accent = theme.accentColor || "#191919";
   const text = theme.textColor || "#fff";
@@ -145,15 +161,11 @@ function createStyles(theme) {
       borderRadius: 22,
       height: 300,
       marginVertical: 7,
+      marginTop: 10,
       overflow: "hidden",
       position: "relative",
-      marginTop: 10,
-      backgroundColor: "rgba(255,255,255,0.18)",
-      shadowColor: theme.glowColor,
-      shadowOpacity: 0.17,
-      shadowRadius: 19,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 6,
+      backgroundColor: "rgba(255,255,255,0.13)",
+      // KEINE shadow*, elevation mehr
     },
     absoluteFill: {
       ...StyleSheet.absoluteFillObject,
@@ -162,8 +174,8 @@ function createStyles(theme) {
     glassBorder: {
       ...StyleSheet.absoluteFillObject,
       borderRadius: 22,
-      borderWidth: 1.8,
-      borderColor: "#fff5",
+      borderWidth: 1.2,
+      borderColor: "#fff4",
       zIndex: 2,
       pointerEvents: "none",
     },
@@ -236,9 +248,7 @@ function createStyles(theme) {
       color: text,
       textAlign: "center",
       fontWeight: "bold",
-      textShadowColor: theme.glowColor + "99",
-      textShadowRadius: 6,
-      textShadowOffset: { width: 0, height: 1 },
+      // Kein textShadow*
     },
     description: {
       fontSize: 14,
@@ -250,3 +260,5 @@ function createStyles(theme) {
     },
   });
 }
+
+export default React.memo(EventList);

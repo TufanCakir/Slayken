@@ -6,10 +6,6 @@
     "bgImage": "https://raw.githubusercontent.com/TufanCakir/slayken-assets/main/backgrounds/bg-slayken.png",
     "linearGradient": ["#000000", "#000000", "#FF2D00", "#FF2D00"],
     "linearGradientString": "linear-gradient(180deg, #FFD700 0%, #FF7A00 40%, #FF2D00 80%, #000000 100%)",
-    "textColor": "#FFFFFF",
-    "shadowColor": "#000000",
-    "borderColor": "#000000",
-    "glowColor": "#000000",
-    "borderGlowColor": "#FFFFFF"
+    "textColor": "#FFFFFF"
   }
 }
